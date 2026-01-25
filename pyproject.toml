@@ -1,0 +1,30 @@
+[project]
+name = "muzika_roboto"
+version = "1.0.0"
+description = "mini framework based on aiogram"
+requires-python = ">=3.8"
+
+dependencies = [
+    "pydantic-settings<=2.2.1",
+    "pydantic<=2.6.1",
+    "aiogram>=3.13.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "flake8", 
+    "pycodestyle", 
+    "pydocstyle"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+cli = "core.cli:main"
+bot = "app.main:main"

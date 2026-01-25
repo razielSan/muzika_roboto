@@ -1,0 +1,252 @@
+from typing import Dict
+import asyncio
+
+import aiohttp
+
+from core.error_handlers.format import format_errors_message
+from core.response.response_data import NetworkResponseResult, LoggingData
+from core.error_handlers.helpers import network_fail, network_ok
+from core.response.messages import messages
+
+
+async def safe_read_response(resp):
+    """Проверяет в каком формате был передан ответ с сайта и возвращает текст ответа.
+
+    Args:
+        resp (_type_): запрос для сайта
+
+    Returns:
+        _type_: Возвращает содержание текста ответа с сайта
+    """
+    try:
+        content_type = resp.headers.get("Content-Type", "").lower()
+        if "application/json" in content_type:
+            data = await resp.json()
+            return data
+        return await resp.text()
+    except Exception:
+        return "<no body>"
+
+
+async def error_handler_for_the_website(
+    session: aiohttp.ClientSession,
+    url: str,
+    logging_data: LoggingData,
+    data_type="JSON",
+    timeout=15,
+    method="GET",
+    data=None,
+    headers=None,
+    function_name=None,
+    json=None,
+) -> NetworkResponseResult:
+    """
+    Асинхронный запрос с обработками ошибок для сайтов.
+
+    Args:
+        session (_type_): Асинхронная сессия запроса
+        url (str): URL сайта
+        logging_data: (LoggingData): Класс содержащий логгер и имя роутера для логирования
+        data_type (str, optional): Тип возвращаемых данных.По умолчанию JSON('JSON', 'TEXT', 'BYTES')
+        timeout (int, optional): Таймаут запроса в секундах
+        method (str, optional): Метод запроса. 'POST' или "GET"
+        data (_type_, optional): Данные для POST запроса
+        headers (dict): Заголовки запроса
+        function_name (str): Имя функции в которой произошла ошибка
+        json (json_data): JSON данные.По умолчанию None
+
+    Returns: NetworkResponseResult
+
+    NetworkResponseResult: содержит в себе
+        class NetworkResponseResult(BaseModel):
+        ok: bool
+        data: Optional[Any] = None
+        url: str
+        status: int
+        method: str
+        headers: Optional[Dict] = None
+        error: Optional[Error] = None
+
+
+        атрибуты NetworkResponseResult:
+            - ok (bool): True если запрос прошел успешно, False - Произошла ошибка
+            - data (Optional[Any]): Данные успешного ответа
+            - url (str): URL, по которому выполнялся запрос
+            - status (int): HTTP-код ответа. 0 — если ошибка возникла на клиентской стороне.
+            - method (str): HTTP-метод, использованный при запросе.
+            - headers (Optional(Any): Заголовки ответа.
+            - error (Optioanl(Error)): Класс содержащий данные об ошибке если произошла,
+            None если запрос произошел усешно
+
+
+        атрибуты Error:
+            - code (str)
+            - message (str)
+            - details (Optional[Any])
+    """
+    timeout_cfg: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=timeout)
+    try:
+        async with session.request(
+            method=method,
+            url=url,
+            timeout=timeout_cfg,
+            data=data,
+            headers=headers,
+            json=json,
+            allow_redirects=True,
+        ) as resp:
+            if resp.status in [403, 404]:
+
+                # Тело ответа запроса
+                error_body = await safe_read_response(resp=resp)
+
+                # Формируем дефолтные сообщения
+                default_messages: Dict = {
+                    403: "Доступ к сайту запрещен",
+                    404: "Cервер не может найти запрошенный ресурс",
+                }
+
+                # Формируем ответ для пользователя
+                error_message_str: str = (
+                    error_body.get("message", default_messages[resp.status])
+                    if isinstance(error_body, dict)
+                    else default_messages[resp.status]
+                )
+
+                logg_error_str: str = str(error_body)[:500]
+
+                logging_data.error_logger.error(
+                    msg=format_errors_message(
+                        name_router=logging_data.router_name,
+                        method=resp.method,
+                        status=resp.status,
+                        url=url,
+                        error_text=logg_error_str,
+                        function_name=function_name,
+                    )
+                )
+
+                return network_fail(
+                    code="NETWORK ERROR",
+                    message=error_message_str,
+                    status=resp.status,
+                    url=url,
+                    method=resp.method,
+                    headers=resp.headers,
+                )
+
+            elif resp.status != 200 and resp.status != 202:
+                error_body = await safe_read_response(resp=resp)
+
+                logg_error_str: str = str(error_body)[:500]
+
+                logging_data.error_logger.error(
+                    msg=format_errors_message(
+                        name_router=logging_data.router_name,
+                        method=resp.method,
+                        status=resp.status,
+                        url=url,
+                        error_text=logg_error_str,
+                        function_name=function_name,
+                    )
+                )
+                return network_fail(
+                    code="UNKNOWN_STATUS_ERROR",
+                    message=messages.UNKNOWN_STATUS_ERROR,
+                    status=resp.status,
+                    url=url,
+                    method=resp.method,
+                    headers=resp.headers,
+                )
+
+            if data_type.upper() == "JSON":
+                message_body = await resp.json()
+                return network_ok(
+                    data=message_body,
+                    status=resp.status,
+                    url=url,
+                    method=resp.method,
+                    headers=resp.headers,
+                )
+
+            elif data_type.upper() == "TEXT":
+                message_body: str = await resp.text()
+                return network_ok(
+                    data=message_body,
+                    status=resp.status,
+                    url=url,
+                    method=resp.method,
+                    headers=resp.headers,
+                )
+            else:
+                message_body: bytes = await resp.read()
+                return network_ok(
+                    data=message_body,
+                    status=resp.status,
+                    url=url,
+                    method=resp.method,
+                    headers=resp.headers,
+                )
+    except aiohttp.ClientError as err:
+        error_message: str = f"Ошибка сети при запросе:\n{err}"
+
+        logging_data.error_logger.exception(
+            msg=format_errors_message(
+                name_router=logging_data.router_name,
+                method=method,
+                status=0,
+                url=url,
+                error_text=error_message,
+                function_name=function_name,
+            )
+        )
+
+        return network_fail(
+            code="NETWORK_ERROR",
+            message=messages.NETWORK_ERROR,
+            status=0,
+            url=url,
+            method=method,
+        )
+
+    except asyncio.TimeoutError as err:
+        error_message: str = f"Ожидание от сервера истекло:\n{err}"
+
+        logging_data.error_logger.exception(
+            msg=format_errors_message(
+                name_router=logging_data.router_name,
+                method=method,
+                status=0,
+                url=url,
+                error_text=error_message,
+                function_name=function_name,
+            )
+        )
+        return network_fail(
+            code="TIMEOUT_NETWORK_ERROR",
+            message=messages.TIMEOUT_ERROR,
+            status=0,
+            url=url,
+            method=method,
+        )
+
+    except Exception as err:
+        error_message: str = f"Неизвестная ошибка при запросе:\n{err}"
+
+        logging_data.error_logger.exception(
+            msg=format_errors_message(
+                name_router=logging_data.router_name,
+                method=method,
+                status=0,
+                url=url,
+                error_text=error_message,
+                function_name=function_name,
+            )
+        )
+        return network_fail(
+            code="SERVER_ERROR",
+            message=messages.SERVER_ERROR,
+            status=0,
+            url=url,
+            method=method,
+        )

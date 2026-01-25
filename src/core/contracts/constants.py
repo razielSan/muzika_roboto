@@ -1,0 +1,24 @@
+DEFAULT_CHILD_SEPARATOR: str = "childes"
+DEFAULT_BOT_MODULES_ROOT: str = "app.bot.modules"
+DEFAULT_NAME_OF_THE_ROUTER_FOLDER: str = "handlers"
+DEFAULT_NAME_SETTINGS: str = "settings"
+DEFAULT_NAME_ROUTER: str = "router"
+DEFAUTL_NAME_APP_PATH: str = "app_path"
+DEFAUTL_NAME_BOT_PATH: str = "bot_path"
+
+
+REQUIERED_MODULE_DIRS = [
+    DEFAULT_CHILD_SEPARATOR,
+    DEFAULT_NAME_OF_THE_ROUTER_FOLDER,
+]
+
+RESERVED_NAMES = {
+    DEFAULT_NAME_SETTINGS,
+    DEFAULT_NAME_ROUTER,
+    DEFAULT_CHILD_SEPARATOR,
+    DEFAULT_NAME_OF_THE_ROUTER_FOLDER,
+    "__init__",
+    "config",
+    "core",
+    "main",
+}

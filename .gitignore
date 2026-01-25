@@ -1,0 +1,6 @@
+venv
+.env
+__pycache__/
+.vscode
+src/muzika_roboto.egg-info
+temp.py
