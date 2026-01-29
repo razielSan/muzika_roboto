@@ -8,6 +8,9 @@ dependencies = [
     "pydantic-settings<=2.2.1",
     "pydantic<=2.6.1",
     "aiogram>=3.13.1",
+    "sqlalchemy",
+    "alembic",
+    "aiosqlite",
 ]
 
 [project.optional-dependencies]
@@ -16,7 +19,8 @@ dev = [
     "black",
     "flake8", 
     "pycodestyle", 
-    "pydocstyle"
+    "pydocstyle",
+    "watchdog",
 ]
 
 [tool.setuptools]
