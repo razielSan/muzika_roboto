@@ -27,6 +27,9 @@ async def setup_bot() -> Result:
     try:
         logging_bot = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
+        if not settings.DB_PATH.exists():
+            raise RuntimeError("Database not initialized. Please contact developer.")
+
         result_load_modules = load_modules(
             root_package=DEFAULT_BOT_MODULES_ROOT,
             name_router=DEFAULT_NAME_ROUTER,
