@@ -18,13 +18,15 @@ from core.contracts.constants import (
     DEFAULT_NAME_SETTINGS,
 )
 from core.error_handlers.helpers import ok, fail
-from core.response.response_data import Result
+from core.response.response_data import Result, InlineKeyboardData
 from core.error_handlers.format import format_errors_message
+from app.app_utils.keyboards import get_total_buttons_inline_kb
 
 
 async def setup_bot() -> Result:
     """Подключает все необходимые компоненты для работы бота."""
     try:
+
         logging_bot = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
         if not settings.DB_PATH.exists():
@@ -69,28 +71,32 @@ async def setup_bot() -> Result:
         settings_root_modules = [
             getattr(module.settings, DEFAULT_NAME_SETTINGS) for module in root_modules
         ]
-        # Формируем клавиатуру для главного меню
-        settings_modules = [
-            config.MENU_REPLY_TEXT
+
+        # Формируем инлайн клавиатуру для главного меню
+        inline_data = [
+            InlineKeyboardData(
+                text=config.MENU_CALLBACK_TEXT,
+                callback_data=config.MENU_CALLBACK_DATA,
+            )
             for config in settings_root_modules
             if config.SHOW_IN_MAIN_MENU
         ]
-        get_main_keyboards = None
-        if len(settings_modules) == 0:
+        if len(inline_data) == 0:
             logging_bot.warning_logger.warning(
-                "Клавиатура для "
+                "Инлайн клавиатура для "
                 "главного меню не была создана:\nПодключен только главный модуль"
                 " или остальные модули скрыты"
             )
         else:
-            get_main_keyboards = get_total_buttons_reply_kb(
-                list_text=settings_modules,
-                quantity_button=2,
-            )
-            buttons: str = ", ".join(settings_modules)
+            buttons_array = [button.text for button in inline_data]
+            buttons = ", ".join(buttons_array)
             logging_bot.info_logger.info(
-                f"Подключена клавиатура главного меню:\nПодключены кнопки - {buttons}"
+                msg=f"[CREATE INLINE KEYBOARDS] Инлайн клавиатура для модуля main создана\nКнопки - {buttons}"
             )
+
+        get_main_inline_keyboards = get_total_buttons_inline_kb(
+            list_inline_kb_data=inline_data, quantity_button=2
+        )
 
         await telegram_bot.set_my_commands(
             commands=settings.LIST_BOT_COMMANDS  # Добавляет команды боту
@@ -123,7 +129,7 @@ async def setup_bot() -> Result:
                 f"Middleware для {logging_data.router_name} подключен"
             )
 
-        return ok(data=(get_main_keyboards, dp))
+        return ok(data=(get_main_inline_keyboards, dp))
     except Exception as err:
         logging_bot.error_logger.error(
             msg=format_errors_message(
