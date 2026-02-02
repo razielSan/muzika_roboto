@@ -21,6 +21,7 @@ dev = [
     "pycodestyle", 
     "pydocstyle",
     "watchdog",
+    "pytest-asyncio",
 ]
 
 [tool.setuptools]
