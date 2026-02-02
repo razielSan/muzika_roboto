@@ -16,11 +16,15 @@ class AlbumSQLAlchemyRepository:
         executor: Executor,
         title: str,
         year: int,
+        photo_file_unique_id: str,
+        photo_file_id: str,
     ):
         album = self.model(
             executor=executor,
             title=title,
             year=year,
+            photo_file_id=photo_file_id,
+            photo_file_unique_id=photo_file_unique_id,
         )
         self.session.add(album)
         await self.session.flush()
@@ -54,6 +58,31 @@ class AlbumSQLAlchemyRepository:
 
         albums = stmt.all()
         return albums
+
+    async def get_album_by_title(
+        self,
+        executor_id: int,
+        title: str,
+    ):
+        album = await self.session.scalar(
+            select(self.model)
+            .where(
+                self.model.executor_id == executor_id,
+                self.model.title == title,
+            )
+            .options(
+                selectinload(
+                    self.model.executor,
+                )
+            )
+            .options(
+                selectinload(
+                    self.model.songs,
+                ),
+            ),
+        )
+
+        return album
 
     async def update_title(self, executor_id: int, title: str, album_id: int):
         album = await self.session.scalar(
