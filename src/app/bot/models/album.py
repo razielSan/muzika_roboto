@@ -1,7 +1,7 @@
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, UniqueConstraint, Index
 
 from app.bot.models.base import Base
 
@@ -19,6 +19,9 @@ class Album(Base):
         ForeignKey("executor.id", ondelete="CASCADE")
     )
 
+    photo_file_id: Mapped[str]
+    photo_file_unique_id: Mapped[str]
+
     executor: Mapped["Executor"] = relationship(back_populates="albums")
     songs: Mapped[List["Song"]] = relationship(
         back_populates="album",
@@ -31,4 +34,5 @@ class Album(Base):
             "executor_id",
             name="executorname_title_executorid_uc",
         ),
+        Index("idx_album_executor", "executor_id"),
     )
