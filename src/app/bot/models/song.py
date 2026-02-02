@@ -10,17 +10,16 @@ class Song(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str]
-    order: Mapped[int] = mapped_column(
+    position: Mapped[int] = mapped_column(
         CheckConstraint(
-            "order > 0",
-            name="order_positive",
+            "position > 0",
+            name="position_positive",
         )
     )
-    file_id: Mapped[str] = mapped_column(index=True, unique=True)
+    file_id: Mapped[str]
+    file_unique_id: Mapped[str]
 
-    album_id: Mapped[int] = mapped_column(
-        ForeignKey("album.id", ondelete="CASCADE")
-    )
+    album_id: Mapped[int] = mapped_column(ForeignKey("album.id", ondelete="CASCADE"))
     album: Mapped["Album"] = relationship(back_populates="songs")
 
-    __table_args__ = (UniqueConstraint("title", "album_id", "order"),)
+    __table_args__ = (UniqueConstraint("album_id", "position"),)
