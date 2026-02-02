@@ -26,13 +26,13 @@ async def run_bot() -> None:
             )
             sys.exit()
 
-        get_main_keyboards, dp = result_startup.data
+        get_main_inline_keyboards, dp = result_startup.data
 
         # Создаем глобальную сессию для всего бота. Будет доступ в роутерах через
         # название указанное ниже
         async with aiohttp.ClientSession() as session:
             dp["session"] = session
-            dp["get_main_keyboards"] = get_main_keyboards
+            dp["get_main_inline_keyboards"] = get_main_inline_keyboards
             logging_data.info_logger.info("bot запущен")
             await dp.start_polling(telegram_bot)
 
