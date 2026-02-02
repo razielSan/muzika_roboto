@@ -25,7 +25,9 @@ class Executor(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     country: Mapped[str]
-
+    
+    photo_file_id: Mapped[str] 
+    photo_file_unique_id: Mapped[str] 
     user_id: Mapped[int] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"), index=True
     )
