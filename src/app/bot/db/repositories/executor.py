@@ -19,11 +19,15 @@ class ExecutorSqlalchemyRepository:
         country: str,
         user: User,
         genres: List[Genre],
+        file_id: str,
+        file_unique_id: str,
     ):
         executor = self.model(
             name=name,
             country=country,
             user=user,
+            photo_file_id=file_id,
+            photo_file_unique_id=file_unique_id,
         )
         executor.genres.extend(genres)
         self.session.add(executor)
@@ -80,20 +84,24 @@ class ExecutorSqlalchemyRepository:
         executors = stmt.all()
         return executors
 
-    async def get_all_executors_is_user(self, user_id: int):
-        stmt = await self.session.scalars(
+    async def get_all_albums_is_executor(
+        self,
+        user_id: int,
+        executor_id: int,
+    ):
+        executor = await self.session.scalar(
             select(self.model)
-            .where(self.model.user_id == user_id)
+            .where(
+                self.model.user_id == user_id,
+                self.model.id == executor_id,
+            )
             .order_by(self.model.name)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
-        executors = stmt.all()
-        return executors
+        return executor.albums
 
-    async def update_genres(
-        self, user_id: int, genres: List[Genre], excutor_id: int
-    ):
+    async def update_genres(self, user_id: int, genres: List[Genre], excutor_id: int):
         executor = await self.session.scalar(
             select(self.model)
             .where(self.model.user_id == user_id, self.model.id == excutor_id)
