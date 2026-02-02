@@ -17,21 +17,21 @@ class SongSQLAlchemyRepository:
         self,
         song_repsonse: List[SongResponse],
         album: Album,
-        order=1,
     ):
         list_songs = []
-        for index, song in enumerate(song_repsonse, start=order):
+        for song in song_repsonse:
             list_songs.append(
                 self.model(
                     title=song.title,
                     file_id=song.file_id,
-                    order=index,
+                    position=song.position,
                     album=album,
+                    file_unique_id=song.file_unique_id,
                 )
             )
 
         self.session.add_all(list_songs)
-        await self.sesiion.flush()
+        await self.session.flush()
         return list_songs
 
     async def get_all_songs(self, album_id: int):
@@ -41,21 +41,21 @@ class SongSQLAlchemyRepository:
         songs = stmt.all()
         return songs
 
-    async def get_song_by_order(self, album_id: int, order: int):
+    async def get_song_by_position(self, album_id: int, position: int):
         song = await self.session.scalar(
             select(self.model).where(
                 self.model.album_id == album_id,
-                self.model.order == order,
+                self.model.position == position,
             ),
         )
         return song
 
-    async def delete_songs_by_orders(self, album_id: int, list_order: List[int]):
+    async def delete_songs_by_orders(self, album_id: int, list_postions: List[int]):
 
         await self.session.execute(
             delete(self.model).where(
                 self.model.album_id == album_id,
-                self.model.order.in_(list_order),
+                self.model.position.in_(list_postions),
             )
         )
         await self.session.flush()
