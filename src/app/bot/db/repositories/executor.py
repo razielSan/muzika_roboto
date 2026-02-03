@@ -1,6 +1,6 @@
 from typing import List
 
-from app.bot.models import Executor, User, Genre
+from app.bot.models import Executor, Genre
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,11 +13,10 @@ class ExecutorSqlalchemyRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_executor(
+    async def create_base_executor(
         self,
         name: str,
         country: str,
-        user: User,
         genres: List[Genre],
         file_id: str,
         file_unique_id: str,
@@ -25,7 +24,6 @@ class ExecutorSqlalchemyRepository:
         executor = self.model(
             name=name,
             country=country,
-            user=user,
             photo_file_id=file_id,
             photo_file_unique_id=file_unique_id,
         )
@@ -34,22 +32,21 @@ class ExecutorSqlalchemyRepository:
         await self.session.flush()
         return executor
 
-    async def get_executor(self, user_id: int, executor_id: int):
+    async def get_base_executor(self, executor_id: int):
         executor = await self.session.scalar(
             select(self.model)
-            .where(self.model.id == executor_id, self.model.user_id == user_id)
+            .where(
+                self.model.id == executor_id,
+            )
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
         return executor
 
-    async def get_executor_by_name_and_country(
-        self, user_id: int, name: str, country: str
-    ):
+    async def get_base_executor_by_name_and_country(self, name: str, country: str):
         executor = await self.session.scalar(
             select(self.model)
             .where(
-                self.model.user_id == user_id,
                 self.model.name == name,
                 self.model.country == country,
             )
@@ -59,11 +56,10 @@ class ExecutorSqlalchemyRepository:
 
         return executor
 
-    async def get_executors_by_name(self, user_id: int, name: str):
+    async def get_base_executors_by_name(self, name: str):
         stmt = await self.session.scalars(
             select(self.model)
             .where(
-                self.model.user_id == user_id,
                 self.model.name == name,
             )
             .order_by(self.model.country)
@@ -73,10 +69,10 @@ class ExecutorSqlalchemyRepository:
         executors = stmt.all()
         return executors
 
-    async def get_executors_by_country(self, user_id: int, country: str):
+    async def get_base_executors_by_country(self, country: str):
         stmt = await self.session.scalars(
             select(self.model)
-            .where(self.model.user_id == user_id, self.model.country == country)
+            .where(self.model.country == country)
             .order_by(self.model.name)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
@@ -84,15 +80,13 @@ class ExecutorSqlalchemyRepository:
         executors = stmt.all()
         return executors
 
-    async def get_all_albums_is_executor(
+    async def get_all_albums_is_base_executor(
         self,
-        user_id: int,
         executor_id: int,
     ):
         executor = await self.session.scalar(
             select(self.model)
             .where(
-                self.model.user_id == user_id,
                 self.model.id == executor_id,
             )
             .order_by(self.model.name)
@@ -101,10 +95,14 @@ class ExecutorSqlalchemyRepository:
         )
         return executor.albums
 
-    async def update_genres(self, user_id: int, genres: List[Genre], excutor_id: int):
+    async def update_genres_base_executor(
+        self,
+        genres: List[Genre],
+        excutor_id: int,
+    ):
         executor = await self.session.scalar(
             select(self.model)
-            .where(self.model.user_id == user_id, self.model.id == excutor_id)
+            .where(self.model.id == excutor_id)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
@@ -113,12 +111,13 @@ class ExecutorSqlalchemyRepository:
         await self.session.flush()
         return executor
 
-    async def delete_executor(self, user_id: int, executor_id: int):
+    async def delete_base_executor(self, executor_id: int):
         executor = await self.session.scalar(
             select(self.model)
-            .where(self.model.user_id == user_id, self.model.id == executor_id)
+            .where(self.model.id == executor_id)
             .options(selectinload(self.model.genres))
         )
+
         if not executor:
             return False
 
