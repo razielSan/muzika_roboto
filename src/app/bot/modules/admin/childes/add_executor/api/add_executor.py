@@ -15,13 +15,14 @@ class ParsedAlbum:
         return f"{cls.year} {cls.title}"
 
 
-class ApiAddExecutor:
+class ApiAddExecutorAPI:
     def parse_album(self, base_path: Path) -> List[ParsedAlbum]:
         albums = []
         for album_dir in base_path.iterdir():
             year, title = album_dir.stem.strip("(").split(")")
+            title = title.strip().lower()
             albums.append(ParsedAlbum(title=title, year=int(year), path=album_dir))
         return albums
 
 
-api_add_executor: ApiAddExecutor = ApiAddExecutor()
+add_executor_api: ApiAddExecutorAPI = ApiAddExecutorAPI()
