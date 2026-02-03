@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from typing import Dict
+from typing import Dict, List
 
 from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove, FSInputFile
@@ -10,27 +10,33 @@ from aiogram.filters.state import StateFilter
 from pydantic import ValidationError
 
 
-from app.bot.modules.admin.childes.add_executor.settings import settings
 from app.bot.modules.admin.childes.add_executor.services.add_executor import (
-    service_add_executor,
+    add_executor_service,
 )
 from app.bot.modules.admin.childes.add_executor.keyboards.reply import (
     get_reply_add_executor_button,
 )
 from app.app_utils.keyboards import get_reply_cancel_button
-from app.bot.settings import settings as bot_settings
 from app.bot.modules.admin.childes.add_executor.settings import settings
+from app.bot.settings import settings as bot_settings
 from core.response.messages import telegram_emoji, messages
 from app.bot.modules.admin.filters import AdminFilter
+from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.modules.admin.childes.add_executor.dto import ExecutorImportDTO
+from app.bot.modules.admin.settings import settings as admin_settings
 from app.bot.response import format_album
 from core.logging.api import get_loggers
+from app.app_utils.fsm import async_make_update_progress
+from app.bot.db.uow import UnitOfWork
+from core.response.response_data import LoggingData, Result
 
 
-router = Router(name=__name__)
+router: Router = Router(name=__name__)
 
 
 class FSMAddExecutor(StatesGroup):
+    """FSM для добавления в базовый executor."""
+
     name: State = State()
     country: State = State()
     genres: State = State()
@@ -40,22 +46,56 @@ class FSMAddExecutor(StatesGroup):
         State()
     )  # используется для сохранен file_unique_id фото(не состояние)
     path: State = State()
+    processing: State = State()
+    cancel: State = State()
+
+
+async def go_to_photo_step(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+) -> None:
+    """
+    Переходит в функцию add_photo_file_id.
+
+    Встает в состояние FSMAddExecutor.photo.
+    """
+
+    await state.set_state(FSMAddExecutor.photo)
+    await add_photo_file_id(message, state, bot)
 
 
 @router.callback_query(
     AdminFilter(),
+    StateFilter(None),
     F.data == settings.MENU_CALLBACK_DATA,
 )
 async def add_executor(
     call: CallbackQuery,
     state: FSMContext,
-):
-    await call.message.edit_reply_markup(reply_markup=None)
+    bot: Bot,
+) -> None:
+    """
+    Главный обработчик модуля add_executor.
+
+    Работа с FSMAddExecutor.
+    Встает в состоние FSMAddExecutor.name
+    """
 
     await call.message.answer(
         f"{telegram_emoji.pencil} Введите название исполнителя",
         reply_markup=get_reply_cancel_button(),
     )
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    try:  # Удаляем админ панель
+        await bot.delete_message(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+        )
+    except Exception:
+        pass
+
     await state.set_state(FSMAddExecutor.name)
 
 
@@ -68,25 +108,53 @@ async def cancel_handler(
     message: Message,
     bot: Bot,
     state: FSMContext,
-    get_main_inline_keyboards,
-):
+) -> None:
+    """
+    Отменяет все состояния.
+
+    Работа с FSMAddExecutor
+    """
 
     await state.clear()
 
     await message.answer(
         text=messages.CANCEL_MESSAGE, reply_markup=ReplyKeyboardRemove()
     )
-    await bot.send_message(
-        text=messages.START_BOT_MESSAGE,
+    await bot.send_photo(
         chat_id=message.chat.id,
-        reply_markup=get_main_inline_keyboards,
+        reply_markup=get_keyboards_menu_buttons,
+        photo=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
     )
 
 
-@router.message(FSMAddExecutor.name, F.text)
-async def add_name(message: Message, state: FSMContext, bot: Bot):
+@router.message(FSMAddExecutor.processing, F.text)
+async def processing_message(message: Message, state: FSMContext) -> None:
+    """
+    Отправляют сообщение при вводе текста во время обработки запроса или
+    отменяет запрос при нажатии кнопки.
 
-    try:
+    Работа с FSMAddExecutor.
+    """
+
+    if message.text == messages.CANCEL_TEXT:
+        await message.answer(text="Запрос на отмену принят...")
+
+        await state.update_data(cancel=True)
+        return
+
+    await message.answer(text=messages.WAIT_AND_CANCEL_MESSAGE)
+
+
+@router.message(FSMAddExecutor.name, F.text)
+async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
+    """
+    Просит ввести страну исполнителя.
+
+    Работа с FSMAddExecutor.
+    Встает в состояние FSMAddExecutor.country.
+    """
+
+    try:  # удаляем предыдущее сообщение
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await bot.delete_message(
             chat_id=message.chat.id, message_id=message.message_id - 1
@@ -94,7 +162,7 @@ async def add_name(message: Message, state: FSMContext, bot: Bot):
     except Exception:
         pass
 
-    await state.update_data(name=message.text.strip())
+    await state.update_data(name=message.text.lower().strip())
 
     await message.answer(
         f"{telegram_emoji.pencil} Введите страну исполнителя или нажмите Неизвестно",
@@ -104,7 +172,16 @@ async def add_name(message: Message, state: FSMContext, bot: Bot):
 
 
 @router.message(FSMAddExecutor.country, F.text)
-async def add_country(message: Message, state: FSMContext, bot: Bot):
+async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
+    """
+    Просит ввести жанры исполнителя или переходит к обработчику для ввода пути,
+    если есть исполнитель.
+
+    Работа с FSMAddExecutor.
+    Встает в состояние FSMAddExecutor.genres.
+    """
+
+    country: str = message.text.strip().lower()
 
     try:
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -114,7 +191,29 @@ async def add_country(message: Message, state: FSMContext, bot: Bot):
     except Exception:
         pass
 
-    await state.update_data(country=message.text.strip())
+    await state.update_data(country=country)
+
+    # Проверяем на наличие исполнителя в базе данных
+    data: Dict = await state.get_data()
+    executor_name: str = data.get("name")
+    exists_executor = False
+    async with UnitOfWork() as uow:
+        executor = await uow.executors.get_base_executor_by_name_and_country(
+            country=country, name=executor_name
+        )
+        if executor:
+            genres: List[str] = [genre.title for genre in executor.genres]
+            exists_executor = True
+    if (
+        exists_executor
+    ):  # если исполнитель существует то переходим сразу к добавлению пути
+        await state.update_data(genres=genres)
+        await go_to_photo_step(
+            message=message,
+            state=state,
+            bot=bot,
+        )
+        return
 
     await message.answer(
         f"{telegram_emoji.pencil} Введите жанры исполнителя через точку"
@@ -125,7 +224,17 @@ async def add_country(message: Message, state: FSMContext, bot: Bot):
 
 
 @router.message(FSMAddExecutor.genres, F.text)
-async def add_genres(message: Message, state: FSMContext, bot: Bot):
+async def add_genres(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+) -> None:
+    """
+    Просит скинуть фото исполнителя.
+
+    Работа с FSMAddExecutor.
+    Встает в состояние FSMAddExecutor.photo.
+    """
 
     try:
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -135,7 +244,7 @@ async def add_genres(message: Message, state: FSMContext, bot: Bot):
     except Exception:
         pass
 
-    genres = [genre.strip() for genre in message.text.split(".")]
+    genres: List[str] = [genre.lower().strip() for genre in message.text.split(".")]
     await state.update_data(genres=genres)
 
     await message.answer(
@@ -146,7 +255,13 @@ async def add_genres(message: Message, state: FSMContext, bot: Bot):
 
 
 @router.message(FSMAddExecutor.photo)
-async def photo(message: Message, state: FSMContext, bot: Bot):
+async def add_photo_file_id(message: Message, state: FSMContext, bot: Bot):
+    """
+    Просит ввести путь до альбомов исполнителя.
+
+    Работа с FSMAddExecutor.
+    Встает в состояние FSMAddExecutor.path.
+    """
 
     try:
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -156,18 +271,14 @@ async def photo(message: Message, state: FSMContext, bot: Bot):
     except Exception:
         pass
 
-    if message.photo:
+    if message.photo:  # если сообщение является фотографией
         await state.update_data(file_id=message.photo[-1].file_id)
         await state.update_data(file_unique_id=message.photo[-1].file_unique_id)
-    else:
+    else:  # если нет используем базовые фото для исполнителя
         await state.update_data(file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID)
         await state.update_data(
             file_unique_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_UNIQUE_ID
         )
-
-    await message.answer_photo(
-        photo=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID, caption="ok"
-    )
 
     await message.answer(
         f"{telegram_emoji.pencil} Введите путь до альбома с исполнителем\n\n"
@@ -178,16 +289,18 @@ async def photo(message: Message, state: FSMContext, bot: Bot):
 
 
 @router.message(FSMAddExecutor.path)
-async def photo(
+async def add_executor_base(
     message: Message,
     state: FSMContext,
     bot: Bot,
-    get_main_inline_keyboards,
-):
+) -> None:
+    """
+    Добавляет исполителя с альбомами в базу данных.
+    """
 
-    chat_id = message.chat.id
-    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-    path = Path(message.text)
+    # Формируем общие данные
+    chat_id: int = message.chat.id
+    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     try:
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -197,16 +310,17 @@ async def photo(
     except Exception:
         pass
 
-    data = await state.get_data()
+    # Формируем данные для добавления в БД
+    data: Dict = await state.get_data()
 
-    telegram = message.from_user.id
-    executor_name = data.get("name")
-    country = data.get("country")
-    genres = data.get("genres")
-    file_id = data.get("file_id")
-    file_unique_id = data.get("file_unique_id")
+    path: Path = Path(message.text)
+    executor_name: str = data.get("name")
+    country: str = data.get("country")
+    genres: List[str] = data.get("genres")
+    file_id: str = data.get("file_id")
+    file_unique_id: str = data.get("file_unique_id")
 
-    try:
+    try:  # проверяем данные на валидность
         ExecutorImportDTO(
             executor_name=executor_name,
             country=country,
@@ -236,7 +350,16 @@ async def photo(
 
         return
 
-    async def get_audio_telegram(audio_path: Path) -> Message:
+    async def get_audio_telegram(audio_path: Path, album_name: str) -> Message:
+        """
+        Отправляет в телеграм песню и возвращает полученный ответ, для получения
+        file_id песни.
+        """
+
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=f"Идет добавление песни {audio_path.stem} в альбом {album_name}",
+        )
         msg: Message = await bot.send_audio(
             chat_id=chat_id,
             audio=FSInputFile(path=audio_path),
@@ -244,19 +367,22 @@ async def photo(
         )
         await bot.send_message(
             chat_id=chat_id,
-            text=f"Песня {audio_path.stem} добавлена",
+            text=f"Альбом {album_name}. Песня {audio_path.stem} добавлена",
         )
         return msg
 
+    # Для отправки сообщений при запросе и избежания спама
+    await state.set_state(FSMAddExecutor.processing)
     await bot.send_message(
         chat_id=chat_id,
         text=messages.WAIT_MESSAGE,
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=get_reply_cancel_button(),
     ),
 
-    result = await service_add_executor.import_executor_from_path(
-        telegram=telegram,
-        user_name=message.from_user.first_name,
+    # Функция для отслежвания состояние отмены
+    update_progress = async_make_update_progress(state=state)
+
+    result: Result = await add_executor_service.import_executor_from_path(
         executor_name=executor_name,
         country=country,
         genres=genres,
@@ -266,19 +392,15 @@ async def photo(
         get_audio_telegram=get_audio_telegram,
         logging_data=logging_data,
         audio_extensions=bot_settings.AUDIO_EXTENSIONS,
+        update_progress=update_progress,
     )
     await state.clear()
     if result.ok:
         await message.answer(text=result.data)
-        await bot.send_message(
-            chat_id=chat_id,
-            text=messages.START_BOT_MESSAGE,
-            reply_markup=get_main_inline_keyboards,
-        )
     else:
         await message.answer(text=result.error.message)
-        await bot.send_message(
-            chat_id=chat_id,
-            text=messages.START_BOT_MESSAGE,
-            reply_markup=get_main_inline_keyboards,
-        )
+    await bot.send_photo(
+        chat_id=message.chat.id,
+        reply_markup=get_keyboards_menu_buttons,
+        photo=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+    )
