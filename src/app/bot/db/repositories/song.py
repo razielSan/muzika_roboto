@@ -29,7 +29,6 @@ class SongSQLAlchemyRepository:
                     file_unique_id=song.file_unique_id,
                 )
             )
-
         self.session.add_all(list_songs)
         await self.session.flush()
         return list_songs
