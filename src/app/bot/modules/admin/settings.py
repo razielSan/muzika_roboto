@@ -11,5 +11,7 @@ class ModuleSettings(BaseModel):
     NAME_FOR_TEMP_FOLDER: str = "admin"
     ROOT_PACKAGE: str = "app.bot.modules.admin"
     
+    ADMIN_PANEL_PHOTO_FILE_ID: str = "AgACAgIAAxkBAAIHRGmBl3vdFd8Sb7Nh0dasuFYG1HtXAAJWEGsb6LYISDc5Cg0FAAFtpAEAAwIAA3kAAzgE"
+    
 settings: ModuleSettings = ModuleSettings()
     
