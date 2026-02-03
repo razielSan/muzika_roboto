@@ -25,16 +25,9 @@ class Executor(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     country: Mapped[str]
-    
-    photo_file_id: Mapped[str] 
-    photo_file_unique_id: Mapped[str] 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE"), index=True
-    )
 
-    user: Mapped["User"] = relationship(
-        back_populates="executors",
-    )
+    photo_file_id: Mapped[str]
+    photo_file_unique_id: Mapped[str]
 
     albums: Mapped[List["Album"]] = relationship(
         back_populates="executor",
@@ -50,8 +43,7 @@ class Executor(Base):
         UniqueConstraint(
             "name",
             "country",
-            "user_id",
-            name="name_country_userid_uc",
+            name="name_country_uc",
         ),
     )
 
