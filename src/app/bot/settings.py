@@ -19,7 +19,7 @@ class BotSettings(BaseSettings):
         BotCommand(command="start", description="Меню бота"),
         BotCommand(command="admin", description="Для администраторов"),
     ]
-    ADMINS_LIST: List[str] 
+    ADMINS_LIST: List[str]
 
     ASYNC_SQLITE_BASE: str = f"sqlite+aiosqlite:///{DB_PATH}"
     SQLITE_BASE: str = f"sqlite:///{DB_PATH}"
@@ -29,7 +29,7 @@ class BotSettings(BaseSettings):
 
     ALBUM_DEFAULT_PHOTO_FILE_ID: str = "AgACAgIAAxkBAAIBZ2l9oQn144OfNwEmtdJD6NVVbyFcAAJlDGsbIWPwS8FbQ1M2cbvAAQADAgADeQADOAQ"
     ALBUM_DEFAULT_PHOTO_UNIQUE_ID: str = "AQADZQxrGyFj8Et-"
-    
+
     AUDIO_EXTENSIONS: Set[str] = {".mp3", ".flac", ".wav", ".ogg", ".m4a"}
 
     model_config: SettingsConfigDict = SettingsConfigDict(
