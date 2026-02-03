@@ -51,6 +51,6 @@ class ExecutorImportDTO(BaseModel):
             year = result[0].isdigit()
             if not year:
                 raise ValueError(
-                    f"Год должен быть целым, положительным числом:  {year}"
+                    f"Год должен быть целым, положительным числом:  {result[0]}"
                 )
         return value
