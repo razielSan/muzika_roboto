@@ -13,5 +13,7 @@ class MainRouterSettings(BaseModel):
     NAME_FOR_LOG_FOLDER: str = "main"
     ROOT_PACKAGE: str = "app.bot.modules.main"
 
+    MENU_IMAGE_FILE_ID: str = "AgACAgIAAxkBAAIFhmmAOwJQBKOpkNk4F94xdWjcF4NQAALnDGsb6LYAAUhZgLpnRetIFwEAAwIAA3kAAzgE"
+
 
 settings: MainRouterSettings = MainRouterSettings()
