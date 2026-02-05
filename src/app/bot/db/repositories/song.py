@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.models import Song, Album
-from app.bot.db.response import SongResponse
+from app.bot.view_model import SongResponse
 from sqlalchemy import select, delete
 
 
