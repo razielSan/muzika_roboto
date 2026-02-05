@@ -32,9 +32,18 @@ class AlbumSQLAlchemyRepository:
 
     async def get_album(self, executor_id: int, album_id: int):
         album = await self.session.scalar(
-            select(self.model).where(
-                self.model.executor_id == executor_id, self.model.id == album_id
+            select(self.model)
+            .where(self.model.executor_id == executor_id, self.model.id == album_id)
+            .options(
+                selectinload(
+                    self.model.songs,
+                )
             )
+            .options(
+                selectinload(
+                    self.model.executor,
+                )
+            ),
         )
         return album
 
