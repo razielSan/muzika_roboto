@@ -43,6 +43,16 @@ class ExecutorSqlalchemyRepository:
         )
         return executor
 
+    async def get_all_executors(self):
+        stmt = await self.session.scalars(
+            select(self.model)
+            .order_by(self.model.name)
+            .options(selectinload(self.model.genres))
+            .options(selectinload(self.model.albums))
+        )
+        executors = stmt.all()
+        return executors
+
     async def get_base_executor_by_name_and_country(self, name: str, country: str):
         executor = await self.session.scalar(
             select(self.model)
