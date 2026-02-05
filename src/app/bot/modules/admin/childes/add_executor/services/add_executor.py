@@ -6,7 +6,7 @@ from aiogram.types import Message
 from app.bot.modules.admin.childes.add_executor.api.add_executor import add_executor_api
 from app.bot.settings import settings
 from app.bot.db.uow import UnitOfWork
-from app.bot.db.response import SongResponse
+from app.bot.view_model import SongResponse
 from core.error_handlers.helpers import ok, fail
 from core.error_handlers.format import format_errors_message
 from core.response.response_data import LoggingData, Result
@@ -33,32 +33,40 @@ class AddExecutorService:
         Отвечает за:
         - оркестрацию вызова AddExecutorAPI
         - обработку ошибок
-        - работа с базой данных
+        - работу с базой данных
         - подготовку данных для handlers
 
         Не содержит логики взаимодействия с Telegram UI.
         """
         try:
             albums = add_executor_api.parse_album(base_path=base_path)
-            
-            executor_id = None
-            async with UnitOfWork() as uow:
-
-                genres: List[str] = await uow.genres.get_or_create_genres(titles=genres)
-                executor = await uow.executors.get_base_executor_by_name_and_country(
-                    name=executor_name, country=country
-                )
-                if not executor:
-                    executor = await uow.executors.create_base_executor(
-                        name=executor_name,
-                        genres=genres,
-                        country=country,
-                        file_id=file_id,
-                        file_unique_id=file_unique_id,
-                    )
-                executor_id = executor.id
             for parsed_album in albums:
+                cancel: bool = await update_progress()
+                if not cancel:
+                    await uow.session.rollback()
+                    return fail(
+                        code="CANCEL_OPERATION",
+                        message=messages.CANCEL_MESSAGE,
+                    )
                 async with UnitOfWork() as uow:
+                    genres_list_executor: List[
+                        str
+                    ] = await uow.genres.get_or_create_genres(titles=genres)
+                    executor = (
+                        await uow.executors.get_base_executor_by_name_and_country(
+                            name=executor_name, country=country
+                        )
+                    )
+                    if not executor:
+                        executor = await uow.executors.create_base_executor(
+                            name=executor_name,
+                            genres=genres_list_executor,
+                            country=country,
+                            file_id=file_id,
+                            file_unique_id=file_unique_id,
+                        )
+                    executor_id = executor.id
+
                     array_songs: List = []
                     exists_album = await uow.albums.get_album_by_title(
                         executor_id=executor_id,
@@ -67,20 +75,12 @@ class AddExecutorService:
                     if exists_album:
                         continue
 
-                    cancel: bool = await update_progress()
-                    if not cancel:
-                        await uow.session.rollback()
-                        return fail(
-                            code="CANCEL_OPERATION",
-                            message=messages.CANCEL_MESSAGE,
-                        )
-
                     album = await uow.albums.create_album(
                         executor=executor,
                         title=parsed_album.title,
                         year=parsed_album.year,
                         photo_file_unique_id=settings.ALBUM_DEFAULT_PHOTO_UNIQUE_ID,
-                        photo_file_id=settings.ALBUM_DEFAULT_PHOTO_UNIQUE_ID,
+                        photo_file_id=settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
                     )
 
                     position: int = 0
@@ -89,14 +89,6 @@ class AddExecutorService:
                         if audio_path.suffix.lower() not in audio_extensions:
                             continue
                         try:
-
-                            cancel = await update_progress()
-                            if not cancel:
-                                await uow.session.rollback()
-                                return fail(
-                                    code="CANCEL_OPERATION",
-                                    message=messages.CANCEL_MESSAGE,
-                                )
 
                             msg: Message = await get_audio_telegram(
                                 audio_path,
