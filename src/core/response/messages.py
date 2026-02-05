@@ -61,6 +61,9 @@ class TelegramEmoji(BaseModel):
 
     pencil: str = "✏"
     red_cross: str = "❌"
+    guitar: str = "🎸"
+    planet_earth: str = "🌏"
+    piano_keys: str =  "🎹"
     yellow_triangle_with_exclamation_mark: str = "⚠"
 
 
