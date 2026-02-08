@@ -14,6 +14,8 @@ class MainRouterSettings(BaseModel):
     ROOT_PACKAGE: str = "app.bot.modules.main"
 
     MENU_IMAGE_FILE_ID: str = "AgACAgIAAxkBAAIFhmmAOwJQBKOpkNk4F94xdWjcF4NQAALnDGsb6LYAAUhZgLpnRetIFwEAAwIAA3kAAzgE"
+    DELETE_IMAGE_FILE_ID: str = "AgACAgIAAxkBAAIJvGmFdN5orJwkcWn2wwv7J-2ALiaBAALzC2sbm8kwSKCgwqBOos5mAQADAgADeAADOAQ"
+    DELETE_IMAGE_FILE_UNIQUE_ID: str = "AQAD8wtrG5vJMEh9"
 
 
 settings: MainRouterSettings = MainRouterSettings()
