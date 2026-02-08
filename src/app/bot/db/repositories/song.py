@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,12 +49,12 @@ class SongSQLAlchemyRepository:
         )
         return song
 
-    async def delete_songs_by_orders(self, album_id: int, list_postions: List[int]):
+    async def delete_songs(self, album_id: int, list_ids: List[int]):
 
         await self.session.execute(
             delete(self.model).where(
                 self.model.album_id == album_id,
-                self.model.position.in_(list_postions),
+                self.model.id.in_(list_ids),
             )
         )
         await self.session.flush()
@@ -66,3 +66,17 @@ class SongSQLAlchemyRepository:
         )
         await self.session.flush()
         return True
+
+    async def get_positions_songs_by_id(
+        self,
+        album_id: int,
+        songs_ids: List,
+    ):
+        stmt = await self.session.scalars(
+            select(self.model).where(
+                self.model.album_id == album_id, self.model.id.in_(songs_ids)
+            )
+        )
+        songs = stmt.all()
+        songs_position = [song.position for song in songs]
+        return songs_position
