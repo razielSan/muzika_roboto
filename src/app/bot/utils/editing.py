@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from core.response.messages import telegram_emoji
 
@@ -24,4 +24,11 @@ def get_info_album(
     return (
         f"{telegram_emoji.guitar} Год: {year}\n"
         f"{telegram_emoji.guitar} Название: {title}"
+    )
+
+
+def get_info_photo(file_id: str, file_unique_id: str):
+    return (
+        f"Информация о фотографии:\n\nfile_id: {file_id}\n\n"
+        f"file_unique_id: {file_unique_id}"
     )
