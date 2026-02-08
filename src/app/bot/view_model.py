@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from dataclasses import dataclass
 
 
@@ -12,12 +12,21 @@ class AlbumResponse:
     executor_photo_file_id: Optional[str] = None
     album_id: Optional[int] = None
     path: Optional[Path] = None
+    
+    
+@dataclass
+class ExecutorResponse:
+    info_executor: str
+    executor_id: int
+    photo_file_id: str
+    albums_list: List[AlbumResponse]
 
 
 @dataclass
 class SongResponse:
     file_id: Optional[str] = None
     file_unique_id: Optional[str] = None
+    song_id: Optional[int] = None
     title: Optional[str] = None
     position: Optional[int] = None
     album_id: Optional[int] = None
