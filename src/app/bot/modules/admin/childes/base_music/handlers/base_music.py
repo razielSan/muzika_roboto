@@ -1,14 +1,14 @@
+from typing import List
+
 from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, InputMediaPhoto
 from aiogram.filters.state import StateFilter
 
 from app.bot.modules.admin.childes.base_music.settings import settings
 from app.bot.modules.admin.settings import settings as admin_settings
-from app.bot.keyboards.inline import (
-    show_base_executor_collections,
-    show_one_album_songs,
+from app.bot.modules.admin.childes.base_music.keyboards.inlinle import (
+    show_one_album_songs_with_base_executor,
 )
-from app.bot.utils.editing import get_info_executor
 from app.bot.modules.admin.childes.base_music.services.base_music import (
     base_music_service,
 )
@@ -19,8 +19,12 @@ from app.bot.utils.editing import get_info_album, get_info_executor
 from app.bot.modules.admin.childes.base_music.filters import (
     BackExecutorCallback,
     BaseMusicCallback,
-    PlaySongCallback,
+    BasePlaySongCallback,
 )
+from app.bot.modules.admin.childes.base_music.keyboards.inlinle import (
+    show_base_executor_collections,
+)
+from app.bot.view_model import ExecutorResponse, AlbumResponse
 
 
 router: Router = Router(name=__name__)
@@ -30,32 +34,36 @@ router: Router = Router(name=__name__)
 async def base_music(call: CallbackQuery) -> None:
     """Возвращает первого исполнителя из базового музыкального хранилища."""
 
+    print("base_music")
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_executor = await base_music_service.show_executor(
         get_info_executor=get_info_executor, logging_data=logging_data
     )
     if result_executor.ok:
-        albums_list = result_executor.data
-        album = albums_list[0]
-
+        executor: ExecutorResponse = result_executor.data
+        albums_list: List[AlbumResponse] = executor.albums_list
         await call.message.edit_media(
             media=InputMediaPhoto(
-                media=album.executor_photo_file_id,
-                caption=album.info_executor,
+                media=executor.photo_file_id,
+                caption=executor.info_executor,
             ),
             reply_markup=show_base_executor_collections(
                 list_albums=albums_list,
+                executor_id=executor.executor_id,
             ),
         )
     else:
-        await call.message.edit_media(
-            media=InputMediaPhoto(
-                media=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
-                caption=result_executor.error.message,
-            ),
-            reply_markup=get_keyboards_menu_buttons,
-        )
+        try:  # При повторном нажатии кнопки когда нет исполнителей
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                    caption=result_executor.error.message,
+                ),
+                reply_markup=get_keyboards_menu_buttons,
+            )
+        except Exception:
+            pass
 
 
 @router.callback_query(StateFilter(None), BaseMusicCallback.filter())
@@ -82,9 +90,10 @@ async def show_songs_with_album(
                 media=song.album_photo_file_id,
                 caption=song.info_album,
             ),
-            reply_markup=show_one_album_songs(
+            reply_markup=show_one_album_songs_with_base_executor(
                 list_songs=songs,
                 executor_id=song.album_executor_id,
+                album_id=album_id,
             ),
         )
     else:
@@ -93,7 +102,7 @@ async def show_songs_with_album(
                 media=song.album_photo_file_id,
                 caption=result.error.message,
             ),
-            reply_markup=show_one_album_songs(
+            reply_markup=show_one_album_songs_with_base_executor(
                 list_songs=[],
                 executor_id=song.album_executor_id,
             ),
@@ -127,7 +136,7 @@ async def back_to_executor(
                 caption=album.info_executor,
             ),
             reply_markup=show_base_executor_collections(
-                list_albums=albums_list,
+                list_albums=albums_list, executor_id=executor_id
             ),
         )
     else:
@@ -140,10 +149,10 @@ async def back_to_executor(
         )
 
 
-@router.callback_query(StateFilter(None), PlaySongCallback.filter())
+@router.callback_query(StateFilter(None), BasePlaySongCallback.filter())
 async def play_song(
     call: CallbackQuery,
-    callback_data: PlaySongCallback,
+    callback_data: BasePlaySongCallback,
     bot: Bot,
 ) -> None:
     """Скидывает песню для прослушивания."""
