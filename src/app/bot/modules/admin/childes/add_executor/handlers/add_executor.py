@@ -124,6 +124,7 @@ async def cancel_handler(
         chat_id=message.chat.id,
         reply_markup=get_keyboards_menu_buttons,
         photo=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+        caption=messages.ADMIN_PANEL_TEXT,
     )
 
 
@@ -403,4 +404,5 @@ async def add_executor_base(
         chat_id=message.chat.id,
         reply_markup=get_keyboards_menu_buttons,
         photo=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+        caption=messages.ADMIN_PANEL_TEXT
     )
