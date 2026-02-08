@@ -6,7 +6,7 @@ from core.error_handlers.helpers import ok, fail
 from core.response.messages import messages
 from core.response.response_data import LoggingData, Result
 from core.error_handlers.format import format_errors_message
-from app.bot.view_model import SongResponse, AlbumResponse
+from app.bot.view_model import SongResponse, AlbumResponse, ExecutorResponse
 
 
 class BaseMusicService:
@@ -26,6 +26,8 @@ class BaseMusicService:
         Не содержит логики взаимодействия с Telegram UI.
         """
         try:
+            photo_file_id = None
+            executor_id = None
             async with UnitOfWork() as uow:
                 executors = await uow.executors.get_all_executors()
                 if not executors:
@@ -35,6 +37,8 @@ class BaseMusicService:
                     )
 
                 executor = executors[0]
+                photo_file_id = executor.photo_file_id
+                executor_id = executor.id
 
                 genres = [genre.title for genre in executor.genres]
 
@@ -57,7 +61,14 @@ class BaseMusicService:
                 ]
 
             albums_list.sort(key=lambda x: x.year)
-            return ok(data=albums_list)
+            return ok(
+                data=ExecutorResponse(
+                    info_executor=data_executor,
+                    executor_id=executor_id,
+                    photo_file_id=photo_file_id,
+                    albums_list=albums_list
+                )
+            )
         except Exception as err:
             logging_data.error_logger.exception(
                 format_errors_message(
