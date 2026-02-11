@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from aiogram import Router, F, Bot
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.filters.state import StateFilter
 
 from app.bot.modules.main.settings import settings
@@ -28,6 +28,11 @@ async def main(
         )
     except Exception:
         pass
+
+    await message.answer(
+        text="☕ Будь как дома путник",
+        reply_markup=ReplyKeyboardRemove(),
+    )
 
     await bot.send_photo(
         chat_id=message.chat.id,
