@@ -4,10 +4,9 @@ import traceback
 
 from app.bot.core.bot import dp
 from app.bot.core.paths import bot_path
-from app.bot.core.bot import telegram_bot
-from app.bot.settings import settings
+from app.bot.core.bot import create_bot
+from app.bot.settings import settings, proxy_settings
 from app.bot.core.middleware.errors import RouterErrorMiddleware
-from app.app_utils.keyboards import get_total_buttons_reply_kb
 from core.module_loader.runtime.loader import load_modules
 from core.utils.filesistem import ensure_directories
 from core.module_loader.runtime.register import register_module
@@ -98,13 +97,6 @@ async def setup_bot() -> Result:
             list_inline_kb_data=inline_data, quantity_button=2
         )
 
-        await telegram_bot.set_my_commands(
-            commands=settings.LIST_BOT_COMMANDS  # Добавляет команды боту
-        )  # Добавляет команды боту
-        await telegram_bot.delete_webhook(
-            drop_pending_updates=True
-        )  # Игнорирует все присланные сообщение пока бот не работал
-
         for model in root_modules:
             # получаем  логгеры
 
@@ -129,7 +121,19 @@ async def setup_bot() -> Result:
                 f"Middleware для {logging_data.router_name} подключен"
             )
 
-        return ok(data=(get_main_inline_keyboards, dp))
+        telegram_bot = create_bot(
+            bot_settings=settings,
+            proxy_settings=proxy_settings,
+        )
+
+        await telegram_bot.set_my_commands(
+            commands=settings.LIST_BOT_COMMANDS  # Добавляет команды боту
+        )  # Добавляет команды боту
+        await telegram_bot.delete_webhook(
+            drop_pending_updates=True
+        )  # Игнорирует все присланные сообщение пока бот не работал
+
+        return ok(data=(get_main_inline_keyboards, dp, telegram_bot))
     except Exception as err:
         logging_bot.error_logger.error(
             msg=format_errors_message(
