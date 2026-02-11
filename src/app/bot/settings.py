@@ -37,4 +37,23 @@ class BotSettings(BaseSettings):
     )
 
 
+class ProxySettings(BaseSettings):
+
+    BOT_DIR: Path = Path(__file__).resolve().parent
+
+    LOGIN: Optional[str] = None
+    PASSWORD: Optional[str] = None
+    HOST: Optional[str] = None
+    PORT: Optional[str] = None
+    USE_PROXY: bool = True
+
+    def get_http_url(self):
+        return f"http://{self.LOGIN}:{self.PASSWORD}@{self.HOST}:{self.PORT}"
+
+    model_config: SettingsConfigDict = SettingsConfigDict(
+        env_file=BOT_DIR / ".env", extra="ignore"
+    )
+
+
+proxy_settings = ProxySettings()
 settings = BotSettings()
