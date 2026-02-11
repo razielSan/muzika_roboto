@@ -1,5 +1,5 @@
 from aiogram import Router, F, Bot
-from aiogram.types import Message, CallbackQuery, InputMediaPhoto
+from aiogram.types import Message, CallbackQuery, InputMediaPhoto, ReplyKeyboardRemove
 from aiogram.filters.state import StateFilter
 
 from app.bot.modules.admin.response import get_keyboards_menu_buttons
@@ -27,6 +27,12 @@ async def admin(
         )
     except Exception:
         pass
+
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=messages.ADMIN_PANEL_TEXT,
+        reply_markup=ReplyKeyboardRemove(),
+    )
 
     await bot.send_photo(
         chat_id=message.chat.id,
