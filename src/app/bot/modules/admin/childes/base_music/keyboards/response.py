@@ -11,5 +11,9 @@ class KeyboardResponse(Enum):
     DELETE_SONGS: str = "🗑 Удалить Песни"
     DELETE_ALBUM: str = "🗑 Удалить Альбом"
     DELETE_EXECUTOR: str = "🗑 Удалить Исполнителя"
+    BACK_BUTTON: str = "⬅ Назад"
+    FORWARD_BUTTON: str = "Вперед ➡"
 
-    
+
+LIMIT_SONGS: int = 5
+LIMIT_ALBUMS: int = 5
