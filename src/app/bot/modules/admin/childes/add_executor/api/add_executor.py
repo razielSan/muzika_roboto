@@ -9,7 +9,7 @@ class ApiAddExecutorAPI:
         albums = []
         for album_dir in base_path.iterdir():
             year, title = album_dir.stem.strip("(").split(")")
-            title = title.strip().lower()
+            title = title.strip(" +-,.").lower()
             albums.append(AlbumResponse(title=title, year=int(year), path=album_dir))
         return albums
 
