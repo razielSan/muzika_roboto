@@ -12,14 +12,22 @@ class AlbumResponse:
     executor_photo_file_id: Optional[str] = None
     album_id: Optional[int] = None
     path: Optional[Path] = None
-    
-    
+    count_executors: Optional[int] = None
+
+
 @dataclass
 class ExecutorResponse:
     info_executor: str
     executor_id: int
     photo_file_id: str
-    albums_list: List[AlbumResponse]
+
+
+@dataclass
+class ExecutorPageRepsonse:
+    executor: ExecutorResponse
+    albums: List[AlbumResponse]
+    total_pages: int
+    current_page: int
 
 
 @dataclass
