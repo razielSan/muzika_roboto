@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Sequence, List
 
 from app.bot.view_model import AlbumResponse
 from app.bot.db.uow import UnitOfWork
@@ -6,7 +6,12 @@ from core.error_handlers.helpers import ok, fail
 from core.response.messages import messages
 from core.response.response_data import LoggingData, Result
 from core.error_handlers.format import format_errors_message
-from app.bot.view_model import SongResponse, AlbumResponse, ExecutorResponse
+from app.bot.view_model import (
+    SongResponse,
+    AlbumResponse,
+    ExecutorResponse,
+    ExecutorPageRepsonse,
+)
 
 
 class BaseMusicService:
@@ -14,9 +19,10 @@ class BaseMusicService:
         self,
         get_info_executor: Callable[..., str],
         logging_data: LoggingData,
+        page_executor: int = 1,
     ) -> Result:
         """
-        Application service для сценария показа пользователю исполинтеля с альбомами.
+        Application service для сценария показа исполнителя с альбомами.
 
         Отвечает за:
         - обработку ошибок
@@ -28,6 +34,7 @@ class BaseMusicService:
         try:
             photo_file_id = None
             executor_id = None
+            count_executors = None
             async with UnitOfWork() as uow:
                 executors = await uow.executors.get_all_executors()
                 if not executors:
@@ -35,20 +42,21 @@ class BaseMusicService:
                         code="NOT_FOUND_EXECUTORS",
                         message="Не найденно ни одного исполнителя",
                     )
+                count_executors: int = len(executors)
 
-                executor = executors[0]
-                photo_file_id = executor.photo_file_id
-                executor_id = executor.id
+                executor = executors[page_executor - 1]
+                photo_file_id: str = executor.photo_file_id
+                executor_id: int = executor.id
 
-                genres = [genre.title for genre in executor.genres]
+                genres: List[str] = [genre.title for genre in executor.genres]
 
-                data_executor = get_info_executor(
+                data_executor: str = get_info_executor(
                     name=executor.name,
                     country=executor.country,
                     genres=genres,
                 )
 
-                albums_list = [
+                albums_list: List[str] = [
                     AlbumResponse(
                         title=album.title,
                         year=album.year,
@@ -62,11 +70,15 @@ class BaseMusicService:
 
             albums_list.sort(key=lambda x: x.year)
             return ok(
-                data=ExecutorResponse(
-                    info_executor=data_executor,
-                    executor_id=executor_id,
-                    photo_file_id=photo_file_id,
-                    albums_list=albums_list
+                data=ExecutorPageRepsonse(
+                    executor=ExecutorResponse(
+                        info_executor=data_executor,
+                        executor_id=executor_id,
+                        photo_file_id=photo_file_id,
+                    ),
+                    albums=albums_list,
+                    total_pages=count_executors,
+                    current_page=page_executor,
                 )
             )
         except Exception as err:
@@ -86,7 +98,7 @@ class BaseMusicService:
         self,
         get_info_executor: Callable[..., str],
         logging_data: LoggingData,
-        executor_id: int,
+        current_page_executor: int,
     ) -> Result:
         """
         Application service для сценария возврата к исполнителю при нажатии кнопки.
@@ -101,19 +113,19 @@ class BaseMusicService:
         try:
 
             async with UnitOfWork() as uow:
-                executor = await uow.executors.get_base_executor(
-                    executor_id=executor_id,
-                )
+                executors = await uow.executors.get_all_executors()
 
-                genres = [genre.title for genre in executor.genres]
+                executor = executors[current_page_executor - 1]
 
-                data_executor = get_info_executor(
+                genres: List[str] = [genre.title for genre in executor.genres]
+
+                data_executor: str = get_info_executor(
                     name=executor.name,
                     country=executor.country,
                     genres=genres,
                 )
 
-                albums_list = [
+                albums_list: List[AlbumResponse] = [
                     AlbumResponse(
                         title=album.title,
                         year=album.year,
@@ -121,6 +133,7 @@ class BaseMusicService:
                         album_id=album.id,
                         executor_photo_file_id=executor.photo_file_id,
                         info_executor=data_executor,
+                        count_executors=len(executors),
                     )
                     for album in executor.albums
                 ]
@@ -161,7 +174,7 @@ class BaseMusicService:
                 song = await uow.songs.get_song_by_position(
                     album_id=album_id, position=position
                 )
-                song_data = SongResponse(
+                song_data: SongResponse = SongResponse(
                     file_id=song.file_id,
                     file_unique_id=song.file_unique_id,
                     title=song.title,
@@ -189,7 +202,7 @@ class BaseMusicService:
         get_info_album: Callable[..., str],
     ) -> Result:
         """
-        Application service для сценария добавления исполнителя в базу данных.
+        Application service для сценария добавления показа альбома с песнями..
 
         Отвечает за:
         - обработку ошибок
@@ -203,14 +216,14 @@ class BaseMusicService:
                 executor_id=executor_id, album_id=album_id
             )
 
-            info_album = get_info_album(
+            info_album: str = get_info_album(
                 title=album.title,
                 year=album.year,
             )
-            album_photo_file_id = album.photo_file_id
-            album_executor_id = album.executor_id
+            album_photo_file_id: str = album.photo_file_id
+            album_executor_id: int = album.executor_id
             if album.songs:
-                songs = [
+                songs: List[SongResponse] = [
                     SongResponse(
                         title=song.title,
                         position=song.position,
@@ -227,8 +240,8 @@ class BaseMusicService:
                 ]
                 return ok(data=songs)
             return fail(
-                code="ALBUM_NOT_FOUND",
-                message="Альбомы для исполнителя не найденны",
+                code="SONGS_NOT_FOUND",
+                message="У альбома нет загруженных песен",
                 details=SongResponse(
                     album_photo_file_id=album_photo_file_id,
                     album_executor_id=album_executor_id,
