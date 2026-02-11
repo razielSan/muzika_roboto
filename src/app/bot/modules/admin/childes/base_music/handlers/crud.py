@@ -133,7 +133,7 @@ async def confirm_delete_album(
         await call.message.edit_media(
             media=InputMediaPhoto(
                 media=main_settings.DELETE_IMAGE_FILE_ID,
-                caption=f"Вы точно хотите удалить альбом исполнителя ?\n\n{result.data}",
+                caption=f"Вы точно хотите удалить альбом ?\n\n{result.data}",
             ),
             reply_markup=get_confirmation_delete_album_button(
                 executor_id=callback_data.executor_id, album_id=callback_data.album_id
