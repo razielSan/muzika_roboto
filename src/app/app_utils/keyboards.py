@@ -64,10 +64,10 @@ def get_total_buttons_reply_kb(
     )
 
 
-def get_reply_cancel_button() -> ReplyKeyboardMarkup:
+def get_reply_cancel_button(cancel_text: str = messages.CANCEL_TEXT) -> ReplyKeyboardMarkup:
     """Reply кнопка отмены."""
     reply_kb: ReplyKeyboardBuilder = ReplyKeyboardBuilder()
-    reply_kb.add(KeyboardButton(text=messages.CANCEL_TEXT))
+    reply_kb.add(KeyboardButton(text=cancel_text))
     return reply_kb.as_markup(resize_keyboard=True)
 
 
