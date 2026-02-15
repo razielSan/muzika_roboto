@@ -8,14 +8,17 @@ from core.error_handlers.helpers import fail, ok
 from core.response.messages import messages
 
 
-def safe_async_execution(logging_data: LoggingData = None):
+def safe_async_execution(message: str, code: str):
     """
     Декоратор оборчивающий асинхронную функцию в try/except для перхвата всех возможных ошибок.
 
     При ошибке в ходе выполнения функции выкидывает обьект класса Result
 
     Args:
-       logging_data (LoggingData, optional): Обьект класса LoggingData.По умолчанию None
+        message (str): сообщение об ошибке для отправки пользователю
+        code (str): код ошибки
+
+        Оборочиваемая функция должна содержать обьект logging_data для логгирования
 
         аргументы LoggingData:
             - info_logger (Logger)
@@ -28,6 +31,7 @@ def safe_async_execution(logging_data: LoggingData = None):
     def decorator(function: Callable):
         @functools.wraps(function)
         async def wrapper(*args, **kwargs):
+            logging_data = kwargs.get("logging_data")
             try:
                 return await function(*args, **kwargs)
 
@@ -49,7 +53,7 @@ def safe_async_execution(logging_data: LoggingData = None):
                     )
                 else:
                     print(err)
-                return fail(code="Unknown error", message=messages.SERVER_ERROR)
+                return fail(code=code, message=message)
 
         return wrapper
 
