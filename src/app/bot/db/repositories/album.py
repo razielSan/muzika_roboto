@@ -96,22 +96,44 @@ class AlbumSQLAlchemyRepository:
     async def update_title(self, executor_id: int, title: str, album_id: int):
         album = await self.session.scalar(
             select(self.model).where(
-                self.model.executor_id == executor_id, self.model.id == album_id
+                self.model.executor_id == executor_id,
+                self.model.id == album_id,
             )
         )
         album.title = title
-        self.session.add(album)
         await self.session.flush()
         return album
 
-    async def update_year(self, executor_id: int, year: int, album_id: int):
+    async def update_year(
+        self,
+        executor_id: int,
+        year: int,
+        album_id: int,
+    ):
         album = await self.session.scalar(
             select(self.model).where(
                 self.model.executor_id == executor_id, self.model.id == album_id
             )
         )
         album.year = year
-        self.session.add(album)
+        await self.session.flush()
+        return album
+
+    async def update_photo_file_id_and_photo_file_unique_id(
+        self,
+        executor_id: int,
+        album_id: int,
+        photo_file_id: str,
+        photo_file_unique_id: str,
+    ):
+        album = await self.session.scalar(
+            select(self.model).where(
+                self.model.id == album_id,
+                self.model.executor_id == executor_id,
+            )
+        )
+        album.photo_file_id = photo_file_id
+        album.photo_file_unique_id = photo_file_unique_id
         await self.session.flush()
         return album
 
