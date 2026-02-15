@@ -18,21 +18,22 @@ from app.bot.view_model import SongResponse
 from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.utils.editing import get_info_album, get_info_executor
 from app.bot.modules.admin.childes.base_music.filters import (
-    BackExecutorCallback,
-    BaseMusicCallback,
-    BasePlaySongCallback,
-    ScrollingSongsCallback,
-    ScrollingEXecutorsCallback,
-    ScrollingAlbumsCallback,
+    AdminBackExecutorCallback,
+    AdminMusicCallback,
+    AdminPlaySongCallback,
+    AdminScrollingSongsCallback,
+    AdminScrollingExecutorsCallback,
+    AdminScrollingAlbumsCallback,
 )
 from app.bot.modules.admin.childes.base_music.keyboards.inlinle import (
     show_base_executor_collections,
 )
 from app.bot.view_model import ExecutorResponse, AlbumResponse
-from app.bot.modules.admin.childes.base_music.keyboards.response import (
+from app.bot.response import (
     LIMIT_SONGS,
     LIMIT_ALBUMS,
 )
+from app.bot.modules.admin.utils.admin import callback_update_admin_panel_media_photo
 from core.response.response_data import Result, LoggingData
 
 
@@ -83,10 +84,10 @@ async def base_music(call: CallbackQuery) -> None:
             pass
 
 
-@router.callback_query(StateFilter(None), BaseMusicCallback.filter())
+@router.callback_query(StateFilter(None), AdminMusicCallback.filter())
 async def show_songs_with_album(
     call: CallbackQuery,
-    callback_data: BaseMusicCallback,
+    callback_data: AdminMusicCallback,
 ) -> None:
     """Возвращает альбом со списком песен для исполнителя."""
 
@@ -129,14 +130,15 @@ async def show_songs_with_album(
                 list_songs=[],
                 executor_id=executor_id,
                 album_id=album_id,
+                current_page_executor=current_page_executor,
             ),
         )
 
 
-@router.callback_query(StateFilter(None), ScrollingEXecutorsCallback.filter())
+@router.callback_query(StateFilter(None), AdminScrollingExecutorsCallback.filter())
 async def scrolling_base_executors(
     call: CallbackQuery,
-    callback_data: ScrollingEXecutorsCallback,
+    callback_data: AdminScrollingExecutorsCallback,
     bot: Bot,
 ) -> None:
     """Пролистывает исполнителей."""
@@ -149,13 +151,14 @@ async def scrolling_base_executors(
         logging_data=logging_data,
         page_executor=current_page_executor,
     )
+
     if result_executor.ok:
         executor: ExecutorResponse = result_executor.data.executor
         albums_list: List[AlbumResponse] = result_executor.data.albums
         len_list_albums: int = len(albums_list)
         if albums_list:
             albums_list = albums_list[0:LIMIT_ALBUMS]
-        
+
         total_pages: int = result_executor.data.total_pages
 
         try:
@@ -175,27 +178,22 @@ async def scrolling_base_executors(
                 ),
             )
 
-        except Exception as err:
-            print(err)
+        except Exception:
             await bot.answer_callback_query(
                 call.id,
                 text="Исполнитель уже загружен",
                 show_alert=True,
             )
     else:
-        await call.message.edit_media(
-            media=InputMediaPhoto(
-                media=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
-                caption=result_executor.error.message,
-            ),
-            reply_markup=get_keyboards_menu_buttons,
+        await callback_update_admin_panel_media_photo(
+            call=call, caption=result_executor.error.message
         )
 
 
-@router.callback_query(StateFilter(None), ScrollingAlbumsCallback.filter())
+@router.callback_query(StateFilter(None), AdminScrollingAlbumsCallback.filter())
 async def scrolling_base_albums(
     call: CallbackQuery,
-    callback_data: ScrollingAlbumsCallback,
+    callback_data: AdminScrollingAlbumsCallback,
     bot: Bot,
 ) -> None:
     """Пролистывает альбомы."""
@@ -212,7 +210,7 @@ async def scrolling_base_albums(
         executor: ExecutorResponse = result_executor.data.executor
         albums_list: List[AlbumResponse] = result_executor.data.albums
         len_list_albums: int = len(albums_list)
-        
+
         albums_list = albums_list[album_position : album_position + LIMIT_ALBUMS]
         total_pages: int = result_executor.data.total_pages
 
@@ -233,10 +231,10 @@ async def scrolling_base_albums(
         )
 
 
-@router.callback_query(StateFilter(None), ScrollingSongsCallback.filter())
+@router.callback_query(StateFilter(None), AdminScrollingSongsCallback.filter())
 async def scrolling_songs_with_album(
     call: CallbackQuery,
-    callback_data: ScrollingSongsCallback,
+    callback_data: AdminScrollingSongsCallback,
 ) -> None:
     """Пролистывает песни из альбома."""
 
@@ -253,14 +251,6 @@ async def scrolling_songs_with_album(
     )
     if result.ok:
         songs: List[SongResponse] = result.data
-        if not songs:
-            await call.message.edit_media(
-                media=InputMediaPhoto(
-                    media=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
-                    caption="У исполнителя нет загруженных песен",
-                ),
-                reply_markup=get_keyboards_menu_buttons,
-            )
 
         len_list_songs: int = len(songs)
 
@@ -296,10 +286,10 @@ async def scrolling_songs_with_album(
         )
 
 
-@router.callback_query(StateFilter(None), BackExecutorCallback.filter())
+@router.callback_query(StateFilter(None), AdminBackExecutorCallback.filter())
 async def back_to_executor(
     call: CallbackQuery,
-    callback_data: BackExecutorCallback,
+    callback_data: AdminBackExecutorCallback,
 ) -> None:
     """Возвращает назад к исполнителю, при нажатии кнопки."""
 
@@ -317,7 +307,7 @@ async def back_to_executor(
     if result_executor.ok:
         albums_list: List[AlbumResponse] = result_executor.data
         len_list_albums: int = len(albums_list)
-        
+
         if albums_list:
             albums_list = albums_list[0:LIMIT_ALBUMS]
         album: AlbumResponse = albums_list[0]
@@ -338,19 +328,15 @@ async def back_to_executor(
             ),
         )
     else:
-        await call.message.edit_media(
-            media=InputMediaPhoto(
-                media=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
-                caption=result_executor.error.message,
-            ),
-            reply_markup=get_keyboards_menu_buttons,
+        await callback_update_admin_panel_media_photo(
+            call=call, caption=result_executor.error.message
         )
 
 
-@router.callback_query(StateFilter(None), BasePlaySongCallback.filter())
+@router.callback_query(StateFilter(None), AdminPlaySongCallback.filter())
 async def play_song(
     call: CallbackQuery,
-    callback_data: BasePlaySongCallback,
+    callback_data: AdminPlaySongCallback,
     bot: Bot,
 ) -> None:
     """Скидывает песню для прослушивания."""
@@ -370,6 +356,7 @@ async def play_song(
         await bot.send_audio(
             chat_id=call.message.chat.id,
             audio=song.file_id,
+            caption=f"{song.position}. {song.title}",
         )
     else:
-        await call.message.answer(text=result.error.message)
+        await call.message.answer(text=f"{result.error.message}\n\nПопробуйте,снова,запустить песню")
