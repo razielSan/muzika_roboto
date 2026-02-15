@@ -124,6 +124,7 @@ async def setup_bot() -> Result:
         telegram_bot = create_bot(
             bot_settings=settings,
             proxy_settings=proxy_settings,
+            logging_data=logging_data,
         )
 
         await telegram_bot.set_my_commands(
@@ -147,3 +148,4 @@ async def setup_bot() -> Result:
             message=f"Критическая ошибка в работе startup - {err}",
             details=str(traceback.format_exc()),
         )
+
