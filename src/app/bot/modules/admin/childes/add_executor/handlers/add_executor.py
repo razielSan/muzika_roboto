@@ -137,8 +137,10 @@ async def processing_message(message: Message, state: FSMContext) -> None:
     Работа с FSMAddExecutor.
     """
 
-    if message.text == messages.CANCEL_TEXT:
-        await message.answer(text="Запрос на отмену принят...")
+    if message.text == messages.CANCEL_TEXT_UPLOAD_EXECUTOR:
+        await message.answer(
+            text="Запрос на отмену принят..Дождитесь завершения добавления песен в текущий альбом..."
+        )
 
         await state.update_data(cancel=True)
         return
@@ -377,7 +379,9 @@ async def add_executor_base(
     await bot.send_message(
         chat_id=chat_id,
         text=messages.WAIT_MESSAGE,
-        reply_markup=get_reply_cancel_button(),
+        reply_markup=get_reply_cancel_button(
+            cancel_text=messages.CANCEL_TEXT_UPLOAD_EXECUTOR,
+        ),
     ),
 
     # Функция для отслежвания состояние отмены
@@ -404,5 +408,5 @@ async def add_executor_base(
         chat_id=message.chat.id,
         reply_markup=get_keyboards_menu_buttons,
         photo=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
-        caption=messages.ADMIN_PANEL_TEXT
+        caption=messages.ADMIN_PANEL_TEXT,
     )
