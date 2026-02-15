@@ -121,6 +121,44 @@ class ExecutorSqlalchemyRepository:
         await self.session.flush()
         return executor
 
+    async def update_photo_file_id_and_photo_file_unique_id(
+        self,
+        executor_id: int,
+        photo_file_id: str,
+        photo_file_unique_id: str,
+    ):
+        executor = await self.session.scalar(
+            select(self.model).where(self.model.id == executor_id)
+        )
+        executor.photo_file_id = photo_file_id
+        executor.photo_file_unique_id = photo_file_unique_id
+        await self.session.flush()
+        return executor
+
+    async def update_name(
+        self,
+        executor_id: int,
+        name: str,
+    ):
+        executor = await self.session.scalar(
+            select(self.model).where(self.model.id == executor_id)
+        )
+        executor.name = name
+        await self.session.flush()
+        return executor
+
+    async def update_country(
+        self,
+        executor_id: int,
+        country: str,
+    ):
+        executor = await self.session.scalar(
+            select(self.model).where(self.model.id == executor_id)
+        )
+        executor.country = country
+        await self.session.flush()
+        return executor
+
     async def delete_base_executor(self, executor_id: int):
         executor = await self.session.scalar(
             select(self.model)
