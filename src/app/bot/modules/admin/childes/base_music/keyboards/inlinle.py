@@ -6,26 +6,34 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.bot.view_model import AlbumResponse, SongResponse
 from app.bot.modules.admin.childes.base_music.filters import (
-    BackExecutorCallback,
-    BasePlaySongCallback,
-    BaseDeleteExecutorCallback,
-    BaseMusicCallback,
-    BaseDeleteAlbumCallback,
-    ConfirmBaseDeleteExecutorCallback,
-    ConfirmBaseDeleteAlbumCallback,
-    BaseDeleteSongMenuCallback,
-    BaseButtonDeleteSongCallback,
-    ConfirmBaseDeleteSongCallback,
-    CancelBaseDeleteSongCallback,
-    CompleteBaseDeleteSongCallback,
-    ScrollingSongsCallback,
-    ScrollingEXecutorsCallback,
-    ScrollingAlbumsCallback,
+    AdminBackExecutorCallback,
+    AdminPlaySongCallback,
+    AdminDeleteExecutorCallback,
+    AdminMusicCallback,
+    AdminDeleteAlbumCallback,
+    AdminConfirmDeleteExecutorCallback,
+    AdminConfirmDeleteAlbumCallback,
+    AdminDeleteSongMenuCallback,
+    AdminButtonDeleteSongCallback,
+    AdminConfirmDeleteSongCallback,
+    AdminCancelDeleteSongCallback,
+    AdminCompleteDeleteSongCallback,
+    AdminScrollingSongsCallback,
+    AdminScrollingExecutorsCallback,
+    AdminScrollingAlbumsCallback,
+    AdminUpdatePhotoExecutorCallback,
+    AdminUpdatePhotoAlbumCallback,
+    AdminUpdateExecutorNameCallback,
+    AdminUpdateExecutorCountryCallback,
+    AdminUpdateAlbumTitleCallback,
+    AdminUpdateAlbumYearCallback,
+    AdminUpdateExecutorGenresCallback,
+    AdminScrollingSongsMenuDeleteCallback,
 )
 from app.bot.modules.admin.filters import (
     BackAdminMenuCallback,
 )
-from app.bot.modules.admin.childes.base_music.keyboards.response import KeyboardResponse
+from app.bot.response import KeyboardResponse
 from app.bot.keyboards.utils import build_pages
 
 
@@ -47,7 +55,7 @@ def show_one_album_songs_with_base_executor(
             inline_kb.row(
                 InlineKeyboardButton(
                     text=f"{song.position}. {song.title}",
-                    callback_data=BasePlaySongCallback(
+                    callback_data=AdminPlaySongCallback(
                         position=song.position, album_id=song.album_id
                     ).pack(),
                 )
@@ -63,7 +71,7 @@ def show_one_album_songs_with_base_executor(
             buttons.append(
                 InlineKeyboardButton(
                     text=KeyboardResponse.BACK_BUTTON.value,
-                    callback_data=ScrollingSongsCallback(
+                    callback_data=AdminScrollingSongsCallback(
                         album_id=album_id,
                         executor_id=executor_id,
                         position=song_position,
@@ -77,7 +85,7 @@ def show_one_album_songs_with_base_executor(
             buttons.append(
                 InlineKeyboardButton(
                     text=KeyboardResponse.FORWARD_BUTTON.value,
-                    callback_data=ScrollingSongsCallback(
+                    callback_data=AdminScrollingSongsCallback(
                         album_id=album_id,
                         executor_id=executor_id,
                         position=song_position,
@@ -93,16 +101,44 @@ def show_one_album_songs_with_base_executor(
         inline_kb.row(
             InlineKeyboardButton(
                 text=KeyboardResponse.DELETE_SONGS.value,
-                callback_data=BaseDeleteSongMenuCallback(
+                callback_data=AdminDeleteSongMenuCallback(
                     album_id=album_id,
                 ).pack(),
             )
         )
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_PHOTO_ALBUM.value,
+            callback_data=AdminUpdatePhotoAlbumCallback(
+                executor_id=executor_id,
+                album_id=album_id,
+            ).pack(),
+        )
+    )
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_TITLE_ALBUM.value,
+            callback_data=AdminUpdateAlbumTitleCallback(
+                executor_id=executor_id,
+                album_id=album_id,
+            ).pack(),
+        )
+    )
+
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_YEAR_ALBUM.value,
+            callback_data=AdminUpdateAlbumYearCallback(
+                executor_id=executor_id,
+                album_id=album_id,
+            ).pack(),
+        )
+    )
 
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.DELETE_ALBUM.value,
-            callback_data=BaseDeleteAlbumCallback(
+            callback_data=AdminDeleteAlbumCallback(
                 executor_id=executor_id, album_id=album_id
             ).pack(),
         )
@@ -111,7 +147,7 @@ def show_one_album_songs_with_base_executor(
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.BACK_TO_ALBUMS.value,
-            callback_data=BackExecutorCallback(
+            callback_data=AdminBackExecutorCallback(
                 executor_id=executor_id,
                 current_page_executor=current_page_executor,
             ).pack(),
@@ -149,7 +185,7 @@ def show_base_executor_collections(
             inline_kb.row(
                 InlineKeyboardButton(
                     text=f"({album.year}) {album.title}",
-                    callback_data=BaseMusicCallback(
+                    callback_data=AdminMusicCallback(
                         executor_id=album.executor_id,
                         album_id=album.album_id,
                         current_page_executor=current_page_executor,
@@ -163,7 +199,7 @@ def show_base_executor_collections(
             buttons.append(
                 InlineKeyboardButton(
                     text=KeyboardResponse.BACK_BUTTON.value,
-                    callback_data=ScrollingAlbumsCallback(
+                    callback_data=AdminScrollingAlbumsCallback(
                         executor_id=executor_id,
                         position=album_position,
                         offset=-limit_albums,
@@ -176,7 +212,7 @@ def show_base_executor_collections(
             buttons.append(
                 InlineKeyboardButton(
                     text=KeyboardResponse.FORWARD_BUTTON.value,
-                    callback_data=ScrollingAlbumsCallback(
+                    callback_data=AdminScrollingAlbumsCallback(
                         executor_id=executor_id,
                         position=album_position,
                         offset=limit_albums,
@@ -200,7 +236,7 @@ def show_base_executor_collections(
                 inline_kb.row(
                     InlineKeyboardButton(
                         text="[ 1 ]" if digit == current_page_executor else str(digit),
-                        callback_data=ScrollingEXecutorsCallback(
+                        callback_data=AdminScrollingExecutorsCallback(
                             current_page=digit,
                         ).pack(),
                     )
@@ -211,16 +247,47 @@ def show_base_executor_collections(
                         text=f"[ {digit} ]"
                         if digit == current_page_executor
                         else str(digit),
-                        callback_data=ScrollingEXecutorsCallback(
+                        callback_data=AdminScrollingExecutorsCallback(
                             current_page=digit,
                         ).pack(),
                     )
                 )
-
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_PHOTO_EXECUTOR.value,
+            callback_data=AdminUpdatePhotoExecutorCallback(
+                executor_id=executor_id,
+            ).pack(),
+        )
+    )
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_NAME_EXECUTOR.value,
+            callback_data=AdminUpdateExecutorNameCallback(
+                executor_id=executor_id,
+            ).pack(),
+        )
+    )
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_COUNTRY_EXECUTOR.value,
+            callback_data=AdminUpdateExecutorCountryCallback(
+                executor_id=executor_id,
+            ).pack(),
+        )
+    )
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_EXECUTOR_GENRES.value,
+            callback_data=AdminUpdateExecutorGenresCallback(
+                executor_id=executor_id,
+            ).pack(),
+        )
+    )
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.DELETE_EXECUTOR.value,
-            callback_data=BaseDeleteExecutorCallback(
+            callback_data=AdminDeleteExecutorCallback(
                 executor_id=executor_id,
             ).pack(),
         )
@@ -242,7 +309,7 @@ def get_confirmation_delete_executor_button(
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.YES.value,
-            callback_data=ConfirmBaseDeleteExecutorCallback(
+            callback_data=AdminConfirmDeleteExecutorCallback(
                 executor_id=executor_id
             ).pack(),
         )
@@ -250,7 +317,7 @@ def get_confirmation_delete_executor_button(
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.NO.value,
-            callback_data=ConfirmBaseDeleteExecutorCallback(executor_id=None).pack(),
+            callback_data=AdminConfirmDeleteExecutorCallback(executor_id=None).pack(),
         )
     )
     return inline_kb.as_markup()
@@ -264,7 +331,7 @@ def get_confirmation_delete_album_button(
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.YES.value,
-            callback_data=ConfirmBaseDeleteAlbumCallback(
+            callback_data=AdminConfirmDeleteAlbumCallback(
                 executor_id=executor_id, album_id=album_id
             ).pack(),
         )
@@ -272,7 +339,7 @@ def get_confirmation_delete_album_button(
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.NO.value,
-            callback_data=ConfirmBaseDeleteAlbumCallback(
+            callback_data=AdminConfirmDeleteAlbumCallback(
                 executor_id=None,
                 album_id=None,
             ).pack(),
@@ -284,6 +351,9 @@ def get_confirmation_delete_album_button(
 def get_menu_song_delete(
     list_songs: List[SongResponse],
     album_id: int,
+    song_position: int = 0,
+    len_list_songs=0,
+    limit_songs=5,
     delete_songs: set = None,
 ):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
@@ -292,9 +362,10 @@ def get_menu_song_delete(
             inline_kb.row(
                 InlineKeyboardButton(
                     text=f"☑ {song.position}. {song.title}",
-                    callback_data=BaseButtonDeleteSongCallback(
+                    callback_data=AdminButtonDeleteSongCallback(
                         album_id=song.album_id,
                         song_id=song.song_id,
+                        position=song_position
                     ).pack(),
                 )
             )
@@ -303,24 +374,52 @@ def get_menu_song_delete(
             inline_kb.row(
                 InlineKeyboardButton(
                     text=f"{delete_img} {song.position}. {song.title}",
-                    callback_data=BaseButtonDeleteSongCallback(
+                    callback_data=AdminButtonDeleteSongCallback(
                         album_id=song.album_id,
                         song_id=song.song_id,
+                        position=song_position,
                     ).pack(),
                 )
             )
 
+    has_prev = song_position > 0
+    has_next = song_position + limit_songs < len_list_songs
+    buttons = []
+
+    if has_prev:
+        buttons.append(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_BUTTON.value,
+                callback_data=AdminScrollingSongsMenuDeleteCallback(
+                    album_id=album_id, position=song_position, offset=-limit_songs
+                ).pack(),
+            )
+        )
+
+    if has_next:
+        buttons.append(
+            InlineKeyboardButton(
+                text=KeyboardResponse.FORWARD_BUTTON.value,
+                callback_data=AdminScrollingSongsMenuDeleteCallback(
+                    album_id=album_id, position=song_position, offset=limit_songs
+                ).pack(),
+            )
+        )
+
+    if buttons:
+        inline_kb.row(*buttons)
+
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.CONFIRM_THE_DELETION_OF_SONGS.value,
-            callback_data=ConfirmBaseDeleteSongCallback(album_id=album_id).pack(),
+            callback_data=AdminConfirmDeleteSongCallback(album_id=album_id).pack(),
         )
     )
 
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.CANCEL_THE_DELETION_OF_SONGS.value,
-            callback_data=CancelBaseDeleteSongCallback().pack(),
+            callback_data=AdminCancelDeleteSongCallback().pack(),
         )
     )
 
@@ -332,13 +431,13 @@ def get_confirmation_delete_song_button():
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.YES.value,
-            callback_data=CompleteBaseDeleteSongCallback().pack(),
+            callback_data=AdminCompleteDeleteSongCallback().pack(),
         )
     )
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.CANCEL_THE_DELETION_OF_SONGS.value,
-            callback_data=CancelBaseDeleteSongCallback().pack(),
+            callback_data=AdminCancelDeleteSongCallback().pack(),
         )
     )
     return inline_kb.as_markup()
