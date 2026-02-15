@@ -21,7 +21,7 @@ if len(inline_data) >= 1:
     buttons_array = [button.text for button in inline_data]
     buttons = ", ".join(buttons_array)
     logging_data.info_logger.info(
-        msg=f"[CREATE INLINE KEYBOARDS] Инлайн клавиатура для модуля test создана\nКнопки - {buttons}"
+        msg=f"[CREATE INLINE KEYBOARDS] Инлайн клавиатура для модуля {settings.SERVICE_NAME} создана\nКнопки - {buttons}"
     )
 
 get_keyboards_menu_buttons = get_total_buttons_inline_kb(
