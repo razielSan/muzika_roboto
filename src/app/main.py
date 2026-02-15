@@ -72,15 +72,4 @@ async def _run_windows():
         )
         raise
     finally:
-        # Завершаем работy для windows
-        logging_data.info_logger.info("Приложение завершает работу")
-        # try:
-        #     if getattr(telegram_bot, "session", None):
-        #         await telegram_bot.session.close()  # аккуратно закрываем сессию
-        # except RuntimeError:
-        #     logging_data.warning_logger.warning(
-        #         "Сессия уже была закрыта или event loop завершен"
-        #     )
-        # except Exception as err:
-        #     logging_data.warning_logger.warning(f"Ошибка при закрытии сессии: {err}")
         logging_data.info_logger.info("Приложение завершило работу корректно")
