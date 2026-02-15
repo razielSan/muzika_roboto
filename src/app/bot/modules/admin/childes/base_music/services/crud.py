@@ -7,51 +7,15 @@ from core.error_handlers.format import format_errors_message
 from app.bot.utils.editing import get_info_executor, get_info_album
 from core.error_handlers.helpers import Result
 from app.bot.view_model import SongResponse
+from app.bot.response import ServerDatabaseResponse
+from core.error_handlers.decorator import safe_async_execution
 
 
 class CRUDService:
-    async def delete_base_executor(
-        self,
-        executor_id: int,
-        logging_data: LoggingData,
-    ) -> Result:
-        """
-        Application service для сценария удаление исполнителя.
-
-        Отвечает за:
-        - обработку ошибок
-        - работу с базой данных
-        - подготовку данных для handlers
-
-        Не содержит логики взаимодействия с Telegram UI.
-        """
-        try:
-            executor = None
-            async with UnitOfWork() as uow:
-                executor = await uow.executors.get_base_executor(
-                    executor_id=executor_id,
-                )
-                if executor:
-                    await uow.executors.delete_base_executor(executor_id=executor_id)
-                else:
-                    return fail(
-                        code="EXECUTOR_NOT_FOUND", message="Исполнитель не найден"
-                    )
-
-            return ok(data="Исполнитель успешно удален")
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.delete_base_executor.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="UNKNOWN_ERROR",
-                message="Неизвестная ошибка при удалении исполнителя",
-            )
-
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_INFO_EXECUTOR.name,
+        message=ServerDatabaseResponse.ERROR_INFO_EXECUTOR.value,
+    )
     async def get_info_executor(
         self,
         executor_id: int,
@@ -67,38 +31,30 @@ class CRUDService:
 
         Не содержит логики взаимодействия с Telegram UI.
         """
-        try:
-            executor = None
-            info_executor = None
-            async with UnitOfWork() as uow:
-                executor = await uow.executors.get_base_executor(
-                    executor_id=executor_id,
-                )
-
-                if not executor:
-                    return fail(
-                        code="EXECUTOR_NOT_FOUND", message="Исполнитель не найден"
-                    )
-
-                genres = [genre.title for genre in executor.genres]
-                info_executor = get_info_executor(
-                    name=executor.name, country=executor.country, genres=genres
-                )
-
-            return ok(data=info_executor)
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.get_info_executor.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="UNKNOWN_ERROR",
-                message="Неизвестная ошибка при получении информации об исполнителе",
+        executor = None
+        info_executor = None
+        async with UnitOfWork() as uow:
+            executor = await uow.executors.get_base_executor(
+                executor_id=executor_id,
             )
 
+            if not executor:
+                return fail(
+                    code=ServerDatabaseResponse.NOT_FOUND_EXECUTOR.name,
+                    message=ServerDatabaseResponse.NOT_FOUND_EXECUTOR.value,
+                )
+
+            genres = [genre.title for genre in executor.genres]
+            info_executor = get_info_executor(
+                name=executor.name, country=executor.country, genres=genres
+            )
+
+        return ok(data=info_executor)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_INFO_ALBUM.name,
+        message=ServerDatabaseResponse.ERROR_INFO_ALBUM.value,
+    )
     async def get_info_album(
         self,
         album_id: int,
@@ -115,111 +71,25 @@ class CRUDService:
 
         Не содержит логики взаимодействия с Telegram UI.
         """
-        try:
-            album = None
-            info_album = None
-            async with UnitOfWork() as uow:
-                album = await uow.albums.get_album(
-                    executor_id=executor_id, album_id=album_id
+        album = None
+        info_album = None
+        async with UnitOfWork() as uow:
+            album = await uow.albums.get_album(
+                executor_id=executor_id, album_id=album_id
+            )
+            if not album:
+                return fail(
+                    code=ServerDatabaseResponse.NOT_FOUND_ALBUM.name,
+                    message=ServerDatabaseResponse.NOT_FOUND_ALBUM.value,
                 )
-                if not album:
-                    return fail(code="ALBUM_NOT_FOUND", message="Альбом не найден")
-                info_album = get_info_album(title=album.title, year=album.year)
+            info_album = get_info_album(title=album.title, year=album.year)
 
-            return ok(data=info_album)
+        return ok(data=info_album)
 
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.get_info_album.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="UNKNOWN_ERROR",
-                message="Неизвестная ошибка при получении информации о альбоме",
-            )
-
-    async def delete_base_album(
-        self,
-        executor_id: int,
-        album_id: int,
-        logging_data: LoggingData,
-    ) -> Result:
-        """
-        Application service для сценария удаления альбома..
-
-        Отвечает за:
-        - обработку ошибок
-        - работу с базой данных
-        - подготовку данных для handlers
-
-        Не содержит логики взаимодействия с Telegram UI.
-        """
-        try:
-            async with UnitOfWork() as uow:
-                await uow.albums.delete_album(
-                    executor_id=executor_id, album_id=album_id
-                )
-
-            return ok(data="Альбома успешно удален")
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.delete_base_album.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="UNKNOWN_ERROR",
-                message="Неизвестная ошибка при удалении альбома исполнителя",
-            )
-
-    async def show_menu_songs_delete(
-        self,
-        album_id: int,
-        logging_data: LoggingData,
-    ) -> Result:
-        """
-        Application service для сценария показа меню удаления песен..
-
-        Отвечает за:
-        - обработку ошибок
-        - работу с базой данных
-        - подготовку данных для handlers
-
-        Не содержит логики взаимодействия с Telegram UI.
-        """
-        try:
-            async with UnitOfWork() as uow:
-                result = await uow.songs.get_all_songs(album_id=album_id)
-                array_songs = [
-                    SongResponse(
-                        position=song.position,
-                        album_id=song.album_id,
-                        title=song.title,
-                        song_id=song.id,
-                    )
-                    for song in result
-                ]
-            return ok(
-                data=array_songs,
-            )
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.show_menu_songs_delete.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="UNKNOWN_ERROR",
-                message="Неизвестная ошибка при получении песен для меню удаления песен.",
-            )
-
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_POSITIONS_SONGS.name,
+        message=ServerDatabaseResponse.ERROR_POSITIONS_SONGS.value,
+    )
     async def get_positions_songs(
         self,
         album_id: int,
@@ -236,52 +106,333 @@ class CRUDService:
 
         Не содержит логики взаимодействия с Telegram UI.
         """
-        try:
-            async with UnitOfWork() as uow:
-                result: List[int] = await uow.songs.get_positions_songs_by_id(
-                    album_id=album_id,
-                    songs_ids=songs_ids,
-                )
-
-            return ok(data=result)
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.get_positions_songs.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="UNKNOWN_ERROR",
-                message="Неизвестная ошибка при получениt позиций песен.",
+        async with UnitOfWork() as uow:
+            result: List[int] = await uow.songs.get_positions_songs_by_id(
+                album_id=album_id,
+                songs_ids=songs_ids,
             )
 
+        return ok(data=result)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_MENU_SONGS_DELETE.name,
+        message=ServerDatabaseResponse.ERROR_MENU_SONGS_DELETE.value,
+    )
+    async def show_menu_songs_delete(
+        self,
+        album_id: int,
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария показа меню удаления песен..
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            result = await uow.songs.get_all_songs(album_id=album_id)
+            array_songs = [
+                SongResponse(
+                    position=song.position,
+                    album_id=song.album_id,
+                    title=song.title,
+                    song_id=song.id,
+                )
+                for song in result
+            ]
+        return ok(
+            data=array_songs,
+        )
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_UPDATE_PHOTO_EXECUTOR.name,
+        message=ServerDatabaseResponse.ERROR_UPDATE_PHOTO_EXECUTOR.value,
+    )
+    async def update_photo_executor(
+        self,
+        executor_id: int,
+        photo_file_id: str,
+        photo_file_unique_id: str,
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария обновления фото исполнителя.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            await uow.executors.update_photo_file_id_and_photo_file_unique_id(
+                executor_id=executor_id,
+                photo_file_id=photo_file_id,
+                photo_file_unique_id=photo_file_unique_id,
+            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_PHOTO_EXECUTOR.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_UPDATE_PHOTO_ALBUM.name,
+        message=ServerDatabaseResponse.ERROR_UPDATE_PHOTO_ALBUM.value,
+    )
+    async def update_album_photo(
+        self,
+        executor_id: int,
+        album_id: int,
+        logging_data: LoggingData,
+        photo_file_id: str,
+        photo_file_unique_id: str,
+    ) -> Result:
+        """
+        Application service для сценария обновления фото альбома.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            await uow.albums.update_photo_file_id_and_photo_file_unique_id(
+                executor_id=executor_id,
+                album_id=album_id,
+                photo_file_id=photo_file_id,
+                photo_file_unique_id=photo_file_unique_id,
+            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_PHOTO_ALBUM.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_UPDATE_EXECUTOR_NAME.name,
+        message=ServerDatabaseResponse.ERROR_UPDATE_EXECUTOR_NAME.value,
+    )
+    async def update_executor_name(
+        self,
+        executor_id: int,
+        name: str,
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария обновления имени исполнителя.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            await uow.executors.update_name(
+                executor_id=executor_id,
+                name=name,
+            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_EXECUTOR_NAME.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_UPDATE_EXECUTOR_COUNTRY.name,
+        message=ServerDatabaseResponse.ERROR_UPDATE_EXECUTOR_COUNTRY.value,
+    )
+    async def update_executor_country(
+        self,
+        executor_id: int,
+        country: str,
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария обновления страны исполнителя.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            await uow.executors.update_country(
+                executor_id=executor_id,
+                country=country,
+            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_EXECUTOR_COUNTRY.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_UPDATE_ALBUM_TITLE.name,
+        message=ServerDatabaseResponse.ERROR_UPDATE_ALBUM_TITLE.value,
+    )
+    async def update_album_tilte(
+        self,
+        executor_id: int,
+        album_id: int,
+        title: str,
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария обновления заголовка альбома.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            await uow.albums.update_title(
+                executor_id=executor_id,
+                album_id=album_id,
+                title=title,
+            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_ALBUM_TITLE.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_UPDATE_ALBUM_YEAR.name,
+        message=ServerDatabaseResponse.ERROR_UPDATE_ALBUM_YEAR.value,
+    )
+    async def update_album_year(
+        self,
+        executor_id: int,
+        album_id: int,
+        year: str,
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария обновления года выпуса альбома.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            await uow.albums.update_year(
+                executor_id=executor_id,
+                album_id=album_id,
+                year=year,
+            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_ALBUM_YEAR.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_UPDATE_EXECUTOR_GENRES.name,
+        message=ServerDatabaseResponse.ERROR_UPDATE_EXECUTOR_GENRES.value,
+    )
+    async def update_executor_genres(
+        self,
+        executor_id: int,
+        genres: List[str],
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария обновления жанров исполнителя.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            update_genres = await uow.genres.get_or_create_genres(titles=genres)
+
+            await uow.executors.update_genres_base_executor(
+                genres=update_genres, excutor_id=executor_id
+            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_EXECUTOR_GENRES.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_DELETE_EXECUTOR.name,
+        message=ServerDatabaseResponse.ERROR_DELETE_EXECUTOR.value,
+    )
+    async def delete_base_executor(
+        self,
+        executor_id: int,
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария удаление исполнителя.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        executor = None
+        async with UnitOfWork() as uow:
+            executor = await uow.executors.get_base_executor(
+                executor_id=executor_id,
+            )
+            if executor:
+                await uow.executors.delete_base_executor(executor_id=executor_id)
+            else:
+                return fail(
+                    code=ServerDatabaseResponse.NOT_FOUND_EXECUTOR.name,
+                    message=ServerDatabaseResponse.NOT_FOUND_EXECUTOR.value,
+                )
+
+        return ok(data=ServerDatabaseResponse.SUCCESS_DELETE_EXECUTOR.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_DELETE_ALBUM.name,
+        message=ServerDatabaseResponse.ERROR_DELETE_ALBUM.value,
+    )
+    async def delete_base_album(
+        self,
+        executor_id: int,
+        album_id: int,
+        logging_data: LoggingData,
+    ) -> Result:
+        """
+        Application service для сценария удаления альбома..
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            await uow.albums.delete_album(executor_id=executor_id, album_id=album_id)
+
+        return ok(data=ServerDatabaseResponse.SUCCESS_DELETE_ALBUM.value)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_DELETE_SONGS.name,
+        message=ServerDatabaseResponse.ERROR_DELETE_SONGS.value,
+    )
     async def delete_songs(
         self,
         album_id: int,
         songs_ids: List,
         logging_data: LoggingData,
-    ):
-        try:
-            async with UnitOfWork() as uow:
-                await uow.songs.delete_songs(
-                    album_id=album_id,
-                    list_ids=songs_ids,
-                )
-            return ok(data="success")
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.delete_songs.__name__,
-                    error_text=str(err),
-                )
+    ) -> Result:
+        """
+        Application service для сценария удаления песен из альбома.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            await uow.songs.delete_songs(
+                album_id=album_id,
+                list_ids=songs_ids,
             )
-            return fail(
-                code="UNKNOWN_ERROR",
-                message="Неизвестная ошибка при удалении песен.",
-            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_DELETE_SONGS.value)
 
 
 crud_service: CRUDService = CRUDService()

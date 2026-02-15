@@ -1,20 +1,24 @@
-from typing import Callable, Sequence, List
+from typing import Callable, List
 
 from app.bot.view_model import AlbumResponse
 from app.bot.db.uow import UnitOfWork
 from core.error_handlers.helpers import ok, fail
-from core.response.messages import messages
 from core.response.response_data import LoggingData, Result
-from core.error_handlers.format import format_errors_message
 from app.bot.view_model import (
     SongResponse,
     AlbumResponse,
     ExecutorResponse,
     ExecutorPageRepsonse,
 )
+from core.error_handlers.decorator import safe_async_execution
+from app.bot.response import ServerDatabaseResponse
 
 
 class BaseMusicService:
+    @safe_async_execution(
+        message=ServerDatabaseResponse.ERROR_SHOW_EXECUTOR.value,
+        code=ServerDatabaseResponse.ERROR_SHOW_EXECUTOR.name,
+    )
     async def show_executor(
         self,
         get_info_executor: Callable[..., str],
@@ -31,69 +35,60 @@ class BaseMusicService:
 
         Не содержит логики взаимодействия с Telegram UI.
         """
-        try:
-            photo_file_id = None
-            executor_id = None
-            count_executors = None
-            async with UnitOfWork() as uow:
-                executors = await uow.executors.get_all_executors()
-                if not executors:
-                    return fail(
-                        code="NOT_FOUND_EXECUTORS",
-                        message="Не найденно ни одного исполнителя",
-                    )
-                count_executors: int = len(executors)
-
-                executor = executors[page_executor - 1]
-                photo_file_id: str = executor.photo_file_id
-                executor_id: int = executor.id
-
-                genres: List[str] = [genre.title for genre in executor.genres]
-
-                data_executor: str = get_info_executor(
-                    name=executor.name,
-                    country=executor.country,
-                    genres=genres,
+        photo_file_id = None
+        executor_id = None
+        count_executors = None
+        async with UnitOfWork() as uow:
+            executors = await uow.executors.get_all_executors()
+            if not executors:
+                return fail(
+                    code=ServerDatabaseResponse.NOT_FOUND_EXECUTORS.name,
+                    message=ServerDatabaseResponse.NOT_FOUND_EXECUTORS.value,
                 )
+            count_executors: int = len(executors)
 
-                albums_list: List[str] = [
-                    AlbumResponse(
-                        title=album.title,
-                        year=album.year,
-                        executor_id=executor.id,
-                        album_id=album.id,
-                        executor_photo_file_id=executor.photo_file_id,
-                        info_executor=data_executor,
-                    )
-                    for album in executor.albums
-                ]
+            executor = executors[page_executor - 1]
+            photo_file_id: str = executor.photo_file_id
+            executor_id: int = executor.id
 
-            albums_list.sort(key=lambda x: x.year)
-            return ok(
-                data=ExecutorPageRepsonse(
-                    executor=ExecutorResponse(
-                        info_executor=data_executor,
-                        executor_id=executor_id,
-                        photo_file_id=photo_file_id,
-                    ),
-                    albums=albums_list,
-                    total_pages=count_executors,
-                    current_page=page_executor,
-                )
-            )
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.show_executor.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="SHOW_EXECUTOR_ERROR",
-                message=messages.SERVER_ERROR,
+            genres: List[str] = [genre.title for genre in executor.genres]
+
+            data_executor: str = get_info_executor(
+                name=executor.name,
+                country=executor.country,
+                genres=genres,
             )
 
+            albums_list: List[str] = [
+                AlbumResponse(
+                    title=album.title,
+                    year=album.year,
+                    executor_id=executor.id,
+                    album_id=album.id,
+                    executor_photo_file_id=executor.photo_file_id,
+                    info_executor=data_executor,
+                )
+                for album in executor.albums
+            ]
+
+        albums_list.sort(key=lambda x: x.year)
+        return ok(
+            data=ExecutorPageRepsonse(
+                executor=ExecutorResponse(
+                    info_executor=data_executor,
+                    executor_id=executor_id,
+                    photo_file_id=photo_file_id,
+                ),
+                albums=albums_list,
+                total_pages=count_executors,
+                current_page=page_executor,
+            )
+        )
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_BACK_EXECUTOR.name,
+        message=ServerDatabaseResponse.ERROR_BACK_EXECUTOR.value,
+    )
     async def back_executor(
         self,
         get_info_executor: Callable[..., str],
@@ -110,49 +105,39 @@ class BaseMusicService:
 
         Не содержит логики взаимодействия с Telegram UI.
         """
-        try:
+        async with UnitOfWork() as uow:
+            executors = await uow.executors.get_all_executors()
 
-            async with UnitOfWork() as uow:
-                executors = await uow.executors.get_all_executors()
+            executor = executors[current_page_executor - 1]
 
-                executor = executors[current_page_executor - 1]
+            genres: List[str] = [genre.title for genre in executor.genres]
 
-                genres: List[str] = [genre.title for genre in executor.genres]
-
-                data_executor: str = get_info_executor(
-                    name=executor.name,
-                    country=executor.country,
-                    genres=genres,
-                )
-
-                albums_list: List[AlbumResponse] = [
-                    AlbumResponse(
-                        title=album.title,
-                        year=album.year,
-                        executor_id=executor.id,
-                        album_id=album.id,
-                        executor_photo_file_id=executor.photo_file_id,
-                        info_executor=data_executor,
-                        count_executors=len(executors),
-                    )
-                    for album in executor.albums
-                ]
-
-            albums_list.sort(key=lambda x: x.year)
-            return ok(data=albums_list)
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.back_executor.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="BACK_EXECUTOR_ERROR",
-                message=messages.SERVER_ERROR,
+            data_executor: str = get_info_executor(
+                name=executor.name,
+                country=executor.country,
+                genres=genres,
             )
 
+            albums_list: List[AlbumResponse] = [
+                AlbumResponse(
+                    title=album.title,
+                    year=album.year,
+                    executor_id=executor.id,
+                    album_id=album.id,
+                    executor_photo_file_id=executor.photo_file_id,
+                    info_executor=data_executor,
+                    count_executors=len(executors),
+                )
+                for album in executor.albums
+            ]
+
+        albums_list.sort(key=lambda x: x.year)
+        return ok(data=albums_list)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_PLAY_SONG.name,
+        message=ServerDatabaseResponse.ERROR_PLAY_SONG.value,
+    )
     async def play_song(
         self,
         album_id: int,
@@ -169,31 +154,18 @@ class BaseMusicService:
 
         Не содержит логики взаимодействия с Telegram UI.
         """
-        try:
-            async with UnitOfWork() as uow:
-                song = await uow.songs.get_song_by_position(
-                    album_id=album_id, position=position
-                )
-                song_data: SongResponse = SongResponse(
-                    file_id=song.file_id,
-                    file_unique_id=song.file_unique_id,
-                    title=song.title,
-                    position=song.position,
-                )
+        async with UnitOfWork() as uow:
+            song = await uow.songs.get_song_by_position(
+                album_id=album_id, position=position
+            )
+            song_data: SongResponse = SongResponse(
+                file_id=song.file_id,
+                file_unique_id=song.file_unique_id,
+                title=song.title,
+                position=song.position,
+            )
 
-            return ok(data=song_data)
-        except Exception as err:
-            logging_data.error_logger.exception(
-                format_errors_message(
-                    name_router=logging_data.router_name,
-                    function_name=self.play_song.__name__,
-                    error_text=str(err),
-                )
-            )
-            return fail(
-                code="PLAY_SONG_ERROR",
-                message=messages.SERVER_ERROR,
-            )
+        return ok(data=song_data)
 
     async def show_songs_with_album(
         self,
@@ -240,8 +212,8 @@ class BaseMusicService:
                 ]
                 return ok(data=songs)
             return fail(
-                code="SONGS_NOT_FOUND",
-                message="У альбома нет загруженных песен",
+                code=ServerDatabaseResponse.NOT_FOUND_SONGS.name,
+                message=ServerDatabaseResponse.NOT_FOUND_SONGS.value,
                 details=SongResponse(
                     album_photo_file_id=album_photo_file_id,
                     album_executor_id=album_executor_id,
