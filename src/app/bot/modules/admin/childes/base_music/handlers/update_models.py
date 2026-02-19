@@ -16,14 +16,23 @@ from app.bot.modules.admin.childes.base_music.filters import (
     AdminUpdateExecutorGenresCallback,
 )
 from app.app_utils.keyboards import get_reply_cancel_button
-from app.bot.modules.admin.childes.base_music.settings import settings
+from app.bot.utils.editing import get_info_executor, get_info_album
 from core.response.messages import messages
-from core.logging.api import get_loggers
 from core.utils.chek import check_number_is_positivity
 from app.bot.modules.admin.childes.base_music.services.crud import crud_service
+from app.bot.modules.admin.childes.base_music.services.base_music import (
+    base_music_service,
+)
 from app.bot.modules.admin.utils.admin import get_admin_panel
 from app.bot.utils.delete import delete_previous_message
-from core.response.response_data import LoggingData, Result
+from core.response.response_data import Result
+from app.bot.response import LIMIT_ALBUMS, LIMIT_SONGS
+from app.bot.utils.navigator import (
+    open_album_pages,
+    open_album_pages_with_not_songs,
+    open_executor_pages,
+)
+from app.bot.response import ServerDatabaseResponse
 
 
 router: Router = Router(name=__name__)
@@ -31,8 +40,10 @@ router: Router = Router(name=__name__)
 
 # Обновление фото исполнителя
 class FSMUpdatePhotoExecutor(StatesGroup):
-    """FSM для сценария удаления фото исполнителя."""
+    """FSM для сценария обновления фото исполнителя."""
 
+    current_page_executor: State = State()
+    count_pages_executor: State = State()
     executor_id: State = State()
     photo: State = State()
     processing: State = State()
@@ -50,12 +61,16 @@ async def start_update_executor_photo(
     await call.message.edit_reply_markup(reply_markup=None)
 
     executor_id: int = callback_data.executor_id
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
         f"Скидывайте фото исполнителя или нажмите '{messages.CANCEL_TEXT}'",
         reply_markup=get_reply_cancel_button(),
     )
     await state.update_data(executor_id=executor_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(count_pages_executor=count_pages_executor)
     await state.set_state(FSMUpdatePhotoExecutor.photo)
 
 
@@ -77,23 +92,44 @@ async def finish_update_executor_photo(
 
         data: Dict = await state.get_data()
 
-        logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
         executor_id: int = data["executor_id"]
         photo_file_id: str = message.photo[-1].file_id
         photo_file_unique_id: str = message.photo[-1].file_unique_id
         chat_id: int = message.chat.id
+        current_page_executor = data.get("current_page_executor")
+        count_pages_executor = data.get("count_pages_executor")
 
         result_update: Result = await crud_service.update_photo_executor(
             executor_id=executor_id,
             photo_file_id=photo_file_id,
             photo_file_unique_id=photo_file_unique_id,
-            logging_data=logging_data,
         )
+
         await state.clear()
-        if result_update.ok:
+        if result_update.ok:  # перебрасываем на страницу исполнителя
+            result: Result = await base_music_service.show_executor(
+                get_info_executor=get_info_executor,
+                page_executor=current_page_executor,
+            )
+
+            await message.answer(text=result_update.data)
+            if result.ok:
+                await open_executor_pages(
+                    executor_response=result.data,
+                    limit_albums=LIMIT_ALBUMS,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    message=message,
+                    bot=bot,
+                    executor_id=executor_id,
+                )
+
+                return
+
+            # Если произошла ошибка при возвращении на страницу исполнителя
             await get_admin_panel(
-                caption=result_update.data,
                 chat_id=chat_id,
+                caption=result.error.message,
                 bot=bot,
             )
         else:
@@ -114,6 +150,8 @@ async def finish_update_executor_photo(
 class FSMUpdatePhotoAlmum(StatesGroup):
     """FSM для сценария обновления фото альбома."""
 
+    current_page_executor: State = State()
+    count_pages_executor: State = State()
     executor_id: State = State()
     album_id: State = State()
     photo: State = State()
@@ -133,6 +171,8 @@ async def start_update_album_photo(
 
     executor_id: int = callback_data.executor_id
     album_id: int = callback_data.album_id
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
         f"Скидывайте фото альбома или нажмите '{messages.CANCEL_TEXT}'",
@@ -140,6 +180,8 @@ async def start_update_album_photo(
     )
     await state.update_data(executor_id=executor_id)
     await state.update_data(album_id=album_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(count_pages_executor=count_pages_executor)
     await state.set_state(FSMUpdatePhotoAlmum.photo)
 
 
@@ -161,7 +203,6 @@ async def finish_update_album_photo(
             reply_markup=ReplyKeyboardRemove(),
         )
 
-        logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
         data: Dict = await state.get_data()
 
         executor_id: int = data["executor_id"]
@@ -169,22 +210,58 @@ async def finish_update_album_photo(
         photo_file_id: str = message.photo[-1].file_id
         photo_file_unique_id: str = message.photo[-1].file_unique_id
         chat_id: int = message.chat.id
+        current_page_executor: int = data.get("current_page_executor")
+        count_pages_executor: int = data.get("count_pages_executor")
 
         result_update_photo_album: Result = await crud_service.update_album_photo(
             executor_id=executor_id,
             album_id=album_id,
-            logging_data=logging_data,
             photo_file_id=photo_file_id,
             photo_file_unique_id=photo_file_unique_id,
         )
         await state.clear()
-        if result_update_photo_album.ok:
-            await get_admin_panel(
-                caption=result_update_photo_album.data,
-                chat_id=chat_id,
-                bot=bot,
+        if result_update_photo_album.ok:  # возвращаемся на страницу альбома
+            result: Result = await base_music_service.show_songs_with_album(
+                get_info_album=get_info_album,
+                album_id=album_id,
+                executor_id=executor_id,
             )
-        else:
+            await message.answer(text=result_update_photo_album.data)
+            if result.ok and not result.empty:  # если есть песни в альбоме
+                await open_album_pages(
+                    songs=result.data,
+                    message=message,
+                    limit_songs=LIMIT_SONGS,
+                    executor_id=executor_id,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    bot=bot,
+                    album_id=album_id,
+                )
+                return
+
+            if result.ok and result.empty:  # Если на странице нет песен
+                song = result.data
+
+                await open_album_pages_with_not_songs(
+                    song=song,
+                    bot=bot,
+                    message=message,
+                    executor_id=executor_id,
+                    album_id=album_id,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    message_not_songs=ServerDatabaseResponse.NOT_FOUND_SONGS.value,
+                )
+
+            if not result.ok:
+                await get_admin_panel(
+                    caption=result.error.message,
+                    chat_id=chat_id,
+                    bot=bot,
+                )
+                return
+        else:  # если произошла ошибка при возвращении к альбому
             await get_admin_panel(
                 chat_id=chat_id,
                 caption=result_update_photo_album.error.message,
@@ -213,7 +290,7 @@ async def start_update_excutor_name(
     callback_data: AdminUpdateExecutorNameCallback,
     state: FSMContext,
 ):
-    """Просит ввести имя исплнителя."""
+    """Просит ввести имя исполнителя."""
 
     await call.message.edit_reply_markup(reply_markup=None)
 
@@ -228,7 +305,11 @@ async def start_update_excutor_name(
 
 
 @router.message(FSMUpdateExecutorName.name)
-async def finish_update_executor_name(message: Message, state: FSMContext, bot: Bot):
+async def finish_update_executor_name(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+):
     """Обновляет имя исполнителя."""
 
     if message.text:
@@ -237,14 +318,15 @@ async def finish_update_executor_name(message: Message, state: FSMContext, bot: 
             reply_markup=ReplyKeyboardRemove(),
         )
 
-        logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
         data: Dict = await state.get_data()
         executor_id: int = data["executor_id"]
         name: str = message.text.strip().lower()
+
         chat_id: int = message.chat.id
 
         result_update_executor_name: Result = await crud_service.update_executor_name(
-            executor_id=executor_id, name=name, logging_data=logging_data
+            executor_id=executor_id,
+            name=name,
         )
         await state.clear()
         if result_update_executor_name.ok:
@@ -253,12 +335,14 @@ async def finish_update_executor_name(message: Message, state: FSMContext, bot: 
                 chat_id=chat_id,
                 bot=bot,
             )
-        else:
-            await get_admin_panel(
-                caption=result_update_executor_name.error.message,
-                chat_id=chat_id,
-                bot=bot,
-            )
+            return
+
+        # Если произошла ошибка при обновлении имени исполнителя
+        await get_admin_panel(
+            caption=result_update_executor_name.error.message,
+            chat_id=chat_id,
+            bot=bot,
+        )
 
     else:
         await message.answer(
@@ -272,6 +356,8 @@ async def finish_update_executor_name(message: Message, state: FSMContext, bot: 
 class FSMUpdateExecutorCountry(StatesGroup):
     """FSM для сценария обновления страны исполнителя."""
 
+    current_page_executor: State = State()
+    count_pages_executor: State = State()
     executor_id: State = State()
     country: State = State()
 
@@ -286,6 +372,9 @@ async def start_update_excutor_country(
 
     await call.message.edit_reply_markup(reply_markup=None)
 
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
+
     await call.message.answer(
         f"Введите страну исполнителя или нажмите '{messages.CANCEL_TEXT}'",
         reply_markup=get_reply_cancel_button(),
@@ -293,6 +382,8 @@ async def start_update_excutor_country(
 
     executor_id: int = callback_data.executor_id
     await state.update_data(executor_id=executor_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(count_pages_executor=count_pages_executor)
     await state.set_state(FSMUpdateExecutorCountry.country)
 
 
@@ -305,24 +396,42 @@ async def finish_update_executor_country(message: Message, state: FSMContext, bo
             reply_markup=ReplyKeyboardRemove(),
         )
 
-        logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
         data: Dict = await state.get_data()
         executor_id: int = data["executor_id"]
         country: str = message.text.strip().lower()
         chat_id: int = message.chat.id
+        current_page_executor: int = data.get("current_page_executor")
+        count_pages_executor: int = data.get("count_pages_executor")
 
         result_update_executor_country: Result = (
             await crud_service.update_executor_country(
                 executor_id=executor_id,
                 country=country,
-                logging_data=logging_data,
             )
         )
 
         await state.clear()
-        if result_update_executor_country.ok:
+        if result_update_executor_country.ok:  # возвращаемся обратно к исполнителю
+            result: Result = await base_music_service.show_executor(
+                get_info_executor=get_info_executor,
+                page_executor=current_page_executor,
+            )
+            await message.answer(text=result_update_executor_country.data)
+            if result.ok:
+                await open_executor_pages(
+                    executor_response=result.data,
+                    limit_albums=LIMIT_ALBUMS,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    message=message,
+                    bot=bot,
+                    executor_id=executor_id,
+                )
+
+                return
+            # Если произошла ошибка при возвращении к исполнителю
             await get_admin_panel(
-                caption=result_update_executor_country.data,
+                caption=result.error.message,
                 chat_id=chat_id,
                 bot=bot,
             )
@@ -344,6 +453,8 @@ async def finish_update_executor_country(message: Message, state: FSMContext, bo
 class FSMUpdateAlbumTitle(StatesGroup):
     """ "FSM для обновления заголовка альбома."""
 
+    count_pages_executor: State = State()
+    current_page_executor: State = State()
     executor_id: State = State()
     album_id: State = State()
     title: State = State()
@@ -359,6 +470,9 @@ async def start_update_album_tilte(
 
     await call.message.edit_reply_markup(reply_markup=None)
 
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
+
     await call.message.answer(
         f"Введите название альбома или нажмите '{messages.CANCEL_TEXT}'",
         reply_markup=get_reply_cancel_button(),
@@ -367,6 +481,8 @@ async def start_update_album_tilte(
     executor_id: int = callback_data.executor_id
     album_id: int = callback_data.album_id
     await state.update_data(executor_id=executor_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(count_pages_executor=count_pages_executor)
     await state.update_data(album_id=album_id)
     await state.set_state(FSMUpdateAlbumTitle.title)
 
@@ -385,28 +501,64 @@ async def finish_update_album_title(
             reply_markup=ReplyKeyboardRemove(),
         )
 
-        logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
         data: Dict = await state.get_data()
         executor_id: int = data["executor_id"]
         album_id: int = data["album_id"]
         title: str = message.text.strip().lower()
+        current_page_executor: int = data.get("current_page_executor")
+        count_pages_executor: int = data.get("count_pages_executor")
+
         result_update_album_title: Result = await crud_service.update_album_tilte(
             executor_id=executor_id,
             album_id=album_id,
             title=title,
-            logging_data=logging_data,
         )
         chat_id: int = message.chat.id
 
         await state.clear()
-        if result_update_album_title.ok:
-            await get_admin_panel(
-                caption=result_update_album_title.data,
-                chat_id=chat_id,
-                bot=bot,
+        if result_update_album_title.ok:  # возвращение на страницу альбома
+            result: Result = await base_music_service.show_songs_with_album(
+                get_info_album=get_info_album,
+                album_id=album_id,
+                executor_id=executor_id,
             )
+            await message.answer(text=result_update_album_title.data)
+            if result.ok and not result.empty:  # если есть песни на странице
+                await open_album_pages(
+                    songs=result.data,
+                    message=message,
+                    limit_songs=LIMIT_SONGS,
+                    executor_id=executor_id,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    bot=bot,
+                    album_id=album_id,
+                )
+                return
 
-        else:
+            if result.ok and result.empty:  # Если на странице нет песен
+                song = result.data
+
+                await open_album_pages_with_not_songs(
+                    song=song,
+                    bot=bot,
+                    message=message,
+                    executor_id=executor_id,
+                    album_id=album_id,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    message_not_songs=ServerDatabaseResponse.NOT_FOUND_SONGS.value,
+                )
+                return
+            if not result.ok:
+                await get_admin_panel(
+                    caption=result.error.message,
+                    chat_id=chat_id,
+                    bot=bot,
+                )
+                return
+
+        else:  # Если произошла ошибка при возвращении к альбому
             await get_admin_panel(
                 caption=result_update_album_title.error.message,
                 chat_id=chat_id,
@@ -424,6 +576,8 @@ async def finish_update_album_title(
 class FSMUpdateAlbumYear(StatesGroup):
     """FSM для обновления года альбома."""
 
+    count_pages_executor: State = State()
+    current_page_executor: State = State()
     executor_id: State = State()
     album_id: State = State()
     year: State = State()
@@ -438,6 +592,8 @@ async def start_update_album_year(
     """Просит ввести год выпуска альбома."""
 
     await call.message.edit_reply_markup(reply_markup=None)
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
         f"Введите год выпуска альбома или нажмите '{messages.CANCEL_TEXT}'",
@@ -448,6 +604,8 @@ async def start_update_album_year(
     album_id: int = callback_data.album_id
     await state.update_data(executor_id=executor_id)
     await state.update_data(album_id=album_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(count_pages_executor=count_pages_executor)
     await state.set_state(FSMUpdateAlbumYear.year)
 
 
@@ -460,7 +618,7 @@ async def finish_update_album_year(
     """Обновляет год выпуска альбома."""
 
     if message.text:
-        result_year = check_number_is_positivity(number=message.text)
+        result_year: Result = check_number_is_positivity(number=message.text)
         if not result_year.ok:
             await message.answer(
                 text=f"{result_year.error.message}\n\n"
@@ -473,29 +631,65 @@ async def finish_update_album_year(
             reply_markup=ReplyKeyboardRemove(),
         )
 
-        logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
         data: Dict = await state.get_data()
         executor_id: int = data["executor_id"]
         album_id: int = data["album_id"]
         year: int = result_year.data
         chat_id: int = message.chat.id
-
-        result_update_executor_year: Result = await crud_service.update_album_year(
+        current_page_executor: int = data.get("current_page_executor")
+        count_pages_executor: int = data.get("count_pages_executor")
+        result_update_album_year: Result = await crud_service.update_album_year(
             executor_id=executor_id,
             album_id=album_id,
             year=year,
-            logging_data=logging_data,
         )
         await state.clear()
-        if result_update_executor_year.ok:
-            await get_admin_panel(
-                caption=result_update_executor_year.data,
-                chat_id=chat_id,
-                bot=bot,
+        if result_update_album_year.ok:  # Возвращает назад к альбомам
+
+            result: Result = await base_music_service.show_songs_with_album(
+                get_info_album=get_info_album,
+                album_id=album_id,
+                executor_id=executor_id,
             )
-        else:
+            await message.answer(text=result_update_album_year.data)
+
+            if result.ok and not result.empty:  # если есть песни в альбоме
+                await open_album_pages(
+                    songs=result.data,
+                    message=message,
+                    limit_songs=LIMIT_SONGS,
+                    executor_id=executor_id,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    bot=bot,
+                    album_id=album_id,
+                )
+                return
+
+            if result.ok and result.empty:  # Если на странице нет песен
+                song = result.data
+
+                await open_album_pages_with_not_songs(
+                    song=song,
+                    bot=bot,
+                    message=message,
+                    executor_id=executor_id,
+                    album_id=album_id,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    message_not_songs=ServerDatabaseResponse.NOT_FOUND_SONGS.value,
+                )
+            if not result.ok:
+                await get_admin_panel(
+                    caption=result.error.message,
+                    chat_id=chat_id,
+                    bot=bot,
+                )
+                return
+
+        else:  # если произошла ошибка при возвращении к альбомам
             await get_admin_panel(
-                caption=result_update_executor_year.error.message,
+                caption=result_update_album_year.error.message,
                 chat_id=chat_id,
                 bot=bot,
             )
@@ -513,6 +707,8 @@ class FSMUpdateExecutorGenres(StatesGroup):
 
     executor_id: State = State()
     genres: State = State()
+    current_page_executor: State = State()
+    count_pages_executor: State = State()
 
 
 @router.callback_query(StateFilter(None), AdminUpdateExecutorGenresCallback.filter())
@@ -525,6 +721,9 @@ async def start_update_executor_genres(
 
     await call.message.edit_reply_markup(reply_markup=None)
 
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
+
     await call.message.answer(
         "Введите жанры исполнителя через точку\n\nПример: панк-рок.краст.треш-метал\n\n"
         f"Или нажмите '{messages.CANCEL_TEXT}'",
@@ -533,6 +732,8 @@ async def start_update_executor_genres(
 
     executor_id: int = callback_data.executor_id
     await state.update_data(executor_id=executor_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(count_pages_executor=count_pages_executor)
     await state.set_state(FSMUpdateExecutorGenres.genres)
 
 
@@ -549,20 +750,44 @@ async def finish_update_executor_genres(
             reply_markup=ReplyKeyboardRemove(),
         )
 
-        logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
         data: Dict = await state.get_data()
         executor_id: int = data["executor_id"]
         genres: List[str] = message.text.split(".")
+        current_page_executor: int = data.get("current_page_executor")
+        count_pages_executor: int = data.get("count_pages_executor")
 
-        result_update_executor_genres = await crud_service.update_executor_genres(
-            executor_id=executor_id, genres=genres, logging_data=logging_data
+        result_update_executor_genres: Result = (
+            await crud_service.update_executor_genres(
+                executor_id=executor_id,
+                genres=genres,
+            )
         )
         chat_id: int = message.chat.id
 
         await state.clear()
-        if result_update_executor_genres.ok:
+        if result_update_executor_genres.ok:  # возвращаемся к исполнителю
+
+            result: Result = await base_music_service.show_executor(
+                get_info_executor=get_info_executor,
+                page_executor=current_page_executor,
+            )
+            await message.answer(text=result_update_executor_genres.data)
+            if result.ok:
+
+                await open_executor_pages(
+                    executor_response=result.data,
+                    limit_albums=LIMIT_ALBUMS,
+                    count_pages_executor=count_pages_executor,
+                    current_page_executor=current_page_executor,
+                    message=message,
+                    bot=bot,
+                    executor_id=executor_id,
+                )
+
+                return
+            # Если произошла ошибка при возвращении к исполнителю
             await get_admin_panel(
-                caption=result_update_executor_genres.data,
+                caption=result.error.message,
                 chat_id=chat_id,
                 bot=bot,
             )
