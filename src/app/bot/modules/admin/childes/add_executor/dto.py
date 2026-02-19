@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, field_validator
 from pathlib import Path
@@ -6,19 +6,19 @@ from app.bot.response import format_album
 
 
 class ExecutorImportDTO(BaseModel):
-    executor_name: str
-    country: str
-    genres: List[str]
-    file_id: str
-    file_unique_id: str
-    base_path: Path
+    executor_name: Optional[str] = None
+    country: Optional[str] = None
+    genres: Optional[List[str]] = None
+    file_id: Optional[str] = None
+    file_unique_id: Optional[str] = None
+    base_path: Optional[Path] = None
 
     @field_validator("executor_name")
     @classmethod
     def validator_executor_name(cls, value: str):
         if not (1 <= len(value) <= 200):
             raise ValueError(
-                f"Название исполнителя должно быть от 1 до 200 символов: {value}"
+                "Название исполнителя должно быть от 1 до 200 символов"
             )
         return value.strip()
 
@@ -27,7 +27,7 @@ class ExecutorImportDTO(BaseModel):
     def validator_country(cls, value: str):
         if not (1 <= len(value) <= 100):
             raise ValueError(
-                f"Название страны должно быть от 1 до 100 символов: {value}"
+                f"Название страны должно быть от 1 до 100 символов"
             )
         return value.strip()
 
@@ -39,8 +39,8 @@ class ExecutorImportDTO(BaseModel):
         if not value.is_dir():
             raise ValueError(f"Путь должены быть директорией: {value}")
         for album_dir in value.iterdir():
-            album_name = album_dir.stem
-            result = album_name.strip(f"{format_album.YEAR_OPEN}").split(
+            album_name: str = album_dir.stem
+            result: List[str] = album_name.strip(f"{format_album.YEAR_OPEN}").split(
                 f"{format_album.YEAR_CLOSE}"
             )
 
@@ -48,7 +48,7 @@ class ExecutorImportDTO(BaseModel):
                 raise ValueError(
                     f"Альбом должен содержать один знак {format_album.YEAR_CLOSE}: {album_name}"
                 )
-            year = result[0].isdigit()
+            year: bool = result[0].isdigit()
             if not year:
                 raise ValueError(
                     f"Год должен быть целым, положительным числом:  {result[0]}"
