@@ -18,6 +18,7 @@ class Result(BaseModel):
 
     ok: bool
     data: Optional[Any] = None
+    empty: Optional[bool] = False  # Если пришел пустой ответ
     error: Optional[Error] = None
 
 
@@ -26,6 +27,7 @@ class NetworkResponseResult(BaseModel):
 
     ok: bool
     data: Optional[Any] = None
+    empty: Optional[bool] = False  # Если пришел пустой ответ
     url: str
     status: int
     method: str
