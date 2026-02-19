@@ -18,7 +18,7 @@ def safe_async_execution(message: str, code: str):
         message (str): сообщение об ошибке для отправки пользователю
         code (str): код ошибки
 
-        Оборочиваемая функция должна содержать обьект logging_data для логгирования
+        Декоратор оборачивает функцию класса. Класс должен инициализировать logging_data
 
         аргументы LoggingData:
             - info_logger (Logger)
@@ -30,29 +30,25 @@ def safe_async_execution(message: str, code: str):
 
     def decorator(function: Callable):
         @functools.wraps(function)
-        async def wrapper(*args, **kwargs):
-            logging_data = kwargs.get("logging_data")
+        async def wrapper(self, *args, **kwargs):
             try:
-                return await function(*args, **kwargs)
+                return await function(self, *args, **kwargs)
 
             except exceptions.CancelledError:
                 print("Остановка работы процесса пользователем")
                 return ok(data="Остановка работы процесса пользователем")
 
             except Exception as err:
-                if logging_data:
-                    logging_data.error_logger.exception(
-                        format_errors_message(
-                            name_router=logging_data.router_name,
-                            method="<unknown>",
-                            status=0,
-                            url="<unknown>",
-                            error_text=err,
-                            function_name=function.__name__,
-                        )
+                self.logging_data.error_logger.exception(
+                    format_errors_message(
+                        name_router=self.logging_data.router_name,
+                        method="<unknown>",
+                        status=0,
+                        url="<unknown>",
+                        error_text=str(err),
+                        function_name=function.__name__,
                     )
-                else:
-                    print(err)
+                )
                 return fail(code=code, message=message)
 
         return wrapper
