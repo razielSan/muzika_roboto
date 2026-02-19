@@ -19,23 +19,26 @@ from app.bot.modules.admin.childes.base_music.filters import (
     AdminCompleteDeleteSongCallback,
     AdminScrollingSongsMenuDeleteCallback,
 )
-from app.bot.modules.admin.childes.base_music.keyboards.inlinle import (
+from app.bot.keyboards.inlinle import (
     get_confirmation_delete_executor_button,
     get_confirmation_delete_album_button,
     get_confirmation_delete_song_button,
     get_menu_song_delete,
+    show_one_album_songs_with_base_executor,
+    show_base_executor_collections,
 )
-from app.bot.modules.admin.settings import settings as admin_settings
 from app.bot.modules.main.settings import settings as main_settings
-from app.bot.modules.admin.childes.base_music.settings import settings
-from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.modules.admin.childes.base_music.services.crud import crud_service
-from core.logging.api import get_loggers
+from app.bot.modules.admin.childes.base_music.services.base_music import (
+    base_music_service,
+)
 from app.bot.view_model import SongResponse
 from app.bot.modules.admin.utils.admin import callback_update_admin_panel_media_photo
 from core.error_handlers.helpers import Result
-from core.response.response_data import LoggingData
-from app.bot.response import LIMIT_SONGS
+from app.bot.response import LIMIT_SONGS, LIMIT_ALBUMS
+from app.bot.utils.editing import get_info_album, get_info_executor
+from app.bot.view_model import ExecutorPageRepsonse
+from app.bot.response import ServerDatabaseResponse
 
 
 router: Router = Router(name=__name__)
@@ -48,12 +51,10 @@ async def confirm_delete_base_executor(
 ) -> None:
     """Подтверждение на удаление исполнителя."""
 
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     executor_id: int = callback_data.executor_id
 
     result: Result = await crud_service.get_info_executor(
         executor_id=executor_id,
-        logging_data=logging_data,
     )
 
     if result.ok:
@@ -79,12 +80,11 @@ async def delete_executor(
 ) -> None:
     """Удаление или отмена удаления исполнителя."""
 
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     executor_id: Optional[int] = callback_data.executor_id
     if executor_id:
 
         result: Result = await crud_service.delete_base_executor(
-            executor_id=executor_id, logging_data=logging_data
+            executor_id=executor_id,
         )
         if result.ok:
             await callback_update_admin_panel_media_photo(
@@ -109,12 +109,14 @@ async def confirm_delete_album(
 ) -> None:
     """Подтверждение на удаление альбома."""
 
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     album_id: int = callback_data.album_id
     executor_id: int = callback_data.executor_id
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
 
     result: Result = await crud_service.get_info_album(
-        album_id=album_id, executor_id=executor_id, logging_data=logging_data
+        album_id=album_id,
+        executor_id=executor_id,
     )
     if result.ok:
         await call.message.edit_media(
@@ -123,7 +125,10 @@ async def confirm_delete_album(
                 caption=f"Вы точно хотите удалить альбом ?\n\n{result.data}",
             ),
             reply_markup=get_confirmation_delete_album_button(
-                executor_id=callback_data.executor_id, album_id=callback_data.album_id
+                executor_id=callback_data.executor_id,
+                album_id=callback_data.album_id,
+                current_page_executor=current_page_executor,
+                count_pages_executor=count_pages_executor,
             ),
         )
     else:
@@ -139,23 +144,57 @@ async def delete_album(
 ) -> None:
     """Удаление или отмена удаления альбома."""
 
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     executor_id: Optional[int] = callback_data.executor_id
     album_id: Optional[int] = callback_data.album_id
+    current_page_executor: Optional[int] = callback_data.current_page_executor
+    count_pages_executor: Optional[int] = callback_data.count_pages_executor
     if executor_id and album_id:  # если альбом на удаление
 
-        result: Result = await crud_service.delete_base_album(
+        result_delete: Result = await crud_service.delete_base_album(
             executor_id=executor_id,
-            logging_data=logging_data,
             album_id=album_id,
         )
-        if result.ok:
-            await callback_update_admin_panel_media_photo(
-                call=call, caption=result.data
+        if result_delete.ok:
+            result: Result = await base_music_service.show_executor(
+                get_info_executor=get_info_executor,
+                page_executor=current_page_executor,
             )
-        else:
+            await call.message.answer(text=result_delete.data)
+            if result.ok:
+                executor_response: ExecutorPageRepsonse = result.data
+                photo_file_id: str = executor_response.executor.photo_file_id
+                caption: str = executor_response.executor.info_executor
+
+                len_list_albums = 0
+                list_albums = executor_response.albums
+                if list_albums:
+                    len_list_albums = len(list_albums)
+                    list_albums = list_albums[0:LIMIT_ALBUMS]
+
+                await call.message.edit_media(
+                    media=InputMediaPhoto(
+                        media=photo_file_id,
+                        caption=caption,
+                    ),
+                    reply_markup=show_base_executor_collections(
+                        count_pages_executor=count_pages_executor,
+                        current_page_executor=current_page_executor,
+                        executor_id=executor_id,
+                        album_position=0,
+                        limit_albums=LIMIT_ALBUMS,
+                        len_list_albums=len_list_albums,
+                        list_albums=list_albums,
+                    ),
+                )
+                return
+
+            # Если произошла ошибка при возвращении к исполнителю
             await callback_update_admin_panel_media_photo(
-                call=call, caption=result.error.message
+                call=call, caption=result_delete.data
+            )
+        else:  # если произошла ошидка при удалении альбома
+            await callback_update_admin_panel_media_photo(
+                call=call, caption=result_delete.error.message
             )
 
     else:
@@ -169,6 +208,9 @@ class FSMBaseDeleteSongs(StatesGroup):
     """FSM для сценария удаления песен."""
 
     state_data: State = State()
+    executor_id: State = State()
+    current_page_executor: State = State()
+    count_pages_executor: State = State()
 
 
 @dataclass
@@ -188,19 +230,20 @@ async def menu_delete_songs(
     """
     Возращает inline menu с возможность выбрать песни для удаления.
     """
+    executor_id: int = callback_data.executor_id
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
 
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     album_id: int = callback_data.album_id
 
     result: Result = await crud_service.show_menu_songs_delete(
         album_id=album_id,
-        logging_data=logging_data,
     )
     if result.ok:
         array_songs: List[SongResponse] = result.data
-        len_list_songs = len(array_songs)
+        len_list_songs: int = len(array_songs)
 
-        songs = array_songs[0:5]
+        songs: List[SongResponse] = array_songs[0:5]
 
         await state.update_data(
             state_data=SongsDeleteResponse(
@@ -208,6 +251,9 @@ async def menu_delete_songs(
                 selected_songs_ids=set(),
             )
         )
+        await state.update_data(current_page_executor=current_page_executor)
+        await state.update_data(count_pages_executor=count_pages_executor)
+        await state.update_data(executor_id=executor_id)
         await state.set_state(FSMBaseDeleteSongs.state_data)
         await call.message.edit_media(
             media=InputMediaPhoto(
@@ -315,14 +361,12 @@ async def scrolling_songe_menu_delete(
 
     data: Dict = await state.get_data()
 
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     album_id: int = callback_data.album_id
     position: int = callback_data.position + callback_data.offset
     delete_songs: Set = set(data["state_data"].selected_songs_ids)
 
     result: Result = await crud_service.show_menu_songs_delete(
         album_id=album_id,
-        logging_data=logging_data,
     )
     if result.ok:
         songs: List[SongResponse] = result.data
@@ -358,7 +402,7 @@ async def confirm_delete_songs(
     callback_data: AdminConfirmDeleteSongCallback,
     state: FSMContext,
 ) -> None:
-    """Подтверждение на удаление песни."""
+    """Подтверждение на удаление песен."""
 
     data: Dict = await state.get_data()
 
@@ -367,12 +411,10 @@ async def confirm_delete_songs(
     if delete_songs:
 
         album_id: int = callback_data.album_id
-        logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
         result: Result = await crud_service.get_positions_songs(
             album_id=album_id,
             songs_ids=delete_songs,
-            logging_data=logging_data,
         )
         if result.ok:
             songs: List = result.data
@@ -409,34 +451,81 @@ async def delete_songs(
     call: CallbackQuery,
     callback_data: AdminCompleteDeleteSongCallback,
     state: FSMContext,
+    bot: Bot,
 ):
     """Удаляет выбранные песни."""
 
     data: Dict = await state.get_data()
-    await state.clear()
+    executor_id = data.get("executor_id")
+    current_page_executor: int = data.get("current_page_executor")
+    count_pages_executor: int = data.get("count_pages_executor")
 
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     delete_songs: List = data["state_data"].selected_songs_ids
     song: SongResponse = data["state_data"].songs[0]
 
     album_id: int = song.album_id
 
-    result: Result = await crud_service.delete_songs(
+    result_delete: Result = await crud_service.delete_songs(
         album_id=album_id,
         songs_ids=delete_songs,
-        logging_data=logging_data,
     )
 
-    if result.ok:
-        await call.message.edit_media(
-            media=InputMediaPhoto(
-                media=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
-                caption=result.data,
-            ),
-            reply_markup=get_keyboards_menu_buttons,
-        ),
+    await state.clear()
+    if result_delete.ok:  # Возвращает назад к альбому
+        result: Result = await base_music_service.show_songs_with_album(
+            get_info_album=get_info_album,
+            album_id=album_id,
+            executor_id=executor_id,
+        )
+
+        await call.message.answer(text=result_delete.data)
+        if result.ok and not result.empty:  # если в альбоме есть песни
+            songs: List[SongResponse] = result.data
+            len_list_songs: int = len(songs)
+
+            songs = songs[0:LIMIT_SONGS]
+            back_song: SongResponse = songs[0]
+
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=back_song.album_photo_file_id,
+                    caption=back_song.info_album,
+                ),
+                reply_markup=show_one_album_songs_with_base_executor(
+                    limit_songs=LIMIT_SONGS,
+                    executor_id=executor_id,
+                    album_id=album_id,
+                    current_page_executor=current_page_executor,
+                    count_pages_executor=count_pages_executor,
+                    len_list_songs=len_list_songs,
+                    list_songs=songs,
+                    song_position=0,
+                ),
+            )
+            return
+        if result.ok and result.empty:  # Если в альбоме нет песен
+            song: SongResponse = result.data
+
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=song.album_photo_file_id,
+                    caption=f"{song.info_album}\n\n{ServerDatabaseResponse.NOT_FOUND_SONGS.value}",
+                ),
+                reply_markup=show_one_album_songs_with_base_executor(
+                    list_songs=[],
+                    executor_id=executor_id,
+                    album_id=album_id,
+                    current_page_executor=current_page_executor,
+                    count_pages_executor=count_pages_executor,
+                ),
+            )
+        if not result.ok:  # если произошла ошибка
+            await callback_update_admin_panel_media_photo(
+                call=call, caption=result.error.message
+            )
+
     else:
         await callback_update_admin_panel_media_photo(
             call=call,
-            caption=result.error.message,
+            caption=result_delete.error.message,
         )
