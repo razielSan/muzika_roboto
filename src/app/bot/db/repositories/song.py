@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.models import Song, Album
 from app.bot.view_model import SongResponse
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 
 
 class SongSQLAlchemyRepository:
@@ -16,16 +16,17 @@ class SongSQLAlchemyRepository:
     async def create_songs(
         self,
         song_repsonse: List[SongResponse],
-        album: Album,
+        album_id: int,
+        start_position: int = 1,
     ):
         list_songs = []
-        for song in song_repsonse:
+        for position, song in enumerate(song_repsonse, start=start_position):
             list_songs.append(
                 self.model(
                     title=song.title,
                     file_id=song.file_id,
-                    position=song.position,
-                    album=album,
+                    position=position,
+                    album_id=album_id,
                     file_unique_id=song.file_unique_id,
                 )
             )
@@ -48,6 +49,14 @@ class SongSQLAlchemyRepository:
             ),
         )
         return song
+
+    async def get_last_poistion_song(self, album_id: int):
+        stmt = await self.session.scalars(
+            select(func.max(self.model.position)).where(self.model.album_id == album_id)
+        )
+        max_position = stmt.first()
+
+        return max_position
 
     async def delete_songs(self, album_id: int, list_ids: List[int]):
 
