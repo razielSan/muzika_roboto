@@ -12,9 +12,14 @@ from app.bot.view_model import (
 )
 from core.error_handlers.decorator import safe_async_execution
 from app.bot.response import ServerDatabaseResponse
+from core.logging.api import get_loggers
+from app.bot.modules.admin.childes.base_music.settings import settings
 
 
 class BaseMusicService:
+    def __init__(self, logging_data: LoggingData):
+        self.logging_data = logging_data
+
     @safe_async_execution(
         message=ServerDatabaseResponse.ERROR_SHOW_EXECUTOR.value,
         code=ServerDatabaseResponse.ERROR_SHOW_EXECUTOR.name,
@@ -22,7 +27,6 @@ class BaseMusicService:
     async def show_executor(
         self,
         get_info_executor: Callable[..., str],
-        logging_data: LoggingData,
         page_executor: int = 1,
     ) -> Result:
         """
@@ -92,7 +96,6 @@ class BaseMusicService:
     async def back_executor(
         self,
         get_info_executor: Callable[..., str],
-        logging_data: LoggingData,
         current_page_executor: int,
     ) -> Result:
         """
@@ -142,7 +145,6 @@ class BaseMusicService:
         self,
         album_id: int,
         position: int,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария сброса пользователю песни для прослушивания.
@@ -167,6 +169,10 @@ class BaseMusicService:
 
         return ok(data=song_data)
 
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_SHOW_ALBUM_WITH_SONGS.name,
+        message=ServerDatabaseResponse.ERROR_SHOW_ALBUM_WITH_SONGS.value,
+    )
     async def show_songs_with_album(
         self,
         executor_id: int,
@@ -174,7 +180,7 @@ class BaseMusicService:
         get_info_album: Callable[..., str],
     ) -> Result:
         """
-        Application service для сценария добавления показа альбома с песнями..
+        Application service для сценария показа альбома с песнями..
 
         Отвечает за:
         - обработку ошибок
@@ -194,7 +200,7 @@ class BaseMusicService:
             )
             album_photo_file_id: str = album.photo_file_id
             album_executor_id: int = album.executor_id
-            if album.songs:
+            if album.songs:  # Если есть песни
                 songs: List[SongResponse] = [
                     SongResponse(
                         title=song.title,
@@ -211,14 +217,18 @@ class BaseMusicService:
                     for song in album.songs
                 ]
                 return ok(data=songs)
-            return fail(
-                code=ServerDatabaseResponse.NOT_FOUND_SONGS.name,
-                message=ServerDatabaseResponse.NOT_FOUND_SONGS.value,
-                details=SongResponse(
+            return ok(
+                data=SongResponse(
                     album_photo_file_id=album_photo_file_id,
                     album_executor_id=album_executor_id,
+                    info_album=info_album,
                 ),
-            )
+                empty=True,
+            )  # Если песен нет
 
 
-base_music_service: BaseMusicService = BaseMusicService()
+base_music_service: BaseMusicService = BaseMusicService(
+    logging_data=get_loggers(
+        name=settings.NAME_FOR_LOG_FOLDER,
+    )
+)
