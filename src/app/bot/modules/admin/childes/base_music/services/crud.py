@@ -1,17 +1,21 @@
-from typing import Set, List
+from typing import List, Optional
 
 from app.bot.db.uow import UnitOfWork
 from core.error_handlers.helpers import ok, fail
 from core.response.response_data import LoggingData
-from core.error_handlers.format import format_errors_message
 from app.bot.utils.editing import get_info_executor, get_info_album
 from core.error_handlers.helpers import Result
 from app.bot.view_model import SongResponse
 from app.bot.response import ServerDatabaseResponse
 from core.error_handlers.decorator import safe_async_execution
+from core.logging.api import get_loggers
+from app.bot.modules.admin.childes.base_music.settings import settings
 
 
 class CRUDService:
+    def __init__(self, logging_data: LoggingData):
+        self.logging_data = logging_data
+
     @safe_async_execution(
         code=ServerDatabaseResponse.ERROR_INFO_EXECUTOR.name,
         message=ServerDatabaseResponse.ERROR_INFO_EXECUTOR.value,
@@ -19,7 +23,6 @@ class CRUDService:
     async def get_info_executor(
         self,
         executor_id: int,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария получения информации о исполнителе.
@@ -59,7 +62,6 @@ class CRUDService:
         self,
         album_id: int,
         executor_id: int,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария получения информации о альбоме.
@@ -94,7 +96,6 @@ class CRUDService:
         self,
         album_id: int,
         songs_ids: List,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария поиска позиций песен.
@@ -121,7 +122,6 @@ class CRUDService:
     async def show_menu_songs_delete(
         self,
         album_id: int,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария показа меню удаления песен..
@@ -135,7 +135,7 @@ class CRUDService:
         """
         async with UnitOfWork() as uow:
             result = await uow.songs.get_all_songs(album_id=album_id)
-            array_songs = [
+            array_songs: List[SongResponse] = [
                 SongResponse(
                     position=song.position,
                     album_id=song.album_id,
@@ -157,7 +157,6 @@ class CRUDService:
         executor_id: int,
         photo_file_id: str,
         photo_file_unique_id: str,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария обновления фото исполнителя.
@@ -185,7 +184,6 @@ class CRUDService:
         self,
         executor_id: int,
         album_id: int,
-        logging_data: LoggingData,
         photo_file_id: str,
         photo_file_unique_id: str,
     ) -> Result:
@@ -216,7 +214,6 @@ class CRUDService:
         self,
         executor_id: int,
         name: str,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария обновления имени исполнителя.
@@ -243,7 +240,6 @@ class CRUDService:
         self,
         executor_id: int,
         country: str,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария обновления страны исполнителя.
@@ -271,7 +267,6 @@ class CRUDService:
         executor_id: int,
         album_id: int,
         title: str,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария обновления заголовка альбома.
@@ -300,7 +295,6 @@ class CRUDService:
         executor_id: int,
         album_id: int,
         year: str,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария обновления года выпуса альбома.
@@ -328,7 +322,6 @@ class CRUDService:
         self,
         executor_id: int,
         genres: List[str],
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария обновления жанров исполнителя.
@@ -349,13 +342,84 @@ class CRUDService:
         return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_EXECUTOR_GENRES.value)
 
     @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_ADD_ALBUM.name,
+        message=ServerDatabaseResponse.ERROR_ADD_ALBUM.value,
+    )
+    async def create_album(
+        self,
+        executor_id: int,
+        title: str,
+        year: str,
+        photo_file_unique_id: str,
+        photo_file_id: str,
+        songs: List[SongResponse],
+    ):
+        """
+        Application service для сценария создания альбома с песнями.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        album_id = None
+        async with UnitOfWork() as uow:
+            executor = await uow.executors.get_base_executor(executor_id=executor_id)
+            album = await uow.albums.create_album(
+                executor=executor,
+                title=title,
+                year=year,
+                photo_file_id=photo_file_id,
+                photo_file_unique_id=photo_file_unique_id,
+            )
+
+            album_id: int = album.id
+            await uow.songs.create_songs(
+                song_repsonse=songs,
+                album_id=album_id,
+                start_position=1,
+            )
+        return ok(data=album_id)
+
+    @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_ADD_SONGS.name,
+        message=ServerDatabaseResponse.ERROR_ADD_SONGS.value,
+    )
+    async def add_songs(
+        self,
+        album_id: int,
+        songs: List[SongResponse],
+    ):
+        """
+        Application service для сценария добавления песен в альбом.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            position: Optional[int] = await uow.songs.get_last_poistion_song(
+                album_id=album_id
+            )
+            position: int = 0 if not position else position
+            start_position: int = position + 1
+            await uow.songs.create_songs(
+                song_repsonse=songs, album_id=album_id, start_position=start_position
+            )
+        return ok(data=ServerDatabaseResponse.SUCCESS_ADD_SONGS.value)
+
+    @safe_async_execution(
         code=ServerDatabaseResponse.ERROR_DELETE_EXECUTOR.name,
         message=ServerDatabaseResponse.ERROR_DELETE_EXECUTOR.value,
     )
     async def delete_base_executor(
         self,
         executor_id: int,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария удаление исполнителя.
@@ -390,7 +454,6 @@ class CRUDService:
         self,
         executor_id: int,
         album_id: int,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария удаления альбома..
@@ -415,7 +478,6 @@ class CRUDService:
         self,
         album_id: int,
         songs_ids: List,
-        logging_data: LoggingData,
     ) -> Result:
         """
         Application service для сценария удаления песен из альбома.
@@ -435,4 +497,6 @@ class CRUDService:
         return ok(data=ServerDatabaseResponse.SUCCESS_DELETE_SONGS.value)
 
 
-crud_service: CRUDService = CRUDService()
+crud_service: CRUDService = CRUDService(
+    logging_data=get_loggers(name=settings.NAME_FOR_LOG_FOLDER),
+)
