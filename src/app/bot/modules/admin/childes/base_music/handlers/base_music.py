@@ -17,7 +17,7 @@ from app.bot.modules.admin.childes.base_music.services.base_music import (
 from app.bot.view_model import SongResponse
 from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.utils.editing import get_info_album, get_info_executor
-from app.bot.modules.admin.childes.base_music.filters import (
+from app.bot.filters.admin_filters import (
     AdminBackExecutorCallback,
     AdminMusicCallback,
     AdminPlaySongCallback,
