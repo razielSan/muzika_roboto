@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.bot.view_model import AlbumResponse, SongResponse
-from app.bot.modules.admin.childes.base_music.filters import (
+from app.bot.filters.admin_filters import (
     AdminBackExecutorCallback,
     AdminPlaySongCallback,
     AdminDeleteExecutorCallback,
@@ -31,10 +31,10 @@ from app.bot.modules.admin.childes.base_music.filters import (
     AdminScrollingSongsMenuDeleteCallback,
     AdminAddSongsCallback,
     AdminAddAlbumCallback,
-)
-from app.bot.modules.admin.filters import (
+    AdminUpdateSongTitleCallback,
     BackAdminMenuCallback,
 )
+
 from app.bot.response import KeyboardResponse
 from app.bot.keyboards.utils import build_pages
 
@@ -114,6 +114,20 @@ def show_one_album_songs_with_base_executor(
             ).pack(),
         )
     )
+
+    if list_songs: # для изменения имени песни
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.UPDATE_TITLE_SONG.value,
+                callback_data=AdminUpdateSongTitleCallback(
+                    executor_id=executor_id,
+                    album_id=album_id,
+                    current_page_executor=current_page_executor,
+                    count_pages_executor=count_pages_executor,
+                ).pack(),
+            )
+        )
+
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.UPDATE_PHOTO_ALBUM.value,
@@ -150,7 +164,7 @@ def show_one_album_songs_with_base_executor(
         )
     )
 
-    if list_songs:
+    if list_songs: # для удаления песен
         inline_kb.row(
             InlineKeyboardButton(
                 text=KeyboardResponse.DELETE_SONGS.value,
