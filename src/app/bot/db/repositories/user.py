@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
 
-from app.bot.models import User
+from infrastructure.db.models.sqlaclhemy import User
 
 
 class UserSqlalchemyRepository:

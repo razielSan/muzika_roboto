@@ -1,4 +1,4 @@
-from app.bot.models import Album, Executor
+from infrastructure.db.models.sqlaclhemy import Album, Executor
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

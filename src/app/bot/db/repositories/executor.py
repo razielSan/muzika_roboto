@@ -1,6 +1,6 @@
 from typing import List
 
-from app.bot.models import Executor, Genre
+from infrastructure.db.models.sqlaclhemy import Executor, Genre
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.bot.models import Genre
+from infrastructure.db.models.sqlaclhemy import Genre
 
 
 class GenreSqlalchemyRepository:

@@ -2,7 +2,7 @@ from typing import List, Set
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.bot.models import Song, Album
+from infrastructure.db.models.sqlaclhemy import Song
 from app.bot.view_model import SongResponse
 from sqlalchemy import select, delete, func
 
