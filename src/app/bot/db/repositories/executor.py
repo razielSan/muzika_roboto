@@ -26,6 +26,7 @@ class ExecutorSqlalchemyRepository:
             country=country,
             photo_file_id=file_id,
             photo_file_unique_id=file_unique_id,
+            user_id=None,
         )
         executor.genres.extend(genres)
         self.session.add(executor)
@@ -35,9 +36,7 @@ class ExecutorSqlalchemyRepository:
     async def get_base_executor(self, executor_id: int):
         executor = await self.session.scalar(
             select(self.model)
-            .where(
-                self.model.id == executor_id,
-            )
+            .where(self.model.id == executor_id, self.model.user_id.is_(None))
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
@@ -46,6 +45,7 @@ class ExecutorSqlalchemyRepository:
     async def get_all_executors(self):
         stmt = await self.session.scalars(
             select(self.model)
+            .where(self.model.user_id.is_(None))
             .order_by(self.model.name)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
@@ -59,6 +59,7 @@ class ExecutorSqlalchemyRepository:
             .where(
                 self.model.name == name,
                 self.model.country == country,
+                self.model.user_id.is_(None),
             )
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
@@ -69,9 +70,7 @@ class ExecutorSqlalchemyRepository:
     async def get_base_executors_by_name(self, name: str):
         stmt = await self.session.scalars(
             select(self.model)
-            .where(
-                self.model.name == name,
-            )
+            .where(self.model.name == name, self.model.user_id.is_(None))
             .order_by(self.model.country)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
@@ -82,7 +81,7 @@ class ExecutorSqlalchemyRepository:
     async def get_base_executors_by_country(self, country: str):
         stmt = await self.session.scalars(
             select(self.model)
-            .where(self.model.country == country)
+            .where(self.model.country == country, self.model.user_id.is_(None))
             .order_by(self.model.name)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
@@ -98,6 +97,7 @@ class ExecutorSqlalchemyRepository:
             select(self.model)
             .where(
                 self.model.id == executor_id,
+                self.model.user_id.is_(None),
             )
             .order_by(self.model.name)
             .options(selectinload(self.model.genres))
@@ -112,7 +112,7 @@ class ExecutorSqlalchemyRepository:
     ):
         executor = await self.session.scalar(
             select(self.model)
-            .where(self.model.id == excutor_id)
+            .where(self.model.id == excutor_id, self.model.user_id.is_(None))
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
@@ -128,7 +128,10 @@ class ExecutorSqlalchemyRepository:
         photo_file_unique_id: str,
     ):
         executor = await self.session.scalar(
-            select(self.model).where(self.model.id == executor_id)
+            select(self.model).where(
+                self.model.id == executor_id,
+                self.model.user_id.is_(None),
+            )
         )
         executor.photo_file_id = photo_file_id
         executor.photo_file_unique_id = photo_file_unique_id
@@ -141,7 +144,9 @@ class ExecutorSqlalchemyRepository:
         name: str,
     ):
         executor = await self.session.scalar(
-            select(self.model).where(self.model.id == executor_id)
+            select(self.model).where(
+                self.model.id == executor_id, self.model.user_id.is_(None)
+            )
         )
         executor.name = name
         await self.session.flush()
@@ -153,7 +158,9 @@ class ExecutorSqlalchemyRepository:
         country: str,
     ):
         executor = await self.session.scalar(
-            select(self.model).where(self.model.id == executor_id)
+            select(self.model).where(
+                self.model.id == executor_id, self.model.user_id.is_(None)
+            )
         )
         executor.country = country
         await self.session.flush()
@@ -162,7 +169,7 @@ class ExecutorSqlalchemyRepository:
     async def delete_base_executor(self, executor_id: int):
         executor = await self.session.scalar(
             select(self.model)
-            .where(self.model.id == executor_id)
+            .where(self.model.id == executor_id, self.model.user_id.is_(None))
             .options(selectinload(self.model.genres))
         )
 
