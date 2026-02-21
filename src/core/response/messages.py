@@ -46,6 +46,7 @@ class DefaultMessages(BaseModel):
     CANCEL_TEXT: str = "❌ Отмена"
     CANCEL_TEXT_UPLOAD_EXECUTOR: str = "❌ Отменить Скачивание Исполнителя"
     UNKNOWN_TEXT: str = "Неизвестно"
+    UNKNOWN_TITLE_TEXT: str = "Unknown title"
     CONFIRMATION_TEXT: str = "✅ Подтверждаю"
     ADMIN_PANEL_TEXT: str = "🔧 Админ Панель"
 
