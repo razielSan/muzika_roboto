@@ -342,6 +342,35 @@ class CRUDService:
         return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_EXECUTOR_GENRES.value)
 
     @safe_async_execution(
+        code=ServerDatabaseResponse.ERROR_UPDATE_TITLE_SONG.name,
+        message=ServerDatabaseResponse.ERROR_UPDATE_TITLE_SONG.value,
+    )
+    async def update_title_song(
+        self, album_id: int, position: int, title: int
+    ) -> Result:
+        """
+        Application service для сценария обновления имени песни.
+
+        Отвечает за:
+        - обработку ошибок
+        - работу с базой данных
+        - подготовку данных для handlers
+
+        Не содержит логики взаимодействия с Telegram UI.
+        """
+        async with UnitOfWork() as uow:
+            song = await uow.songs.update_title_song(
+                album_id=album_id,
+                position=position,
+                title=title,
+            )
+        if song:
+            return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_TITLE_SONG.value)
+        return ok(
+            empty=True, data=ServerDatabaseResponse.NOT_FOUND_TITLE_SONG_POSITION.value
+        )  # Если в альбоме нет песен с указанной позицией
+
+    @safe_async_execution(
         code=ServerDatabaseResponse.ERROR_ADD_ALBUM.name,
         message=ServerDatabaseResponse.ERROR_ADD_ALBUM.value,
     )
@@ -353,7 +382,7 @@ class CRUDService:
         photo_file_unique_id: str,
         photo_file_id: str,
         songs: List[SongResponse],
-    ):
+    ) -> Result:
         """
         Application service для сценария создания альбома с песнями.
 
@@ -391,7 +420,7 @@ class CRUDService:
         self,
         album_id: int,
         songs: List[SongResponse],
-    ):
+    ) -> Result:
         """
         Application service для сценария добавления песен в альбом.
 
