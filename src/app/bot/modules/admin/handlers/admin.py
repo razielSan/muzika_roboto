@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.modules.admin.settings import settings
-from app.bot.modules.admin.filters import AdminFilter, BackAdminMenuCallback
+from app.bot.filters.admin_filters import AdminFilter, BackAdminMenuCallback
 from app.bot.utils.delete import delete_previous_message
 from core.response.messages import messages
 
