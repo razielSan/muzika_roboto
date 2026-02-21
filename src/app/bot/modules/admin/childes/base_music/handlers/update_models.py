@@ -1,12 +1,12 @@
 from typing import Dict, List
 
-from aiogram import Router, Bot
+from aiogram import Router, Bot, F
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.filters.state import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
-from app.bot.modules.admin.childes.base_music.filters import (
+from app.bot.filters.admin_filters import (
     AdminUpdatePhotoExecutorCallback,
     AdminUpdatePhotoAlbumCallback,
     AdminUpdateExecutorNameCallback,
@@ -14,6 +14,7 @@ from app.bot.modules.admin.childes.base_music.filters import (
     AdminUpdateAlbumTitleCallback,
     AdminUpdateAlbumYearCallback,
     AdminUpdateExecutorGenresCallback,
+    AdminUpdateSongTitleCallback,
 )
 from app.app_utils.keyboards import get_reply_cancel_button
 from app.bot.utils.editing import get_info_executor, get_info_album
@@ -33,6 +34,7 @@ from app.bot.utils.navigator import (
     open_executor_pages,
 )
 from app.bot.response import ServerDatabaseResponse
+from app.bot.db.uow import UnitOfWork
 
 
 router: Router = Router(name=__name__)
@@ -723,18 +725,17 @@ async def start_update_executor_genres(
 
     current_page_executor: int = callback_data.current_page_executor
     count_pages_executor: int = callback_data.count_pages_executor
+    executor_id: int = callback_data.executor_id
+    await state.update_data(executor_id=executor_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(count_pages_executor=count_pages_executor)
+    await state.set_state(FSMUpdateExecutorGenres.genres)
 
     await call.message.answer(
         "Введите жанры исполнителя через точку\n\nПример: панк-рок.краст.треш-метал\n\n"
         f"Или нажмите '{messages.CANCEL_TEXT}'",
         reply_markup=get_reply_cancel_button(),
     )
-
-    executor_id: int = callback_data.executor_id
-    await state.update_data(executor_id=executor_id)
-    await state.update_data(current_page_executor=current_page_executor)
-    await state.update_data(count_pages_executor=count_pages_executor)
-    await state.set_state(FSMUpdateExecutorGenres.genres)
 
 
 @router.message(FSMUpdateExecutorGenres.genres)
@@ -803,3 +804,175 @@ async def finish_update_executor_genres(
             " текстом\n\nВведите,снова, год выпуска альбома"
             f" или нажмите '{messages.CANCEL_TEXT}'"
         )
+
+
+# Обновление название песни
+class FSMUpdateSongTitle(StatesGroup):
+    """FSM для сценария обновления имени песни."""
+
+    position: State = State()
+    title: State = State()
+    album_id: State = State()
+    executor_id: State = State()
+    current_page_executor: State = State()
+    count_pages_executor: State = State()
+
+
+@router.callback_query(StateFilter(None), AdminUpdateSongTitleCallback.filter())
+async def start_update_title_song(
+    call: CallbackQuery,
+    callback_data: AdminUpdateSongTitleCallback,
+    state: FSMContext,
+):
+    """Просит ввести имя песни для обновления."""
+
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    executor_id: int = callback_data.executor_id
+    album_id: int = callback_data.album_id
+    current_page_executor: int = callback_data.current_page_executor
+    count_pages_executor: int = callback_data.count_pages_executor
+
+    await state.update_data(album_id=album_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(count_pages_executor=count_pages_executor)
+    await state.update_data(executor_id=executor_id)
+    await state.set_state(FSMUpdateSongTitle.title)
+
+    await call.message.answer(
+        text=f"Введите название песни\n\n{messages.CANCEL_TEXT}: Для отмены",
+        reply_markup=get_reply_cancel_button(),
+    )
+
+
+@router.message(FSMUpdateSongTitle.title, F.text)
+async def add_song_title(message: Message, state: FSMContext):
+    """Просит ввести позицию песни."""
+
+    title: str = message.text
+    await state.update_data(title=title)
+    await state.set_state(FSMUpdateSongTitle.position)
+
+    await message.answer(
+        text=f"Введите позицию песни\n\n{messages.CANCEL_TEXT}: Для отмены"
+    )
+
+
+@router.message(FSMUpdateSongTitle.title)
+async def add_song_title_message(message: Message, state: FSMContext):
+    """Отправляет сообщение если были отправлены не те данные"""
+    await message.answer(
+        text=f"Данные должны быть в формате текст\n\n{messages.CANCEL_TEXT}: Для отмены"
+    )
+
+
+@router.message(FSMUpdateSongTitle.position, F.text)
+async def finish_add_song_title(message: Message, state: FSMContext, bot: Bot):
+    """Обновляет имя песни."""
+
+    data: dict = await state.get_data()
+
+    chat_id: int = message.chat.id
+
+    album_id: int = data.get("album_id")
+    title: str = data.get("title")
+    executor_id: int = data.get("executor_id")
+    current_page_executor: int = data.get("current_page_executor")
+    count_pages_executor: int = data.get("count_pages_executor")
+
+    position_result: Result = check_number_is_positivity(number=message.text)
+    if not position_result.ok:  # если данные не явлются положительным числом
+        await message.answer(
+            text=f"{position_result.error.message}\n\nВведите,снова,позицию песни",
+            reply_markup=get_reply_cancel_button(),
+        )
+        return
+
+    await message.answer(
+        text=messages.WAIT_MESSAGE,
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+    position: int = position_result.data
+
+    result_update_song_title: Result = await crud_service.update_title_song(
+        album_id=album_id,
+        position=position,
+        title=title,
+    )
+    if (
+        result_update_song_title.ok and not result_update_song_title.empty
+    ):  # если имя песни изменено
+        result: Result = await base_music_service.show_songs_with_album(
+            get_info_album=get_info_album,
+            album_id=album_id,
+            executor_id=executor_id,
+        )
+        await message.answer(
+            text=result_update_song_title.data,
+        )
+
+        await state.clear()
+        if result.ok and not result.empty:  # возвращение на страницу альбома
+            await open_album_pages(
+                songs=result.data,
+                message=message,
+                limit_songs=LIMIT_SONGS,
+                executor_id=executor_id,
+                count_pages_executor=count_pages_executor,
+                current_page_executor=current_page_executor,
+                bot=bot,
+                album_id=album_id,
+            )
+            return
+
+        if result.ok and result.empty:  # Если на странице нет песен
+            song = result.data
+
+            await open_album_pages_with_not_songs(
+                song=song,
+                bot=bot,
+                message=message,
+                executor_id=executor_id,
+                album_id=album_id,
+                count_pages_executor=count_pages_executor,
+                current_page_executor=current_page_executor,
+                message_not_songs=ServerDatabaseResponse.NOT_FOUND_SONGS.value,
+            )
+            return
+        if not result.ok:  # если произошла ошибка при возвращении к альбому
+            msg: str = result.error.message
+            await get_admin_panel(
+                caption=result.error.message,
+                chat_id=chat_id,
+                bot=bot,
+            )
+            return
+
+    if (
+        result_update_song_title.ok and result_update_song_title.empty
+    ):  # если нет песни с введенной позицией
+        msg: str = result_update_song_title.data
+        await message.answer(
+            text=f"{msg}\n\nВведите,снова,позицию песни",
+            reply_markup=get_reply_cancel_button(),
+        )
+        return
+    if (
+        not result_update_song_title.ok
+    ):  # если произошла ошибка при изменении имени песни
+        await state.clear()
+        msg: str = result_update_song_title.error.message
+        await get_admin_panel(
+            caption=msg,
+            chat_id=chat_id,
+            bot=bot,
+        )
+
+
+@router.message(FSMUpdateSongTitle.position)
+async def finish_add_song_title_message(message: Message, state: FSMContext):
+    """Отправляет сообщение если были отправлены не те данные"""
+    await message.answer(
+        text=f"Данные должны быть в формате текст\n\n{messages.CANCEL_TEXT}: Для отмены"
+    )
