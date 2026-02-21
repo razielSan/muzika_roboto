@@ -1,12 +1,12 @@
 from typing import List, Dict
 
 from aiogram import Router, Bot, F
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.filters.state import StateFilter
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
-from app.bot.modules.admin.childes.base_music.filters import AdminAddSongsCallback
+from app.bot.filters.admin_filters import AdminAddSongsCallback
 from app.bot.modules.admin.childes.base_music.services.crud import crud_service
 from app.bot.modules.admin.childes.base_music.services.base_music import (
     base_music_service,
@@ -35,11 +35,13 @@ class FSMAddSongs(StatesGroup):
 
     current_page_executor: State = State()
     count_pages_executor: State = State()
+    counter: State = State()
     executor_id: State = State()
     album_id: State = State()
     titles: State = State()
     songs: State = State()
     processings: State = State()
+    counter: State = State()
 
 
 @router.callback_query(StateFilter(None), AdminAddSongsCallback.filter())
@@ -71,22 +73,32 @@ async def start_add_songs(
     await state.update_data(titles=[])
     await state.update_data(album_id=album_id)
     await state.update_data(executor_id=executor_id)
+    await state.update_data(counter=0)
     await state.update_data(count_pages_executor=count_pages_executor)
     await state.update_data(current_page_executor=current_page_executor)
 
 
 @router.message(FSMAddSongs.songs, F.audio)
+@router.message(FSMAddSongs.songs, F.voice)
 async def add_songs_audio(
     message: Message,
     state: FSMContext,
 ):
     """Добавляет песни в список для сохранения."""
 
-    title: str = message.audio.file_name.split(".")[0].strip()
-    file_id: str = message.audio.file_id
-    file_unique_id: str = message.audio.file_unique_id
-
     data: Dict = await state.get_data()
+    counter: int = data.get("counter")
+    if message.voice:
+        counter += 1
+        title = f"{messages.UNKNOWN_TITLE_TEXT} {counter}"
+        file_id: str = message.voice.file_id
+        file_unique_id: str = message.voice.file_unique_id
+
+    if message.audio:
+        title: str = message.audio.file_name.split(".")[0].strip()
+        file_id: str = message.audio.file_id
+        file_unique_id: str = message.audio.file_unique_id
+
     titles: List[str] = data["titles"]
     songs: List[SongResponse] = data["songs"]
     if title in titles:  # Если песня с таким названием уже была добавлена
@@ -98,6 +110,7 @@ async def add_songs_audio(
         await message.answer(text=f"Песня {title} сохранена")
         titles.append(title)
         await state.update_data(songs=songs)
+        await state.update_data(counter=counter)
         await state.update_data(titles=titles)
 
 
@@ -168,7 +181,10 @@ async def finish_add_songs(
         result: Result = await base_music_service.show_songs_with_album(
             executor_id=executor_id, album_id=album_id, get_info_album=get_info_album
         )
-        await message.answer(text=ServerDatabaseResponse.SUCCESS_ADD_SONGS)
+        await message.answer(
+            text=ServerDatabaseResponse.SUCCESS_ADD_SONGS,
+            reply_markup=ReplyKeyboardRemove(),
+        )
         if result.ok and not result.empty:  # для возврата на страницу альбома
             await open_album_pages(
                 songs=result.data,
@@ -205,12 +221,19 @@ async def finish_add_songs(
                 bot=bot,
             )
             return
-    # если произошла ошибка при добавлении песен
-    await get_admin_panel(
-        chat_id=message.chat.id,
-        caption=result_add_songs.error.message,
-        bot=bot,
-    )
+
+    if not result_add_songs.ok: # если произошла ошибка при добавлении песен
+        msg: str = result_add_songs.error.message
+        await message.answer(
+            text=msg,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        
+        await get_admin_panel(
+            chat_id=message.chat.id,
+            caption=msg,
+            bot=bot,
+        )
 
 
 @router.message(FSMAddSongs.processings)
