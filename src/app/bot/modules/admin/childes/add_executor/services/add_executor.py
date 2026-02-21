@@ -98,13 +98,23 @@ class AddExecutorService:
                             audio_path,
                             parsed_album.title,
                         )
-                        array_songs.append(
-                            SongResponse(
-                                file_id=msg.audio.file_id,
-                                file_unique_id=msg.audio.file_unique_id,
-                                title=audio_path.stem.lower(),
+                        if msg.audio:
+                            array_songs.append(
+                                SongResponse(
+                                    file_id=msg.audio.file_id,
+                                    file_unique_id=msg.audio.file_unique_id,
+                                    title=audio_path.stem.lower(),
+                                )
                             )
-                        )
+                        if msg.voice:
+                            array_songs.append(
+                                SongResponse(
+                                    file_id=msg.voice.file_id,
+                                    file_unique_id=msg.voice.file_unique_id,
+                                    title=audio_path.stem.lower(),
+                                )
+                            )
+
                     except Exception as err:
                         self.logging_data.warning_logger.warning(
                             "Не удалось загрузить трек",
