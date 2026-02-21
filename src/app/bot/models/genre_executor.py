@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, UniqueConstraint
@@ -38,6 +38,12 @@ class Executor(Base):
         back_populates="executors",
         secondary="genre_executor",
     )
+
+    user_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    user: Mapped[Optional["User"]] = relationship(back_populates="executors")
 
     __table_args__ = (
         UniqueConstraint(
