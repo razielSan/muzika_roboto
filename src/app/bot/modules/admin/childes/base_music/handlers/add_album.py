@@ -1,12 +1,12 @@
 from typing import List, Dict
 
 from aiogram import Router, Bot, F
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.filters.state import StateFilter
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
-from app.bot.modules.admin.childes.base_music.filters import AdminAddAlbumCallback
+from app.bot.filters.admin_filters import AdminAddAlbumCallback
 from app.bot.modules.admin.childes.base_music.services.crud import crud_service
 from app.bot.modules.admin.childes.base_music.services.base_music import (
     base_music_service,
@@ -25,7 +25,6 @@ from core.response.response_data import Result
 from app.bot.modules.admin.utils.admin import get_admin_panel
 from core.utils.chek import check_number_is_positivity
 from app.app_utils.keyboards import get_reply_cancel_button
-from app.bot.utils.delete import delete_previous_message
 from app.bot.settings import settings as bot_settings
 from app.bot.response import ServerDatabaseResponse
 
@@ -39,6 +38,7 @@ class FSMAddAlbum(StatesGroup):
 
     current_page_executor: State = State()
     count_pages_executor: State = State()
+    counter: State = State()
     unique_titles_songs: State = State()  # провекра на уникальность заголовоков
     album_title: State = State()
     song_title: State = State()
@@ -143,6 +143,7 @@ async def add_year_message(message: Message):
 
 
 @router.message(FSMAddAlbum.songs, F.audio)
+@router.message(FSMAddAlbum.songs, F.voice)
 async def add_songs_audio_album(
     message: Message,
     state: FSMContext,
@@ -150,11 +151,18 @@ async def add_songs_audio_album(
 ):
     """Добавляет песни в список для сохранения."""
 
-    song_title: str = message.audio.file_name.split(".")[0].strip()
-    file_id: str = message.audio.file_id
-    file_unique_id: str = message.audio.file_unique_id
-
     data: Dict = await state.get_data()
+    counter: int = data.get("counter")
+    if message.voice:
+        counter += 1
+        song_title = f"{messages.UNKNOWN_TITLE_TEXT} {counter}"
+        file_id: str = message.voice.file_id
+        file_unique_id: str = message.voice.file_unique_id
+    if message.audio:
+        song_title: str = message.audio.file_name.split(".")[0].strip()
+        file_id: str = message.audio.file_id
+        file_unique_id: str = message.audio.file_unique_id
+
     unique_titles_songs: List[str] = data["unique_titles_songs"]
     songs: List = data["songs"]
     if (
@@ -168,6 +176,7 @@ async def add_songs_audio_album(
     )
     unique_titles_songs.append(song_title)
     await state.update_data(songs=songs)
+    await state.update_data(counter=counter)
     await state.update_data(unique_titles_songs=unique_titles_songs)
 
     await message.answer(text=f"Песня {song_title} сохранена")
@@ -248,7 +257,10 @@ async def finish_add_songs_album(
         result: Result = await base_music_service.show_songs_with_album(
             executor_id=executor_id, album_id=album_id, get_info_album=get_info_album
         )
-        await message.answer(text=ServerDatabaseResponse.SUCCESS_ADD_ALBUM)
+        await message.answer(
+            text=ServerDatabaseResponse.SUCCESS_ADD_ALBUM,
+            reply_markup=ReplyKeyboardRemove(),
+        )
         if result.ok and not result.empty:  # для возврата на страницу альбома
             await open_album_pages(
                 songs=result.data,
@@ -285,17 +297,22 @@ async def finish_add_songs_album(
                 bot=bot,
             )
             return
-
-    # если произошла ошибка при добавлении песен
-    await get_admin_panel(
-        chat_id=message.chat.id,
-        caption=result_add_albums.error.message,
-        bot=bot,
-    )
+    if not result_add_albums.ok: # если произошла ошибка при создании альбома с песнями
+        msg: str = result_add_albums.error.message
+        await message.answer(
+            text=msg,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        # если произошла ошибка при добавлении альбома
+        await get_admin_panel(
+            chat_id=message.chat.id,
+            caption=msg,
+            bot=bot,
+        )
 
 
 @router.message(FSMAddAlbum.processings)
-async def finish_add_songs_message(
+async def finish_add_songs_album_message(
     message: Message,
 ):
     """
