@@ -19,7 +19,7 @@ from app.app_utils.keyboards import get_reply_cancel_button
 from app.bot.modules.admin.childes.add_executor.settings import settings
 from app.bot.settings import settings as bot_settings
 from core.response.messages import telegram_emoji, messages
-from app.bot.modules.admin.filters import AdminFilter
+from app.bot.filters.admin_filters import AdminFilter
 from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.modules.admin.childes.add_executor.dto import ExecutorImportDTO
 from app.bot.modules.admin.settings import settings as admin_settings
