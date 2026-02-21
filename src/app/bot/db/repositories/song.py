@@ -58,6 +58,25 @@ class SongSQLAlchemyRepository:
 
         return max_position
 
+    async def update_title_song(
+        self,
+        album_id: int,
+        title: str,
+        position: int,
+    ):
+        song = await self.session.scalar(
+            select(self.model).where(
+                self.model.album_id == album_id,
+                self.model.position == position,
+            ),
+        )
+
+        if not song:
+            return False
+        song.title = title
+        await self.session.flush()
+        return song
+
     async def delete_songs(self, album_id: int, list_ids: List[int]):
 
         await self.session.execute(
