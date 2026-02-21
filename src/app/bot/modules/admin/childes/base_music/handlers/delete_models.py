@@ -7,7 +7,7 @@ from aiogram.filters.state import StateFilter
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
-from app.bot.modules.admin.childes.base_music.filters import (
+from app.bot.filters.admin_filters import (
     AdminDeleteExecutorCallback,
     AdminConfirmDeleteExecutorCallback,
     AdminDeleteAlbumCallback,
