@@ -1,4 +1,4 @@
-# Responses, strings, text for module upload_executor
+# Responses, strings, text for module music_library.childes.collection_of_songs
 from pathlib import Path
 
 from core.module_loader.runtime.loader import get_child_modules_settings_inline_data
@@ -13,15 +13,15 @@ logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
 
 inline_data = get_child_modules_settings_inline_data(
-    module_path=bot_path.BOT_DIR / "modules" / Path("upload_executor/childes"),
-    root_package="app.bot.modules.upload_executor.childes",
+    module_path=bot_path.BOT_DIR / "modules" / Path("music_library/childes/collection_of_songs/childes"),
+    root_package="app.bot.modules.music_library.childes.collection_of_songs.childes",
     logging_data=logging_data,
 )
 if len(inline_data) >= 1:
     buttons_array = [button.text for button in inline_data]
     buttons = ", ".join(buttons_array)
     logging_data.info_logger.info(
-        msg=f"[CREATE INLINE KEYBOARDS] Инлайн клавиатура для модуля {settings.SERVICE_NAME} создана\nКнопки - {buttons}"
+        msg=f"[CREATE INLINE KEYBOARDS] Инлайн клавиатура для модуля test создана\nКнопки - {buttons}"
     )
 
 get_keyboards_menu_buttons = get_total_buttons_inline_kb(

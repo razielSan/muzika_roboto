@@ -20,7 +20,7 @@ class User(Base):
         index=True,
     )
 
-    # Добавленные из общей библиотеки
+    # свои собственные исполнители
     executors: Mapped[List["Executor"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -29,6 +29,11 @@ class User(Base):
     # Добавленные из общей библиотеки
     library_executors: Mapped[List["Executor"]] = relationship(
         secondary="user_executor", back_populates="library_users"
+    )
+    
+    collection_songs: Mapped[List["CollectionSong"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
 

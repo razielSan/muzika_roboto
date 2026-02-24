@@ -67,7 +67,7 @@ async def start_update_executor_photo(
     count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
-        f"Скидывайте фото исполнителя или нажмите '{messages.CANCEL_TEXT}'",
+        f"Скидывайте фото исполнителя\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
     await state.update_data(executor_id=executor_id)
@@ -144,7 +144,8 @@ async def finish_update_executor_photo(
         await message.answer(
             text="Данные должны быть"
             " изображением\n\nСкидывайте,снова, фото"
-            f" исполнителя или нажмите '{messages.CANCEL_TEXT}'"
+            f" исполнителя\n{messages.CANCEL_TEXT}: Отмена",
+            reply_markup=get_reply_cancel_button(),
         )
 
 
@@ -177,7 +178,7 @@ async def start_update_album_photo(
     count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
-        f"Скидывайте фото альбома или нажмите '{messages.CANCEL_TEXT}'",
+        f"Скидывайте фото альбома\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
     await state.update_data(executor_id=executor_id)
@@ -274,7 +275,8 @@ async def finish_update_album_photo(
         await message.answer(
             text="Данные должны быть"
             " изображением\n\nСкидывайте,снова, фото"
-            f" альбома или нажмите '{messages.CANCEL_TEXT}'"
+            f" альбома\n{messages.CANCEL_TEXT}: Отмена",
+            reply_markup=get_reply_cancel_button()
         )
 
 
@@ -297,7 +299,7 @@ async def start_update_excutor_name(
     await call.message.edit_reply_markup(reply_markup=None)
 
     await call.message.answer(
-        f"Введите имя исполнителя или нажмите '{messages.CANCEL_TEXT}'",
+        f"Введите имя исполнителя\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
 
@@ -350,7 +352,7 @@ async def finish_update_executor_name(
         await message.answer(
             text="Данные должны быть"
             " текстом\n\nВведите,снова, имя исполнителя"
-            f" или нажмите '{messages.CANCEL_TEXT}'"
+            f"\n{messages.CANCEL_TEXT}: Отмена"
         )
 
 
@@ -378,7 +380,7 @@ async def start_update_excutor_country(
     count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
-        f"Введите страну исполнителя или нажмите '{messages.CANCEL_TEXT}'",
+        f"Введите страну исполнителя\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
 
@@ -446,8 +448,8 @@ async def finish_update_executor_country(message: Message, state: FSMContext, bo
     else:
         await message.answer(
             text="Данные должны быть"
-            " текстом\n\nВведите,снова, страну исполнителя"
-            f" или нажмите '{messages.CANCEL_TEXT}'"
+            " текстом\n\nВведите,снова, страну исполнителя\n"
+            f"{messages.CANCEL_TEXT}: Отмена"
         )
 
 
@@ -476,7 +478,7 @@ async def start_update_album_tilte(
     count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
-        f"Введите название альбома или нажмите '{messages.CANCEL_TEXT}'",
+        f"Введите название альбома\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
 
@@ -598,7 +600,7 @@ async def start_update_album_year(
     count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
-        f"Введите год выпуска альбома или нажмите '{messages.CANCEL_TEXT}'",
+        f"Введите год выпуска альбома\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
 
@@ -624,7 +626,7 @@ async def finish_update_album_year(
         if not result_year.ok:
             await message.answer(
                 text=f"{result_year.error.message}\n\n"
-                f"Введите снова год выпуска альбома или нажмите '{messages.CANCEL_TEXT}'"
+                f"Введите,снова, год выпуска альбома\n{messages.CANCEL_TEXT}: Отмена"
             )
             return
 
@@ -699,7 +701,7 @@ async def finish_update_album_year(
         await message.answer(
             text="Данные должны быть"
             " текстом\n\nВведите,снова, год выпуска альбома"
-            f" или нажмите '{messages.CANCEL_TEXT}'"
+            f"\n{messages.CANCEL_TEXT}: Отмена"
         )
 
 
@@ -732,8 +734,8 @@ async def start_update_executor_genres(
     await state.set_state(FSMUpdateExecutorGenres.genres)
 
     await call.message.answer(
-        "Введите жанры исполнителя через точку\n\nПример: панк-рок.краст.треш-метал\n\n"
-        f"Или нажмите '{messages.CANCEL_TEXT}'",
+        "Введите жанры исполнителя через точку\n\nПример: панк-рок.краст.треш-метал"
+        f"\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
 
@@ -801,8 +803,9 @@ async def finish_update_executor_genres(
     else:
         await message.answer(
             text="Данные должны быть"
-            " текстом\n\nВведите,снова, год выпуска альбома"
-            f" или нажмите '{messages.CANCEL_TEXT}'"
+            " текстом\n\nВведите,снова,жанры исполнителя\n"
+            "Пример: панк-рок.краст.треш-метал\n"
+            f"{messages.CANCEL_TEXT}: Отмена"
         )
 
 
@@ -840,7 +843,7 @@ async def start_update_title_song(
     await state.set_state(FSMUpdateSongTitle.title)
 
     await call.message.answer(
-        text=f"Введите название песни\n\n{messages.CANCEL_TEXT}: Для отмены",
+        text=f"Введите название песни\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
 
@@ -854,7 +857,7 @@ async def add_song_title(message: Message, state: FSMContext):
     await state.set_state(FSMUpdateSongTitle.position)
 
     await message.answer(
-        text=f"Введите позицию песни\n\n{messages.CANCEL_TEXT}: Для отмены"
+        text=f"Введите позицию песни\n\n{messages.CANCEL_TEXT}: Отмена"
     )
 
 
@@ -862,7 +865,9 @@ async def add_song_title(message: Message, state: FSMContext):
 async def add_song_title_message(message: Message, state: FSMContext):
     """Отправляет сообщение если были отправлены не те данные"""
     await message.answer(
-        text=f"Данные должны быть в формате текст\n\n{messages.CANCEL_TEXT}: Для отмены"
+        text=f"Данные должны быть в формате текст\n\n"
+        f"Введите,снова, имя песни\n{messages.CANCEL_TEXT}: Отмена",
+        reply_markup=get_reply_cancel_button(),
     )
 
 
@@ -954,7 +959,7 @@ async def finish_add_song_title(message: Message, state: FSMContext, bot: Bot):
     ):  # если нет песни с введенной позицией
         msg: str = result_update_song_title.data
         await message.answer(
-            text=f"{msg}\n\nВведите,снова,позицию песни",
+            text=f"{msg}\n\nВведите,снова,позицию песни\n{messages.CANCEL_TEXT}: Отмена",
             reply_markup=get_reply_cancel_button(),
         )
         return
@@ -974,5 +979,7 @@ async def finish_add_song_title(message: Message, state: FSMContext, bot: Bot):
 async def finish_add_song_title_message(message: Message, state: FSMContext):
     """Отправляет сообщение если были отправлены не те данные"""
     await message.answer(
-        text=f"Данные должны быть в формате текст\n\n{messages.CANCEL_TEXT}: Для отмены"
+        text=f"Данные должны быть в формате текст\n\n"
+        f"Введите,снова,позицию песни\n{messages.CANCEL_TEXT}: Отмена",
+        reply_markup=get_reply_cancel_button(),
     )

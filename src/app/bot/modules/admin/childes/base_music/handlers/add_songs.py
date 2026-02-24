@@ -61,7 +61,7 @@ async def start_add_songs(
 
     await call.message.answer(
         text="Скидывайте песни"
-        f" для добавления в альбом\n\n{messages.CONFIRMATION_TEXT}: Подтверждение добавления песен', "
+        f" для добавления в альбом\n\n{messages.CONFIRMATION_TEXT}: Подтверждение добавления песен"
         f"\n{messages.CANCEL_TEXT}: Отмена добавления песен",
         reply_markup=get_reply_cancel_button(
             optional_button_text=messages.CONFIRMATION_TEXT,
@@ -130,7 +130,9 @@ async def add_songs_confirm(
     if len(songs) == 0:  # если не было добавлено песен
         await message.answer(
             "Нет песен для добавления\n\n"
-            "Скидывайте,снова, песни для добавления в альбом"
+            "Скидывайте,снова, песни для добавления в альбом\n"
+            f"{messages.CONFIRMATION_TEXT}: Подтверждение добавления песен"
+            f"\n{messages.CANCEL_TEXT}: Отмена добавления песен"
         )
         return
 
@@ -150,7 +152,9 @@ async def add_songs_message(
 
     await message.answer(
         text="Скидываемые данные должные быть в аудио формате"
-        "\n\nСкидывайте,снова,песни для добваления в альбом"
+        "\n\nСкидывайте,снова,песни для добваления в альбом\n"
+        f"{messages.CONFIRMATION_TEXT}: Подтверждение добавления песен"
+        f"\n{messages.CANCEL_TEXT}: Отмена добавления песен"
     )
 
 
@@ -222,13 +226,13 @@ async def finish_add_songs(
             )
             return
 
-    if not result_add_songs.ok: # если произошла ошибка при добавлении песен
+    if not result_add_songs.ok:  # если произошла ошибка при добавлении песен
         msg: str = result_add_songs.error.message
         await message.answer(
             text=msg,
             reply_markup=ReplyKeyboardRemove(),
         )
-        
+
         await get_admin_panel(
             chat_id=message.chat.id,
             caption=msg,
@@ -246,6 +250,6 @@ async def finish_add_songs_message(
     """
 
     await message.answer(
-        f"Нажмите\n\n{messages.CONFIRMATION_TEXT}: Подверждение добавления песен"
+        f"Выберите один из вариантов\n\n{messages.CONFIRMATION_TEXT}: Подверждение добавления песен"
         f"\n{messages.CANCEL_TEXT}: Отмена добавления песен"
     )

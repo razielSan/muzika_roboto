@@ -27,7 +27,7 @@ async def photo_info(call: CallbackQuery, state: FSMContext):
 
     await call.message.edit_reply_markup(reply_markup=None)
     await call.message.answer(
-        text=f"Скидывайте фото для получения file_id или нажмите '{messages.CANCEL_TEXT}'",
+        text=f"Скидывайте фото для получения file_id\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
 
@@ -83,5 +83,6 @@ async def get_photo_file_id(message: Message, state: FSMContext, bot: Bot) -> No
     # Если пользователь скинул не фото
     await message.answer(
         text=f"Данные должны быть изображением\n\n"
-        f"Скидывайте, снова, фото для получения file_id или нажмите '{messages.CANCEL_TEXT}'"
+        f"Скидывайте, снова, фото для получения file_id\n{messages.CANCEL_TEXT}: Отмена",
+        reply_markup=get_reply_cancel_button()
     )

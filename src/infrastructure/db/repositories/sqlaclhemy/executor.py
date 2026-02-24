@@ -3,9 +3,10 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.db.models.sqlaclhemy.user_genre_executor import Genre, Executor
+from domain.entities.db.repositories.executor import ExecutorRepository
 
 
-class SQLAlchemyExecutorRepository:
+class SQLAlchemyExecutorRepository(ExecutorRepository):
     model = Executor
 
     def __init__(self, session: AsyncSession):

@@ -80,7 +80,7 @@ async def add_executor(
     """
 
     await call.message.answer(
-        f"{telegram_emoji.pencil} Введите название исполнителя",
+        f"{telegram_emoji.pencil} Введите название исполнителя\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
     await call.message.edit_reply_markup(reply_markup=None)
@@ -124,7 +124,7 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
     Работа с FSMAddExecutor.
     Встает в состояние FSMAddExecutor.country.
     """
-
+    print(11111)
     try:  # удаляем предыдущее сообщение
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await bot.delete_message(
@@ -132,7 +132,7 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
         )
     except Exception:
         pass
-
+    print(2222)
     executor_name = message.text.lower().strip()
 
     try:  # проверяем данные на валидность
@@ -146,11 +146,13 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
             f"{telegram_emoji.pencil} Введите,снова, название исполнителя"
         )
         return
-
+    print(333)
     await state.update_data(name=message.text.lower().strip())
 
     await message.answer(
-        f"{telegram_emoji.pencil} Введите страну исполнителя или нажмите Неизвестно",
+        text=f"{telegram_emoji.pencil} Введите страну исполнителя\n\n"
+        f"{messages.UNKNOWN_TEXT}: Название по умолчанию\n"
+        f"{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_add_executor_button(),
     )
     await state.set_state(FSMAddExecutor.country)
@@ -184,7 +186,9 @@ async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
         msg: Dict = json.loads(err.json())[0].get("msg")
         await message.answer(
             f"{telegram_emoji.yellow_triangle_with_exclamation_mark} {msg}\n\n"
-            f"{telegram_emoji.pencil} Введите,снова, страну исполнителя"
+            f"{telegram_emoji.pencil} Введите,снова, страну исполнителя\n\n"
+            f"{messages.UNKNOWN_TEXT}: Название по умолчанию\n",
+            f"{messages.CANCEL_TEXT}: Отмена",
         )
         return
     await state.update_data(country=country)
@@ -209,8 +213,10 @@ async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
         return
 
     await message.answer(
-        f"{telegram_emoji.pencil} Введите жанры исполнителя через точку"
-        " или нажмите Неизвестно\n\nПример: панк-рок.металл",
+        text=f"{telegram_emoji.pencil} Введите жанры исполнителя через точку"
+        "\n\nПример: панк-рок.металл\n\n"
+        f"{messages.UNKNOWN_TEXT}: Название по умолчанию\n"
+        f"{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_add_executor_button(),
     )
     await state.set_state(FSMAddExecutor.genres)
@@ -241,8 +247,9 @@ async def add_genres(
     await state.update_data(genres=genres)
 
     await message.answer(
-        f"{telegram_emoji.pencil} Скидывайте фотографию исполнителя или напечатайте любой символ",
-        reply_markup=get_reply_add_executor_button(),
+        text=f"{telegram_emoji.pencil} Скидывайте фотографию"
+        f" исполнителя или напечатайте любой символ\n\n{messages.CANCEL_TEXT}: Отмена",
+        reply_markup=get_reply_cancel_button(),
     )
     await state.set_state(FSMAddExecutor.photo)
 
@@ -274,8 +281,9 @@ async def add_photo_file_id(message: Message, state: FSMContext, bot: Bot):
         )
 
     await message.answer(
-        f"{telegram_emoji.pencil} Введите путь до альбома с исполнителем\n\n"
-        f"Формат имени альбома: {format_album.FORMAT_ALBUM}",
+        text=f"{telegram_emoji.pencil} Введите путь до альбома с исполнителем\n\n"
+        f"Формат имени альбома: {format_album.FORMAT_ALBUM}\n"
+        f"{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
     await state.set_state(FSMAddExecutor.path)
@@ -319,8 +327,10 @@ async def add_executor_base(
     except ValidationError as err:
         msg: Dict = json.loads(err.json())[0].get("msg")
         await message.answer(
-            f"{telegram_emoji.yellow_triangle_with_exclamation_mark} {msg}"
-            "\n\nВведите, снова, путь до альбома с исполнителем"
+            text=f"{telegram_emoji.yellow_triangle_with_exclamation_mark} {msg}"
+            "\n\nВведите, снова, путь до альбома с исполнителем\n"
+            f"{messages.CANCEL_TEXT}: Отмена",
+            reply_markup=get_reply_cancel_button(),
         )
         return
 

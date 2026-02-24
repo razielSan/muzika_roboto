@@ -4,9 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from infrastructure.db.models.sqlaclhemy import Genre
+from domain.entities.db.repositories.genre import GenreRepository
 
 
-class SQLAlchemyGenreRepository:
+class SQLAlchemyGenreRepository(GenreRepository):
     model = Genre
 
     def __init__(self, session: AsyncSession):

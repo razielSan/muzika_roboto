@@ -63,7 +63,7 @@ async def start_add_album(
     count_pages_executor: int = callback_data.count_pages_executor
 
     await call.message.answer(
-        "Введите название альбома",
+        f"Введите название альбома\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
     await state.update_data(executor_id=executor_id)
@@ -83,7 +83,10 @@ async def add_title(message: Message, state: FSMContext, bot: Bot):
     await state.update_data(album_title=album_title)
     await state.set_state(FSMAddAlbum.year)
 
-    await message.answer("Введите год выпуска альбома")
+    await message.answer(
+        f"Введите год выпуска альбома\n\n{messages.CANCEL_TEXT}: Отмена",
+        reply_markup=get_reply_cancel_button(),
+    )
 
 
 @router.message(FSMAddAlbum.album_title)
@@ -92,7 +95,7 @@ async def add_title_message(message: Message):
 
     await message.answer(
         "Название альбома должно быть в формате"
-        " текст\n\nВведите, снова, название альбома"
+        f" текст\n\nВведите, снова, название альбома\n{messages.CANCEL_TEXT}: Отмена",
     )
 
 
@@ -112,7 +115,8 @@ async def add_year(
 
     if not year_result.ok:
         await message.answer(
-            text=f"{year_result.error.message}\n\n" "Введите,снова,год выпуска альбома"
+            text=f"{year_result.error.message}\n\n"
+            f"Введите,снова,год выпуска альбома\n{messages.CANCEL_TEXT}: Отмена",
         )
         return
 
@@ -138,7 +142,7 @@ async def add_year_message(message: Message):
 
     await message.answer(
         "Год выпуска альбома должен быть в числовом формате"
-        "\n\nВведите, снова, название год выпуска альбома"
+        f"\n\nВведите,снова, год выпуска альбома\n{messages.CANCEL_TEXT}: Отмена"
     )
 
 
@@ -201,6 +205,8 @@ async def add_songs_album_confirm(
         await message.answer(
             "Нет песен для добавления\n\n"
             "Скидывайте,снова, песни для добавления в альбом"
+            f"\n{messages.CONFIRMATION_TEXT}: Подтверждение добавления песен"
+            f"\n{messages.CANCEL_TEXT}: Отмена"
         )
         return
 
@@ -219,7 +225,9 @@ async def add_songs_album_message(
     """Отправляет сообщение если были отправлены не те данные"""
     await message.answer(
         text="Скидываемые данные должные быть в аудио формате"
-        "\n\nСкидывайте,снова,песни для добваления в альбом"
+        f"\n\nСкидывайте,снова,песни для добавления в альбом\n"
+        f"{messages.CONFIRMATION_TEXT}: Подтверждение добавления песен"
+        f"\n{messages.CANCEL_TEXT}: Отмена",
     )
 
 
@@ -297,7 +305,7 @@ async def finish_add_songs_album(
                 bot=bot,
             )
             return
-    if not result_add_albums.ok: # если произошла ошибка при создании альбома с песнями
+    if not result_add_albums.ok:  # если произошла ошибка при создании альбома с песнями
         msg: str = result_add_albums.error.message
         await message.answer(
             text=msg,
