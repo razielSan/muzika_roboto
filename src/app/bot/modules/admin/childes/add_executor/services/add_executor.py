@@ -11,7 +11,7 @@ from app.bot.view_model import SongResponse
 from core.error_handlers.helpers import ok, fail
 from core.response.response_data import LoggingData, Result
 from core.error_handlers.decorator import safe_async_execution
-from app.bot.response import ServerDatabaseResponse
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from core.logging.api import get_loggers
 
 
@@ -20,8 +20,8 @@ class AddExecutorService:
         self.logging_data: LoggingData = logging_data
 
     @safe_async_execution(
-        message=ServerDatabaseResponse.ERROR_ADD_EXECUTOR.value,
-        code=ServerDatabaseResponse.ERROR_ADD_EXECUTOR.name,
+        message=ServerDatabaseResponse.ERROR_ADD_EXECUTOR.name,
+        code=ServerDatabaseResponse.ERROR_ADD_EXECUTOR.value,
     )
     async def import_executor_from_path(
         self,
@@ -139,7 +139,7 @@ class AddExecutorService:
         executor_name: str,
     ) -> Result:
         """
-        Application service для сценария провекри существования в базе данных.
+        Application service для сценария проверки существования в базе данных исполнителя.
 
         Отвечает за:
         - оркестрацию вызова AddExecutorAPI
@@ -160,7 +160,10 @@ class AddExecutorService:
                 executor_exists = True
         if executor_exists:
             return ok(data=genres)
-        return fail(code="NOT_EXECUTOR_EXISTS", message="Исполнителя нет в базе данных")
+        return fail(
+            code=ServerDatabaseResponse.NOT_FOUND_EXECUTOR.name,
+            message=ServerDatabaseResponse.NOT_FOUND_EXECUTOR.value,
+        )
 
 
 add_executor_service: AddExecutorService = AddExecutorService(
