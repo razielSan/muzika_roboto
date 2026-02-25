@@ -124,7 +124,6 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
     Работа с FSMAddExecutor.
     Встает в состояние FSMAddExecutor.country.
     """
-    print(11111)
     try:  # удаляем предыдущее сообщение
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await bot.delete_message(
@@ -132,7 +131,6 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
         )
     except Exception:
         pass
-    print(2222)
     executor_name = message.text.lower().strip()
 
     try:  # проверяем данные на валидность
@@ -146,7 +144,6 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
             f"{telegram_emoji.pencil} Введите,снова, название исполнителя"
         )
         return
-    print(333)
     await state.update_data(name=message.text.lower().strip())
 
     await message.answer(
