@@ -23,7 +23,7 @@ class AdminBackExecutorCallback(CallbackData, prefix="admin_back_executor"):
 
 
 class AdminMusicCallback(CallbackData, prefix="admin_base_music"):
-    """Каллбэк для сценаря показа альбома со списокм песен"""
+    """Каллбэк для сценаря показа альбома со списком песен"""
 
     executor_id: int
     album_id: int
