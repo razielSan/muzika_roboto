@@ -27,14 +27,13 @@ from app.bot.modules.admin.childes.base_music.services.base_music import (
 from app.bot.modules.admin.utils.admin import get_admin_panel
 from app.bot.utils.delete import delete_previous_message
 from core.response.response_data import Result
-from app.bot.response import LIMIT_ALBUMS, LIMIT_SONGS
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
+from infrastructure.aiogram.response import LIMIT_ALBUMS, LIMIT_SONGS
 from app.bot.utils.navigator import (
     open_album_pages,
     open_album_pages_with_not_songs,
     open_executor_pages,
 )
-from app.bot.response import ServerDatabaseResponse
-from app.bot.db.uow import UnitOfWork
 
 
 router: Router = Router(name=__name__)
@@ -276,7 +275,7 @@ async def finish_update_album_photo(
             text="Данные должны быть"
             " изображением\n\nСкидывайте,снова, фото"
             f" альбома\n{messages.CANCEL_TEXT}: Отмена",
-            reply_markup=get_reply_cancel_button()
+            reply_markup=get_reply_cancel_button(),
         )
 
 
