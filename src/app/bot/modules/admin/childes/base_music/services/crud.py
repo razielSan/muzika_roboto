@@ -6,7 +6,7 @@ from core.response.response_data import LoggingData
 from app.bot.utils.editing import get_info_executor, get_info_album
 from core.error_handlers.helpers import Result
 from app.bot.view_model import SongResponse
-from app.bot.response import ServerDatabaseResponse
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from core.error_handlers.decorator import safe_async_execution
 from core.logging.api import get_loggers
 from app.bot.modules.admin.childes.base_music.settings import settings
