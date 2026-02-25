@@ -1,5 +1,5 @@
 from domain.entities.db.repositories.executor import ExecutorRepository
-from domain.entities.db.repositories.collection_songs import CollectionSongRepository
+from domain.entities.db.repositories.collection_song import CollectionSongRepository
 from domain.entities.db.repositories.genre import GenreRepository
 from domain.entities.db.repositories.user import UserRepository
 
