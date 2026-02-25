@@ -35,10 +35,10 @@ from app.bot.modules.admin.childes.base_music.services.base_music import (
 from app.bot.view_model import SongResponse
 from app.bot.modules.admin.utils.admin import callback_update_admin_panel_media_photo
 from core.error_handlers.helpers import Result
-from app.bot.response import LIMIT_SONGS, LIMIT_ALBUMS
+from infrastructure.aiogram.response import LIMIT_ALBUMS, LIMIT_SONGS
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from app.bot.utils.editing import get_info_album, get_info_executor
 from app.bot.view_model import ExecutorPageRepsonse
-from app.bot.response import ServerDatabaseResponse
 
 
 router: Router = Router(name=__name__)
@@ -160,7 +160,9 @@ async def delete_album(
                 page_executor=current_page_executor,
             )
             await call.message.answer(text=result_delete.data)
+            print(1)
             if result.ok:
+                print(2)
                 executor_response: ExecutorPageRepsonse = result.data
                 photo_file_id: str = executor_response.executor.photo_file_id
                 caption: str = executor_response.executor.info_executor
@@ -188,7 +190,7 @@ async def delete_album(
                 )
                 return
 
-            # Если произошла ошибка при возвращении к исполнителю
+            # Если произошла ошибка при возвращении к альбому
             await callback_update_admin_panel_media_photo(
                 call=call, caption=result_delete.data
             )
