@@ -6,6 +6,9 @@ from infrastructure.db.repositories.sqlaclhemy.executor import (
 )
 from infrastructure.db.repositories.sqlaclhemy.genre import SQLAlchemyGenreRepository
 from infrastructure.db.repositories.sqlaclhemy.user import SQLAlchemyUserRepository
+from infrastructure.db.repositories.sqlaclhemy.collection_song import (
+    SQLAlchemyCollectionSongRepository,
+)
 
 
 class UnitOfWork:
@@ -17,6 +20,7 @@ class UnitOfWork:
         self.executors = SQLAlchemyExecutorRepository(session=self.session)
         self.genres = SQLAlchemyGenreRepository(session=self.session)
         self.users = SQLAlchemyUserRepository(session=self.session)
+        self.collection_songs = SQLAlchemyCollectionSongRepository(session=self.session)
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
