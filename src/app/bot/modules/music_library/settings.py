@@ -12,4 +12,8 @@ class ModuleSettings(BaseModel):
     ROOT_PACKAGE: str = "app.bot.modules.music_library"
     MENU_IMAGE_FILE_ID: str = "AgACAgIAAxkBAAIFhmmAOwJQBKOpkNk4F94xdWjcF4NQAALnDGsb6LYAAUhZgLpnRetIFwEAAwIAA3kAAzgE"
 
+    COLLECTION_SONG_PHOTO_FILE_ID: str = "AgACAgIAAxkBAAKID2mdNxcQpN7sX4OvbwPXQMnrZy_9AAKJEmsbePvpSLvBWqeDeIdQAQADAgADeAADOgQ"
+    COLLECTION_SONG_PHOTO_FILE_UNIQUE_ID: str = "AQADiRJrG3j76Uh9"
+
+
 settings: ModuleSettings = ModuleSettings()
