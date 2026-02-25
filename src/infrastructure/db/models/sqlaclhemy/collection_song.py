@@ -19,6 +19,8 @@ class CollectionSong(Base):
             name="position_positive",
         )
     )
+    collection_photo_file_id: Mapped[str]
+    collection_photo_unique_id: Mapped[str]
     file_id: Mapped[str]
     file_unique_id: Mapped[str]
 
