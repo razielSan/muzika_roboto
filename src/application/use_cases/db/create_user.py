@@ -2,7 +2,7 @@ from domain.entities.db.uow import UnitOfWork
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok, fail
 
-from domain.errors.error_code import ErorrCode, ExistsErrorCode
+from domain.errors.error_code import ErorrCode, ExistsCode
 from domain.exceptions.db.user import UserAlreadyExists
 
 
@@ -27,6 +27,6 @@ class GetOrCreateUser:
                 return ok(data=user)
             except UserAlreadyExists:
                 return fail(
-                    code=ExistsErrorCode.USER_ALREADY_EXISTS.name,
+                    code=ExistsCode.USER_ALREADY_EXISTS.name,
                     message="Пользователь уже существует",
                 )
