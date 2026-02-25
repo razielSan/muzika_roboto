@@ -11,7 +11,7 @@ from app.bot.view_model import (
     ExecutorPageRepsonse,
 )
 from core.error_handlers.decorator import safe_async_execution
-from app.bot.response import ServerDatabaseResponse
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from core.logging.api import get_loggers
 from app.bot.modules.admin.childes.base_music.settings import settings
 
