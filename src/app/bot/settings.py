@@ -16,7 +16,7 @@ class BotSettings(BaseSettings):
 
     TOKEN: Optional[str] = None
     LIST_BOT_COMMANDS: List[BotCommand] = [
-        BotCommand(command="start", description="Стартовый запуск / Регистрация"),
+        BotCommand(command="start", description="Запуск бота / Регистрация"),
         BotCommand(command="admin", description="Для администраторов"),
         BotCommand(command="music_library", description="Музыкальная библиотека"),
     ]
