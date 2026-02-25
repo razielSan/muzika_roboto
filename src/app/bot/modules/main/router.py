@@ -20,12 +20,11 @@ router: Router = Router(name="main")
 async def main(
     message: Message,
     bot: Bot,
-    get_main_inline_keyboards,
 ) -> None:
     """Отправляет пользователю reply клавиатуру главного меню."""
 
     name: str = message.from_user.first_name
-    telegram = message.from_user.id
+    telegram: int = message.from_user.id
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result = await GetOrCreateUser(uow=UnitOfWork(), logging_data=logging_data).execute(
