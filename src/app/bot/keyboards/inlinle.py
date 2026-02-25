@@ -35,8 +35,8 @@ from app.bot.filters.admin_filters import (
     BackAdminMenuCallback,
 )
 
-from app.bot.response import KeyboardResponse
-from app.bot.keyboards.utils import build_pages
+from infrastructure.aiogram.response import KeyboardResponse
+from infrastructure.aiogram.keyboards.utils import build_pages
 
 
 def show_one_album_songs_with_base_executor(
@@ -115,7 +115,7 @@ def show_one_album_songs_with_base_executor(
         )
     )
 
-    if list_songs: # для изменения имени песни
+    if list_songs:  # для изменения имени песни
         inline_kb.row(
             InlineKeyboardButton(
                 text=KeyboardResponse.UPDATE_TITLE_SONG.value,
@@ -164,7 +164,7 @@ def show_one_album_songs_with_base_executor(
         )
     )
 
-    if list_songs: # для удаления песен
+    if list_songs:  # для удаления песен
         inline_kb.row(
             InlineKeyboardButton(
                 text=KeyboardResponse.DELETE_SONGS.value,
