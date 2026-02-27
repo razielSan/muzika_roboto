@@ -23,7 +23,7 @@ from app.bot.filters.admin_filters import AdminFilter
 from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.modules.admin.childes.add_executor.dto import ExecutorImportDTO
 from app.bot.modules.admin.settings import settings as admin_settings
-from app.bot.response import format_album
+from infrastructure.aiogram.response import format_album
 from app.app_utils.fsm import async_make_update_progress
 from core.response.response_data import Result
 
