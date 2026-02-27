@@ -20,6 +20,11 @@ class User(Base):
         index=True,
     )
 
+    collection_song_photo_file_id: Mapped[Optional[str]] = mapped_column(nullable=True)
+    collection_song_photo_unique_id: Mapped[Optional[str]] = mapped_column(
+        nullable=True
+    )
+
     # свои собственные исполнители
     executors: Mapped[List["Executor"]] = relationship(
         back_populates="user",
@@ -30,7 +35,7 @@ class User(Base):
     library_executors: Mapped[List["Executor"]] = relationship(
         secondary="user_executor", back_populates="library_users"
     )
-    
+
     collection_songs: Mapped[List["CollectionSong"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -82,8 +87,7 @@ class Executor(Base):
         secondary="genre_executor",
     )
     library_users: Mapped[List["User"]] = relationship(
-        secondary="user_executor",
-        back_populates="library_executors"
+        secondary="user_executor", back_populates="library_executors"
     )
 
     # NULL → глобальный
