@@ -1,13 +1,14 @@
-from pathlib import Path
-
 from aiogram import Router, F, Bot
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.filters.state import StateFilter
 
 from app.bot.modules.main.settings import settings
 from core.logging.api import get_loggers
-from application.use_cases.db.create_user import GetOrCreateUser
+from application.use_cases.db.get_or_create_user import GetOrCreateUser
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.aiogram.messages import ERRORS
+from domain.errors.error_code import ErorrCode
+from infrastructure.aiogram.messages import user_messages
 
 
 router: Router = Router(name="main")
@@ -32,9 +33,10 @@ async def main(
         telegram=telegram,
     )
     if not result.ok:
-        await message.answer(
-            text=f"{result.error.message}\n\nПопробуйте нажать \start снова"
-        )
+        if result.error.code == ErorrCode.UNKNOWN_ERROR.name:
+            await message.answer(
+                text=f"{ERRORS[result.error.code]}\n\n{user_messages.TRY_PRESSING_START_AGAIN}"
+            )
         return
 
     # Удаляет сообщение которое было последним
