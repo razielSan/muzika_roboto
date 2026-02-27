@@ -9,7 +9,7 @@ class Executor:
     country: str
     photo_file_id: str
     photo_file_unique_id: str
-    user_id: Optional[int]
+    user_id: Optional[int] = None
     
     @property
     def is_global(self):
