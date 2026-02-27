@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, field_validator
 from pathlib import Path
-from app.bot.response import format_album
+from infrastructure.aiogram.response import format_album
 
 
 class ExecutorImportDTO(BaseModel):
@@ -17,18 +17,14 @@ class ExecutorImportDTO(BaseModel):
     @classmethod
     def validator_executor_name(cls, value: str):
         if not (1 <= len(value) <= 200):
-            raise ValueError(
-                "Название исполнителя должно быть от 1 до 200 символов"
-            )
+            raise ValueError("Название исполнителя должно быть от 1 до 200 символов")
         return value.strip()
 
     @field_validator("country")
     @classmethod
     def validator_country(cls, value: str):
         if not (1 <= len(value) <= 100):
-            raise ValueError(
-                f"Название страны должно быть от 1 до 100 символов"
-            )
+            raise ValueError(f"Название страны должно быть от 1 до 100 символов")
         return value.strip()
 
     @field_validator("base_path")
