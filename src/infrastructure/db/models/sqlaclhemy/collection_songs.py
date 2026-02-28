@@ -7,8 +7,8 @@ from sqlalchemy import CheckConstraint, UniqueConstraint
 from infrastructure.db.models.sqlaclhemy.base import Base
 
 
-class CollectionSong(Base):
-    __tablename__ = "collection_song"
+class CollectionSongs(Base):
+    __tablename__ = "collection_songs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 

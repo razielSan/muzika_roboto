@@ -1,13 +1,14 @@
 from typing import List
 
 from domain.entities.db.uow import UnitOfWork
+from domain.errors.error_code import ErorrCode, SuccessCode
+from domain.entities.response import CollectionSongsResponse
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok
-from domain.errors.error_code import ErorrCode, SuccessCode
-from domain.entities.response import CollectionSongResponse
+from core.response.response_data import Result
 
 
-class AddSongsToCollectionSong:
+class AddSongsToCollectionSongs:
     def __init__(self, uow: UnitOfWork, logging_data):
         self.uow = uow
         self.logging_data = logging_data
@@ -19,8 +20,8 @@ class AddSongsToCollectionSong:
         self,
         user_name: str,
         telegram: int,
-        collection_songs: List[CollectionSongResponse],
-    ):
+        collection_songs: List[CollectionSongsResponse],
+    ) -> Result:
         async with self.uow as uow:
             user = await uow.users.get_user_by_telegram(telegram=telegram)
             if not user:

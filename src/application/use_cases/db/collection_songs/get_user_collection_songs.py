@@ -1,25 +1,28 @@
 from domain.entities.db.uow import UnitOfWork
+from domain.errors.error_code import ErorrCode, NotFoundCode
+from domain.entities.response import (
+    CollectionSongsResponse,
+    UserCollectionSongsResponse,
+)
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok, fail
-
-from domain.errors.error_code import ErorrCode, NotFoundCode
-from domain.entities.response import CollectionSongResponse, UserCollectionSongResponse
+from core.response.response_data import Result
 
 
-class GetUserCollectionSong:
+class GetUserCollectionSongs:
     def __init__(self, uow: UnitOfWork, logging_data):
         self.uow: UnitOfWork = uow
         self.logging_data = logging_data
-    
+
     @safe_async_execution(
         message=ErorrCode.UNKNOWN_ERROR.value, code=ErorrCode.UNKNOWN_ERROR.name
     )
     async def execute(
         self,
         telegram: int,
-    ):
-        collection_song_photo_file_id = None
-        collection_song_photo_unique_id = None
+    ) -> Result:
+        collection_songs_photo_file_id = None
+        collection_songs_photo_file_unique_id = None
         async with self.uow as uow:
             user = await uow.users.get_user_by_telegram(telegram=telegram)
             if not user:  # если пользователя не существует
@@ -32,11 +35,13 @@ class GetUserCollectionSong:
 
             if not result_songs:  # если нет песен в сборнике
                 return ok(data=[], empty=True)
-            
-            collection_song_photo_file_id: str = user.collection_song_photo_file_id
-            collection_song_photo_unique_id: str = user.collection_song_photo_unique_id
+
+            collection_songs_photo_file_id: str = user.collection_songs_photo_file_id
+            collection_songs_photo_file_unique_id: str = (
+                user.collection_songs_photo_file_unique_id
+            )
             collection_songs = [
-                CollectionSongResponse(
+                CollectionSongsResponse(
                     file_id=song.file_id,
                     file_unique_id=song.file_unique_id,
                     title=song.title,
@@ -46,9 +51,9 @@ class GetUserCollectionSong:
             ]
 
         return ok(
-            data=UserCollectionSongResponse(
+            data=UserCollectionSongsResponse(
                 collection_songs=collection_songs,
-                collection_song_photo_file_id=collection_song_photo_file_id,
-                collection_song_photo_unique_id=collection_song_photo_unique_id,
+                collection_songs_photo_file_id=collection_songs_photo_file_id,
+                collection_songs_photo_file_unique_id=collection_songs_photo_file_unique_id,
             )
         )

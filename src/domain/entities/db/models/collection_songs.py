@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class CollectionSong:
+class CollectionSongs:
     id: int
     title: str
     position: int

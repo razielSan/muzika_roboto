@@ -6,34 +6,40 @@ from aiogram.filters.state import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
-from infrastructure.aiogram.filters import AddCallbackDataFilters
-from infrastructure.aiogram.messages import user_messages
-from core.response.messages import messages
-from domain.entities.response import CollectionSongResponse
-from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
-from core.response.messages import messages
-from app.bot.utils.delete import delete_previous_message
-from application.use_cases.db.add_songs_to_collection_songs import (
-    AddSongsToCollectionSong,
-)
-from application.use_cases.db.get_user_collection_song import GetUserCollectionSong
-from infrastructure.db.uow import UnitOfWork
-from domain.errors.error_code import ErorrCode, NotFoundCode
-from infrastructure.aiogram.messages import ERRORS, LIMIT_COLLECTION_SONG, NOT_FOUND
-from core.logging.api import get_loggers
 from app.bot.modules.music_library.childes.collection_of_songs.settings import settings
-from app.bot.modules.music_library.settings import settings as music_libarary_settings
-from infrastructure.aiogram.keyboards.inline import get_buttons_for_song_collection_user
+from app.bot.modules.music_library.settings import settings as music_library_settings
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
-from app.bot.modules.music_library.utils.music_library import show_user_collection
+from app.bot.modules.music_library.services.collection_songs import show_user_collection
+from app.bot.utils.delete import delete_previous_message
+from application.use_cases.db.collection_songs.add_songs_to_collection_songs import (
+    AddSongsToCollectionSongs,
+)
+from application.use_cases.db.collection_songs.get_user_collection_songs import (
+    GetUserCollectionSongs,
+)
+from domain.entities.response import CollectionSongsResponse
+from infrastructure.aiogram.filters import AddCallbackDataFilters
+from infrastructure.aiogram.messages import user_messages
+from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
+from infrastructure.db.uow import UnitOfWork
+from infrastructure.aiogram.messages import (
+    LIMIT_COLLECTION_SONGS,
+    resolve_error_message,
+)
+from core.response.messages import messages
+from core.logging.api import get_loggers
 from core.response.response_data import Result, LoggingData
+
 
 router: Router = Router(name=__name__)
 
 
 class FSMAddSongCollection(StatesGroup):
+    """FSM для сценария добавления песен в сборник."""
+
+    collection_songs: State = State()  # Для возврата к сборнику песен при отмене
     unique_songs_titles: State = State()
     counter: State = State()
     songs: State = State()
@@ -41,14 +47,14 @@ class FSMAddSongCollection(StatesGroup):
 
 
 @router.callback_query(
-    StateFilter(None), AddCallbackDataFilters.CollectionSong.filter()
+    StateFilter(None), AddCallbackDataFilters.SongCollectionSong.filter()
 )
 async def start_add_collection_song(
     call: CallbackQuery,
-    callback_data: AddCallbackDataFilters.CollectionSong,
+    callback_data: AddCallbackDataFilters.SongCollectionSong,
     state: FSMContext,
 ):
-    """Просит пользователю скнуть песни."""
+    """Просит пользователю скинуть песни."""
 
     await call.message.edit_reply_markup(reply_markup=None)
 
@@ -62,36 +68,8 @@ async def start_add_collection_song(
     await state.update_data(unique_songs_titles=[])
     await state.update_data(songs=[])
     await state.update_data(counter=0)
+    await state.update_data(collection_songs=True)
     await state.set_state(FSMAddSongCollection.songs)
-
-
-@router.message(
-    FSMAddSongCollection.processing, F.text == user_messages.USER_CANCEL_TEXT
-)
-@router.message(FSMAddSongCollection.songs, F.text == user_messages.USER_CANCEL_TEXT)
-async def cancel_handler(message: Message, bot: Bot, state: FSMContext):
-    """Отменяет все запросы."""
-
-    telegram: int = message.chat.id
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-
-    result: Result = await GetUserCollectionSong(
-        logging_data=logging_data,
-        uow=UnitOfWork(),
-    ).execute(telegram=telegram)
-
-    await state.clear()
-    if result.ok and not result.empty:
-        await show_user_collection(
-            user_response=result.data,
-            start_collection_song=0,
-            limit_collection_song=LIMIT_COLLECTION_SONG,
-            bot=bot,
-            chat_id=telegram,
-            caption=user_messages.MY_COLLECTION_OF_SONGS,
-            photo_file_id=music_libarary_settings.COLLECTION_SONG_PHOTO_FILE_ID,
-            message=user_messages.USER_CANCEL_MESSAGE,
-        )
 
 
 @router.message(FSMAddSongCollection.songs, F.audio)
@@ -117,14 +95,14 @@ async def add_songs(
         file_unique_id: str = message.audio.file_unique_id
 
     unique_songs_titles: List[str] = data["unique_songs_titles"]
-    songs: List[CollectionSongResponse] = data["songs"]
+    songs: List[CollectionSongsResponse] = data["songs"]
     if title in unique_songs_titles:  # Если песня с таким названием уже была добавлена
         await message.answer(
             text=user_messages.THE_SONG_HAS_ALREADY_BEEN_ADDED.format(title=title),
         )
     else:
         songs.append(
-            CollectionSongResponse(
+            CollectionSongsResponse(
                 file_id=file_id, file_unique_id=file_unique_id, title=title
             ),
         )
@@ -142,7 +120,7 @@ async def confirm_add_songs_collection(message: Message, state: State, bot: Bot)
 
     data: Dict = await state.get_data()
 
-    songs: List[CollectionSongResponse] = data["songs"]
+    songs: List[CollectionSongsResponse] = data["songs"]
     if len(songs) == 0:  # если не было добавлено песен
         await message.answer(
             f"{user_messages.NO_SONGS_WERE_DROPPED}\n\n"
@@ -187,20 +165,20 @@ async def final_add_collection_songs(
     """Сохраняет песни в сборник песен."""
 
     data: Dict = await state.get_data()
-    songs: List[CollectionSongResponse] = data.get("songs")
+    songs: List[CollectionSongsResponse] = data.get("songs")
 
     telegram: int = message.from_user.id
     name: str = message.from_user.first_name
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
-    result_add_song: Result = await AddSongsToCollectionSong(
+    result_add_song: Result = await AddSongsToCollectionSongs(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(user_name=name, telegram=telegram, collection_songs=songs)
 
     await state.clear()
     if result_add_song.ok:
-        result: Result = await GetUserCollectionSong(
+        result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
         ).execute(telegram=telegram)
@@ -208,38 +186,36 @@ async def final_add_collection_songs(
         if result.ok and not result.empty:
             await show_user_collection(
                 user_response=result.data,
-                start_collection_song=0,
-                limit_collection_song=LIMIT_COLLECTION_SONG,
+                start_collection_songs=0,
+                limit_collection_songs=LIMIT_COLLECTION_SONGS,
                 bot=bot,
                 chat_id=telegram,
                 caption=user_messages.MY_COLLECTION_OF_SONGS,
-                photo_file_id=music_libarary_settings.COLLECTION_SONG_PHOTO_FILE_ID,
+                photo_file_id=music_library_settings.COLLECTION_SONGS_PHOTO_FILE_ID,
                 message=user_messages.SONGS_ADDED_SUCCESSSFULLY,
             )
             return
 
         if not result.ok:
-            error_message = None
-            if result.error.code == ErorrCode.UNKNOWN_ERROR.name:
-                error_message: str = ERRORS[result.error.code]
-
-            if result.error.code == NotFoundCode.USER_NOT_FOUND.name:
-                error_message: str = NOT_FOUND[result.error.code]
+            error_message = resolve_error_message(error_code=result.error.code)
             await get_inline_menu_music_library(
                 chat_id=telegram,
                 bot=bot,
                 message=error_message,
+                caption=user_messages.MAIN_MENU,
             )
             return
 
     if not result_add_song.ok:
-        if result_add_song.error.code == ErorrCode.UNKNOWN_ERROR.name:
-            error_message = ERRORS[result.error.code]
-            await get_inline_menu_music_library(
-                chat_id=telegram,
-                bot=bot,
-                message=error_message,
-            )
+        error_message: str = resolve_error_message(
+            error_code=result_add_song.error.code
+        )
+        await get_inline_menu_music_library(
+            chat_id=telegram,
+            bot=bot,
+            message=error_message,
+            caption=user_messages.MAIN_MENU,
+        )
 
 
 @router.message(FSMAddSongCollection.processing, F.text)

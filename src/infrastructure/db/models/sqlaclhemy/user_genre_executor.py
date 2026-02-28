@@ -20,8 +20,8 @@ class User(Base):
         index=True,
     )
 
-    collection_song_photo_file_id: Mapped[Optional[str]] = mapped_column(nullable=True)
-    collection_song_photo_unique_id: Mapped[Optional[str]] = mapped_column(
+    collection_songs_photo_file_id: Mapped[Optional[str]] = mapped_column(nullable=True)
+    collection_songs_photo_file_unique_id: Mapped[Optional[str]] = mapped_column(
         nullable=True
     )
 
@@ -36,7 +36,7 @@ class User(Base):
         secondary="user_executor", back_populates="library_users"
     )
 
-    collection_songs: Mapped[List["CollectionSong"]] = relationship(
+    collection_songs: Mapped[List["CollectionSongs"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
