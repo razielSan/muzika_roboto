@@ -20,7 +20,7 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         genres: List[Genre],
         file_id: str,
         file_unique_id: str,
-    ):
+    ) -> Executor:
         executor = self.model(
             name=name,
             country=country,

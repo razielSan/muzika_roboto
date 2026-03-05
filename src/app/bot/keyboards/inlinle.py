@@ -33,6 +33,8 @@ from app.bot.filters.admin_filters import (
     AdminAddAlbumCallback,
     AdminUpdateSongTitleCallback,
     BackAdminMenuCallback,
+    AdminCreateFullExecutorCallback,
+    AdminCreateExecutorCallback,
 )
 
 from infrastructure.aiogram.response import KeyboardResponse
@@ -427,6 +429,8 @@ def get_menu_song_delete(
     limit_songs=5,
     delete_songs: set = None,
 ):
+    """Кнопки меню удаления песни с возможность пометить песни."""
+
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     for song in list_songs:
         if not delete_songs:
@@ -498,6 +502,7 @@ def get_menu_song_delete(
 
 
 def get_confirmation_delete_song_button():
+    """Кнопки для подвтерждения или отмены удаления песен."""
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     inline_kb.row(
         InlineKeyboardButton(
@@ -509,6 +514,35 @@ def get_confirmation_delete_song_button():
         InlineKeyboardButton(
             text=KeyboardResponse.CANCEL_THE_DELETION_OF_SONGS.value,
             callback_data=AdminCancelDeleteSongCallback().pack(),
+        )
+    )
+    return inline_kb.as_markup()
+
+
+def get_buttons_create_executor():
+    """Кнопки для выбора создания исполнителя или исполнителя с альбомами."""
+
+    inline_kb = InlineKeyboardBuilder()
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.CREATE_EXECUTOR.value,
+            callback_data=AdminCreateExecutorCallback().pack(),
+        )
+    )
+    inline_kb.row(
+        (
+            InlineKeyboardButton(
+                text=KeyboardResponse.CREATE_EXECUTOR_WITH_ALBUMS.value,
+                callback_data=AdminCreateFullExecutorCallback().pack(),
+            )
+        )
+    )
+    inline_kb.row(
+        (
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL.value,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
     )
     return inline_kb.as_markup()

@@ -8,16 +8,47 @@ from app.bot.modules.admin.childes.add_executor.settings import settings
 from app.bot.settings import settings
 from app.bot.db.uow import UnitOfWork
 from app.bot.view_model import SongResponse
+from domain.errors.error_code import SuccessCode, ErorrCode
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from core.error_handlers.helpers import ok, fail
 from core.response.response_data import LoggingData, Result
 from core.error_handlers.decorator import safe_async_execution
-from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from core.logging.api import get_loggers
 
 
 class AddExecutorService:
     def __init__(self, logging_data: LoggingData):
         self.logging_data: LoggingData = logging_data
+
+    @safe_async_execution(
+        message=ErorrCode.UNKNOWN_ERROR.name,
+        code=ErorrCode.UNKNOWN_ERROR.name,
+    )
+    async def add_executor_without_albums(
+        self,
+        name: str,
+        country: str,
+        genres_list_executor: List[str],
+        file_id: str,
+        file_unique_id: str,
+    ):
+        async with UnitOfWork() as uow:
+            genres_list_executor: List[str] = await uow.genres.get_or_create_genres(
+                titles=genres_list_executor
+            )
+            executor = await uow.executors.get_base_executor_by_name_and_country(
+                name=name, country=country
+            )
+            if executor:
+                return ok(data=ErorrCode.EXECUTOR_ALREADY_EXISTS.name)
+            executor = await uow.executors.create_base_executor(
+                name=name,
+                genres=genres_list_executor,
+                country=country,
+                file_id=file_id,
+                file_unique_id=file_unique_id,
+            )
+        return ok(data=SuccessCode.ADD_EXECUTOR_SUCCESS.name)
 
     @safe_async_execution(
         message=ServerDatabaseResponse.ERROR_ADD_EXECUTOR.name,
@@ -36,7 +67,7 @@ class AddExecutorService:
         update_progress: Callable[[], Awaitable[bool]],
     ) -> Result:
         """
-        Application service для сценария добавления исполнителя в базу данных.
+        Application service для сценария добавления исполнителя c альбомами в базу данных.
 
         Отвечает за:
         - оркестрацию вызова AddExecutorAPI
@@ -98,12 +129,13 @@ class AddExecutorService:
                             audio_path,
                             parsed_album.title,
                         )
+                        file_name: str = audio_path.parts[-1].lower()
                         if msg.audio:
                             array_songs.append(
                                 SongResponse(
                                     file_id=msg.audio.file_id,
                                     file_unique_id=msg.audio.file_unique_id,
-                                    title=audio_path.stem.lower(),
+                                    title=file_name,
                                 )
                             )
                         if msg.voice:
@@ -111,7 +143,7 @@ class AddExecutorService:
                                 SongResponse(
                                     file_id=msg.voice.file_id,
                                     file_unique_id=msg.voice.file_unique_id,
-                                    title=audio_path.stem.lower(),
+                                    title=file_name,
                                 )
                             )
 

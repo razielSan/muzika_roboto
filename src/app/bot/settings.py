@@ -46,20 +46,22 @@ class ProxySettings(BaseSettings):
     WEBSHARE_PASSWORD: Optional[str] = None
     WEBSHARE_HOST: Optional[str] = None
     WEBSHARE_PORT: Optional[str] = None
-    
-    USE_PROXY: bool = True
+
+    USE_WEBSHARE_POXY: bool = False
+    USE_OTHER_PROXY: bool = True
 
     OTHER_HOST: Optional[str] = None
     OTHER_PORT: Optional[str] = None
 
-    def get_http_webshare_url(self):
-        return (
-            f"http://{self.WEBSHARE_LOGIN}:{self.WEBSHARE_PASSWORD}"
-            "@{self.WEBSHARE_HOST}:{self.WEBSHARE_PORT}"
-        )
-
-    def get_http_url(self):
-        return f"http://{self.OTHER_HOST}:{self.OTHER_PORT}"
+    def get_proxy_url(self):
+        if self.USE_WEBSHARE_POXY:
+            return (
+                f"http://{self.WEBSHARE_LOGIN}:{self.WEBSHARE_PASSWORD}"
+                f"@{self.WEBSHARE_HOST}:{self.WEBSHARE_PORT}"
+            )
+        if self.USE_OTHER_PROXY:
+            return f"http://{self.OTHER_HOST}:{self.OTHER_PORT}"
+        return None
 
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_file=BOT_DIR / ".env", extra="ignore"

@@ -15,6 +15,20 @@ class BackAdminMenuCallback(CallbackData, prefix="back_admin_menu"):
     pass
 
 
+class AdminCreateExecutorCallback(CallbackData, prefix="admin_create_executor"):
+    """Каллбэк для сценария создания только имени исполнителя"""
+
+    pass
+
+
+class AdminCreateFullExecutorCallback(
+    CallbackData, prefix="admin_create_full_executor"
+):
+    """Каллбэк для сценария создания исполнителя с альбомами."""
+
+    pass
+
+
 class AdminBackExecutorCallback(CallbackData, prefix="admin_back_executor"):
     """Каллбэк для сценария возврата, по нажатию кнопки, назад к исполнителю c альбомами."""
 

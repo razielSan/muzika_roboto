@@ -21,9 +21,11 @@ router: Router = Router(name=__name__)
 async def admin(
     message: Message,
     bot: Bot,
+    user,
 ) -> None:
     """Возвращает главное меню админки."""
 
+    print(user.id, 11)
     await delete_previous_message(bot=bot, message=message)
 
     await bot.send_message(
@@ -46,7 +48,6 @@ async def base_music(
     callback_data: BackAdminMenuCallback,
 ) -> None:
     """Возвращает к главному меню админки по нажатию кнопки."""
-
     await call.message.edit_media(
         media=InputMediaPhoto(
             media=settings.ADMIN_PANEL_PHOTO_FILE_ID,

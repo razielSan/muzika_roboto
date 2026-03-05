@@ -3,11 +3,17 @@ from typing import Optional, List
 from aiogram import Bot
 from aiogram.types import CallbackQuery, InputMediaPhoto, ReplyKeyboardRemove
 
-from infrastructure.aiogram.keyboards.inline import get_buttons_for_song_collection_user
+
+from app.bot.modules.music_library.settings import settings as music_library_settings
+from infrastructure.aiogram.keyboards.inline import (
+    get_buttons_for_song_collection_user,
+    get_buttons_for_song_collection_empty_user,
+)
 from domain.entities.response import (
     UserCollectionSongsResponse,
     CollectionSongsResponse,
 )
+from infrastructure.aiogram.messages import user_messages
 
 
 async def show_user_collection(
@@ -16,10 +22,8 @@ async def show_user_collection(
     user_response: UserCollectionSongsResponse,
     start_collection_songs: int,
     limit_collection_songs: int,
-    photo_file_id: str,
     caption: str,
     message: Optional[str] = None,
-    song_position: int = 0,
 ):
     """
     Переходит к сборнику песен пользователя
@@ -39,8 +43,27 @@ async def show_user_collection(
         photo_file_id (str): Id картинки сборника песен
         caption (str): текст для изображения
         message (Optional[str], optional): Сообщение пользователю.По умолчанию не отправляется
-        song_position (int, optional): Позиция песни.По умолчанию 0
     """
+    # Выставляем обложку сборника песен
+    photo_file_id: str = music_library_settings.COLLECTION_SONGS_PHOTO_FILE_ID
+    if user_response.collection_songs_photo_file_id:
+        photo_file_id: str = user_response.collection_songs_photo_file_id
+
+    if message:
+        await bot.send_message(
+            chat_id=chat_id,
+            text=message,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+
+    if not user_response.collection_songs:  # если нет песен в сборнике
+        await bot.send_photo(
+            chat_id=chat_id,
+            caption=f"{user_messages.THERE_ARE_NO_SONGS}",
+            photo=photo_file_id,
+            reply_markup=get_buttons_for_song_collection_empty_user(),
+        )
+        return
 
     collection_songs = user_response.collection_songs
 
@@ -50,13 +73,6 @@ async def show_user_collection(
         start_collection_songs : start_collection_songs + limit_collection_songs
     ]  # для показа необходимого количества песен на странице
 
-    if message:
-        await bot.send_message(
-            chat_id=chat_id,
-            text=message,
-            reply_markup=ReplyKeyboardRemove(),
-        )
-
     await bot.send_photo(
         chat_id=chat_id,
         caption=caption,
@@ -64,7 +80,7 @@ async def show_user_collection(
         reply_markup=get_buttons_for_song_collection_user(
             colellection_songs=collection_songs,
             len_collection_songs=len_collection_songs,
-            song_position=song_position,
+            song_position=start_collection_songs,
             limit_songs=limit_collection_songs,
         ),
     )
@@ -75,9 +91,8 @@ async def callback_show_user_collection(
     user_response: UserCollectionSongsResponse,
     start_collection_songs: int,
     limit_collection_songs: int,
-    photo_file_id: str,
     caption: str,
-    song_position: int = 0,
+    message: str = None,
 ):
     """
     Обновляет каллбэк запрос и переходит к сборнику песен пользователя
@@ -93,14 +108,30 @@ async def callback_show_user_collection(
 
         start_collection_song (int): Начало выборки песен
         limit_collection_song (int): Максимальное количество песен на странице сборника
-        photo_file_id (str): Id картинки сборника песен
         caption (str): текст для изображения
-        song_position (int, optional): Позиция песни.По умолчанию 0
+
     """
+    if message:
+        await call.message.answer(text=message)
+
+    # Выставляем обложку сборника песен
+    photo_file_id: str = music_library_settings.COLLECTION_SONGS_PHOTO_FILE_ID
+    if user_response.collection_songs_photo_file_id:
+        photo_file_id: str = user_response.collection_songs_photo_file_id
+
+    if not user_response.collection_songs:  # если нет песен в сборнике
+        await call.message.edit_media(
+            media=InputMediaPhoto(
+                media=photo_file_id,
+                caption=f"{user_messages.THERE_ARE_NO_SONGS}",
+            ),
+            reply_markup=get_buttons_for_song_collection_empty_user(),
+        )
+        return
+
     collection_songs: List[CollectionSongsResponse] = user_response.collection_songs
 
     len_collection_songs: int = len(collection_songs)
-
     collection_songs = collection_songs[
         start_collection_songs : start_collection_songs + limit_collection_songs
     ]  # для показа необходимого количества песен на странице
@@ -113,6 +144,6 @@ async def callback_show_user_collection(
             colellection_songs=collection_songs,
             len_collection_songs=len_collection_songs,
             limit_songs=limit_collection_songs,
-            song_position=song_position,
+            song_position=start_collection_songs,
         ),
     )

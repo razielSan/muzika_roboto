@@ -1,5 +1,5 @@
-from domain.entities.db.uow import UnitOfWork
-from domain.errors.error_code import ErorrCode, NotFoundCode
+from domain.entities.db.uow import AbstractUnitOfWork
+from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
 from domain.entities.response import (
     CollectionSongsResponse,
     UserCollectionSongsResponse,
@@ -10,8 +10,8 @@ from core.response.response_data import Result
 
 
 class GetUserCollectionSongs:
-    def __init__(self, uow: UnitOfWork, logging_data):
-        self.uow: UnitOfWork = uow
+    def __init__(self, uow: AbstractUnitOfWork, logging_data):
+        self.uow: AbstractUnitOfWork = uow
         self.logging_data = logging_data
 
     @safe_async_execution(
@@ -34,7 +34,10 @@ class GetUserCollectionSongs:
             result_songs = await uow.collection_songs.get_all_songs(user_id=user.id)
 
             if not result_songs:  # если нет песен в сборнике
-                return ok(data=[], empty=True)
+                return ok(
+                    data=UserCollectionSongsResponse(collection_songs=[]), empty=True,
+                    code=NotFoundCode.SONGS_NOT_FOUND.name
+                )
 
             collection_songs_photo_file_id: str = user.collection_songs_photo_file_id
             collection_songs_photo_file_unique_id: str = (
@@ -46,6 +49,7 @@ class GetUserCollectionSongs:
                     file_unique_id=song.file_unique_id,
                     title=song.title,
                     position=song.position,
+                    id=song.id,
                 )
                 for song in result_songs
             ]
@@ -55,5 +59,6 @@ class GetUserCollectionSongs:
                 collection_songs=collection_songs,
                 collection_songs_photo_file_id=collection_songs_photo_file_id,
                 collection_songs_photo_file_unique_id=collection_songs_photo_file_unique_id,
-            )
+            ),
+            code=SuccessCode.GET_SONGS_SUCCESS.name
         )

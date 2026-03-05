@@ -18,12 +18,15 @@ from application.use_cases.db.collection_songs.update_title_song import (
 from application.use_cases.db.collection_songs.get_user_collection_songs import (
     GetUserCollectionSongs,
 )
+from application.use_cases.db.user.update_user_collection_songs_photo_file_id import (
+    UpdateUserCollectionSongsPhotoFileId,
+)
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
     LIMIT_COLLECTION_SONGS,
-    resolve_error_message,
+    resolve_message,
 )
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from core.utils.chek import check_number_is_positivity
@@ -35,6 +38,7 @@ from core.response.response_data import LoggingData, Result
 router: Router = Router(name=__name__)
 
 
+# обновлние имени сборника песен
 class FSMUpdateTitleCollectionSong(StatesGroup):
     """FSM для сценария обновления имени песни."""
 
@@ -44,11 +48,11 @@ class FSMUpdateTitleCollectionSong(StatesGroup):
 
 
 @router.callback_query(
-    StateFilter(None), UpdateCallbackDataFilters.SongTitleCollectionSong.filter()
+    StateFilter(None), UpdateCallbackDataFilters.SongTitleCollectionSongs.filter()
 )
 async def start_update_song_title(
     call: CallbackQuery,
-    callback_data: UpdateCallbackDataFilters.SongTitleCollectionSong,
+    callback_data: UpdateCallbackDataFilters.SongTitleCollectionSongs,
     state: FSMContext,
 ):
     """Просит пользователя ввести имя песни."""
@@ -109,21 +113,17 @@ async def finish_update_song_title(
     ).execute(telegram=telegram, title=title, position=position)
     if result_update.ok:
 
-        msg: str = "Unknown"
         if result_update.empty:  # Если позиция песни не была найдена
-            msg = user_messages.NO_SONGS_FOUND_WITH_THE_POSITION.format(
-                position=position
-            )
+            msg_update = resolve_message(code=result_update.code)
+            msg_update = msg_update.format(position=position)
 
             await message.answer(
-                text=f"{msg}\n\n{user_messages.ENTER_THE_SONG_POSITION}"
+                text=f"{msg_update}\n\n{user_messages.ENTER_THE_SONG_POSITION}"
             )
             return
 
-        msg = user_messages.THE_NAME_OF_THE_SONG_HAS_BEEN_SUCCESSFULLY_CHANGED.format(
-            title=title
-        )
-
+        msg_update: str = resolve_message(code=result_update.code)
+        msg_update: str = msg_update.format(title=title)
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
@@ -131,23 +131,29 @@ async def finish_update_song_title(
 
         await state.clear()
         if result.ok:
-
             await show_user_collection(
                 user_response=result.data,
-                start_collection_songs=0,
                 limit_collection_songs=LIMIT_COLLECTION_SONGS,
+                start_collection_songs=0,
                 bot=bot,
                 chat_id=telegram,
                 caption=user_messages.MY_COLLECTION_OF_SONGS,
-                photo_file_id=music_library_settings.COLLECTION_SONGS_PHOTO_FILE_ID,
-                message=msg,
+                message=msg_update,
             )
 
             return
+        if not result.ok:
+            error_message = resolve_message(code=result.error.code)
+            await get_inline_menu_music_library(
+                chat_id=telegram,
+                bot=bot,
+                message=error_message,
+                caption=user_messages.MAIN_MENU,
+            )
 
     if not result_update.ok:
         await state.clear()
-        error_message = resolve_error_message(error_code=result_update.error.code)
+        error_message = resolve_message(code=result_update.error.code)
         await get_inline_menu_music_library(
             chat_id=telegram,
             bot=bot,
@@ -161,4 +167,99 @@ async def finish_update_song_title_message(message: Message):
     """Отправляет сообщение при вводе не требуемых данных."""
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+
+
+# обновление фотографии сборника песен
+class FSMUpdateUserCollectionSongsPhotoFileId(StatesGroup):
+    """FSM для сценария обновления фото сборника песен."""
+
+    collection_songs: State = State()
+    photo_file_id: State = State()
+
+
+@router.callback_query(
+    StateFilter(None), UpdateCallbackDataFilters.UserCollectionSongsPhotoFileId.filter()
+)
+async def start_update_user_collection_songs_photo_file_id(
+    call: CallbackQuery,
+    callback_data: UpdateCallbackDataFilters.UserCollectionSongsPhotoFileId,
+    state: FSMContext,
+):
+    """Просит пользователя скинуть фотографию."""
+
+    await state.update_data(collection_songs=True)
+    await state.set_state(FSMUpdateUserCollectionSongsPhotoFileId.photo_file_id)
+
+    await call.message.edit_reply_markup(reply_markup=None)
+    await call.message.answer(
+        text=user_messages.DROP_THE_PHOTO,
+        reply_markup=get_reply_cancel_button(),
+    )
+
+
+@router.message(FSMUpdateUserCollectionSongsPhotoFileId.photo_file_id, F.photo)
+async def finish_update_user_collection_songs_photo_file_id(
+    message: Message, state: FSMContext, bot: Bot
+):
+    """Обновляет фото сборника песен."""
+
+    telegram: int = message.from_user.id
+    photo_file_id: str = message.photo[-1].file_id
+    photo_file_unique_id: str = message.photo[-1].file_unique_id
+    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+
+    result_update = await UpdateUserCollectionSongsPhotoFileId(
+        uow=UnitOfWork(),
+        logging_data=logging_data,
+    ).execute(
+        telegram=telegram,
+        photo_file_id=photo_file_id,
+        photo_file_unique_id=photo_file_unique_id,
+    )
+    await state.clear()
+    if result_update.ok:
+
+        msg_update: str = resolve_message(code=result_update.code)
+
+        result = await GetUserCollectionSongs(
+            uow=UnitOfWork(), logging_data=logging_data
+        ).execute(telegram=telegram)
+        if result.ok:
+            user_response = result.data
+            await show_user_collection(
+                user_response=user_response,
+                bot=bot,
+                chat_id=telegram,
+                caption=user_messages.MY_COLLECTION_OF_SONGS,
+                start_collection_songs=0,
+                limit_collection_songs=LIMIT_COLLECTION_SONGS,
+                message=msg_update,
+            )
+            return
+        if not result.ok:
+            error_message = resolve_message(code=result.error.code)
+            await get_inline_menu_music_library(
+                chat_id=telegram,
+                bot=bot,
+                message=error_message,
+                caption=user_messages.MAIN_MENU,
+            )
+
+    if not result_update.ok:
+        error_message = resolve_message(code=result_update.error.code)
+        await get_inline_menu_music_library(
+            chat_id=telegram,
+            bot=bot,
+            message=error_message,
+            caption=user_messages.MAIN_MENU,
+        )
+
+
+@router.message(FSMUpdateUserCollectionSongsPhotoFileId.photo_file_id)
+async def finish_update_user_collection_songs_photo_file_id_message(message: Message):
+    """Отправляет сообщение при вводе данных не в требуемом формате."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="фото")
     )

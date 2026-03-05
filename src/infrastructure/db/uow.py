@@ -1,5 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
+from domain.entities.db.uow import AbstractUnitOfWork
 from infrastructure.db.db_helper import db_helper
 from infrastructure.db.repositories.sqlaclhemy.executor import (
     SQLAlchemyExecutorRepository,
@@ -11,7 +13,7 @@ from infrastructure.db.repositories.sqlaclhemy.collection_songs import (
 )
 
 
-class UnitOfWork:
+class UnitOfWork(AbstractUnitOfWork):
     def __init__(self):
         self.session = None
 

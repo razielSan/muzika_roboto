@@ -7,6 +7,8 @@ from app.bot.core.paths import bot_path
 from app.bot.core.bot import create_bot
 from app.bot.settings import settings, proxy_settings
 from app.bot.core.middleware.errors import RouterErrorMiddleware
+from app.bot.core.middleware.user import UserMiddleware
+from app.app_utils.keyboards import get_total_buttons_inline_kb
 from core.module_loader.runtime.loader import load_modules
 from core.utils.filesistem import ensure_directories
 from core.module_loader.runtime.register import register_module
@@ -19,7 +21,6 @@ from core.contracts.constants import (
 from core.error_handlers.helpers import ok, fail
 from core.response.response_data import Result, InlineKeyboardData
 from core.error_handlers.format import format_errors_message
-from app.app_utils.keyboards import get_total_buttons_inline_kb
 
 
 async def setup_bot() -> Result:
@@ -108,6 +109,8 @@ async def setup_bot() -> Result:
             )
 
             # Подключаем middleware
+
+            # для отлова ошибок
             router.message.middleware(
                 RouterErrorMiddleware(
                     logger=logging_data.error_logger,
@@ -117,8 +120,12 @@ async def setup_bot() -> Result:
                 RouterErrorMiddleware(logger=logging_data.error_logger)
             )
 
+            # для возврата user
+            router.message.middleware(UserMiddleware())
+            router.callback_query.middleware(UserMiddleware())
+
             logging_bot.info_logger.info(
-                f"Middleware для {logging_data.router_name} подключен"
+                f"Middleware для {logging_data.router_name} подключены"
             )
 
         telegram_bot = create_bot(
@@ -148,4 +155,3 @@ async def setup_bot() -> Result:
             message=f"Критическая ошибка в работе startup - {err}",
             details=str(traceback.format_exc()),
         )
-

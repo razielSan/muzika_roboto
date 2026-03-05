@@ -1,3 +1,4 @@
+from typing import List
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
 from core.error_handlers.decorator import safe_async_execution
@@ -5,7 +6,7 @@ from core.error_handlers.helpers import ok, fail
 from core.response.response_data import Result
 
 
-class UpdateTitleSongCollectionSongs:
+class DeleteSongsCollectionSongs:
     def __init__(self, uow: AbstractUnitOfWork, logging_data):
         self.uow: AbstractUnitOfWork = uow
         self.logging_data = logging_data
@@ -13,12 +14,8 @@ class UpdateTitleSongCollectionSongs:
     @safe_async_execution(
         message=ErorrCode.UNKNOWN_ERROR.value, code=ErorrCode.UNKNOWN_ERROR.name
     )
-    async def execute(
-        self,
-        telegram: int,
-        title: str,
-        position: int,
-    ) -> Result:
+    async def execute(self, telegram: int, list_ids: List[int]) -> Result:
+
         async with self.uow as uow:
             user = await uow.users.get_user_by_telegram(telegram=telegram)
             if not user:  # если пользователя не существует
@@ -27,17 +24,11 @@ class UpdateTitleSongCollectionSongs:
                     message=NotFoundCode.USER_NOT_FOUND.value,
                 )
 
-            result_update = await uow.collection_songs.update_song_title(
-                user_id=user.id, title=title, position=position
+            await self.uow.collection_songs.delete_songs(
+                user_id=user.id,
+                list_ids=list_ids,
             )
-
-            if not result_update:  # если нет песен в сборнике
-                return ok(
-                    data=[],
-                    empty=True,
-                    code=NotFoundCode.SONG_POSITION_NOT_FOUND.name,
-                )
-
-            return ok(
-                data=result_update, code=SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name
-            )
+        return ok(
+            data=SuccessCode.DELETE_SONGS_SUCCESS.name,
+            code=SuccessCode.DELETE_SONGS_SUCCESS.name,
+        )

@@ -7,14 +7,18 @@ LIMIT_ALBUMS: int = 5
 
 
 class KeyboardResponse(Enum):
-    YES: str = "[ Да ]"
-    NO: str = "[ Нет ]"
-    CANCEL_THE_DELETION_OF_SONGS: str = "ОТМЕНИТЬ УДАЛЕНИЕ ПЕСЕН"
-    CONFIRM_THE_DELETION_OF_SONGS: str = "ПОДТВЕРДИТЬ УДАЛЕНИЕ ПЕСЕН"
+    YES: str = "✅ [ Да ]"
+    NO: str = "❌ [ Нет ]"
+    CANCEL_THE_DELETION_OF_SONGS: str = "❌ ОТМЕНИТЬ УДАЛЕНИЕ"
+    CONFIRM_THE_DELETION_OF_SONGS: str = "✅ НАЖМИТЕ ДЛЯ ПОДТВЕРЖДЕНИЯ"
+    CREATE_EXECUTOR: str = "👩🏾‍💻 Создание исполнителя"
+    CREATE_EXECUTOR_WITH_ALBUMS: str = "👩🏾‍💻 Создание исполнителя с альбомами"
     BACK_TO_THE_ADMIN_PANEL: str = "⬅ Назад к админ панели"
+    BACK_TO_THE_USER_PANEL: str = "⬅ Назад к главной панели"
     BACK_TO_ALBUMS: str = "⬅ Назад к альбомам"
     UPDATE_PHOTO_EXECUTOR: str = "📆 Обновить Фото Исполнителя"
     UPDATE_PHOTO_ALBUM: str = "📆 Обновить Фото Альбома"
+    UPDATE_PHOTO_COLLECTION_SONGS: str = "📆 Обновить Фото Сборника Песен"
     UPDATE_NAME_EXECUTOR: str = "📆 Обновить Имя Исполнителя"
     UPDATE_TITLE_ALBUM: str = "📆 Обновить Заголовок Альбома"
     UPDATE_YEAR_ALBUM: str = "📆 Обновить Год Альбома"

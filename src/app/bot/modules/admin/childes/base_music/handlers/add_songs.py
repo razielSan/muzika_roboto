@@ -95,7 +95,7 @@ async def add_songs_audio(
         file_unique_id: str = message.voice.file_unique_id
 
     if message.audio:
-        title: str = message.audio.file_name.split(".")[0].strip()
+        title: str = message.audio.file_name.lower()
         file_id: str = message.audio.file_id
         file_unique_id: str = message.audio.file_unique_id
 

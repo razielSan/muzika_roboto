@@ -1,16 +1,26 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 
 from infrastructure.db.models.sqlaclhemy.collection_songs import CollectionSongs
 from domain.entities.response import CollectionSongsResponse
+from domain.entities.db.repositories.collection_songs import CollectionSongsRepository
 
 
-class SQLAlchemyCollectionSongsRepository:
+class SQLAlchemyCollectionSongsRepository(CollectionSongsRepository):
     model = CollectionSongs
 
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
+
+    async def get_song(self, user_id: int, song_id: int) -> Optional[CollectionSongs]:
+        song = await self.session.scalar(
+            select(self.model).where(
+                self.model.user_id == user_id, self.model.id == song_id
+            )
+        )
+        await self.session.flush()
+        return song
 
     async def get_all_songs(
         self,
@@ -41,7 +51,7 @@ class SQLAlchemyCollectionSongsRepository:
         collection_songs: List[CollectionSongsResponse],
         user_id: int,
         start_position: int = 1,
-    ):
+    ) -> List[CollectionSongs]:
         list_songs = []
         for position, song in enumerate(collection_songs, start=start_position):
             list_songs.append(
@@ -74,3 +84,14 @@ class SQLAlchemyCollectionSongsRepository:
         song.title = title
         await self.session.flush()
         return song
+
+    async def delete_songs(self, user_id: int, list_ids: List[int]) -> True:
+
+        await self.session.execute(
+            delete(self.model).where(
+                self.model.user_id == user_id,
+                self.model.id.in_(list_ids),
+            )
+        )
+        await self.session.flush()
+        return True

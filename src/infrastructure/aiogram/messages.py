@@ -1,52 +1,69 @@
-from domain.errors.error_code import ErorrCode, NotFoundCode
+from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
 
 
 ERRORS = {
     ErorrCode.UNKNOWN_ERROR.name: "❌ Произошла неизвестная ошибка",
     ErorrCode.USER_ALREADY_EXISTS.name: "⚠ Пользователь уже существует",
+    ErorrCode.EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель уже существует",
 }
 
 
 NOT_FOUND = {
     NotFoundCode.USER_NOT_FOUND.name: "⚠ Пользователь не найден\n\n"
-    "🤷🏻‍♀️ Попробуйте нажать /start"
+    "🤷🏻‍♀️ Попробуйте нажать /start",
+    NotFoundCode.SONGS_NOT_FOUND.name: "⚠ Песни не найдены",
+    NotFoundCode.SONG_POSITION_NOT_FOUND.name: "⚠ Песня c позицией {position} не найдена",
 }
-SUCCESS = {}
+SUCCESS = {
+    SuccessCode.ADD_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно создан",
+    SuccessCode.ADD_SONGS_SUCCESS.name: "✅ Песни успешно добавлены",
+    SuccessCode.GET_SONGS_SUCCESS.name: "✅ Песни успешно получены",
+    SuccessCode.UPDATE_PHOTO_SUCCESS.name: "✅ Фото успешно изменено",
+    SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name: "✅ Название "
+    "песни успешно изменено\n\n✅ Новое название - {title}",
+    SuccessCode.DELETE_SONGS_SUCCESS.name: "✅ Песни успешно удалены",
+}
 
-LIMIT_COLLECTION_SONGS = 10
+LIMIT_COLLECTION_SONGS = 3
 
 
-def resolve_error_message(error_code: str):
-    if error_code in ERRORS:
-        return ERRORS[error_code]
-    if error_code in NOT_FOUND:
-        return NOT_FOUND[error_code]
-    return "❌ Unknown"
+def resolve_message(code: str):
+    if code in ERRORS:
+        return ERRORS[code]
+    if code in NOT_FOUND:
+        return NOT_FOUND[code]
+    if code in SUCCESS:
+        return SUCCESS[code]
+    return "Unknown"
 
 
 class UserMessages:
-    USER_CANCEL_MESSAGE: str = "❌ Все запросы отменены"
     CONFIRMATION_TEXT: str = "✅ Подтверждаю"
-    USER_CANCEL_TEXT: str = "🚫 Отмена"
+    CLICK_ONE_OF_THE_BUTTONS_ABOVE: str = "👆🏾 Нажмите одну из кнопок выше"
     DROP_THE_SONG: str = "🎸 Скидывайте песни"
+    DROP_THE_PHOTO: str = "🖼 Скидывайте фотографию"
     ENTER_THE_SONG_NAME: str = "🖌 Введите имя песни"
+    ENTER_THE_EXECUTOR_NAME: str = "🖌 Введите имя исполнителя"
     ENTER_THE_SONG_POSITION: str = "🖌 Введите позицию песни"
-    THERE_ARE_NO_SONGS: str = "🤷🏻‍♀️ У вас нет песен добавленных песен"
-    THE_SONG_HAS_ALREADY_BEEN_ADDED: str = "🤷🏻‍♀️ Песня {title} уже была добавленна"
-    THE_SONG_IS_SAVED: str = "🎼 Песня {title} была сохранена"
+    MESSAGE_TO_CONFIRM_THE_DELETION_OF_SONGS: str = (
+        "❗️ Подтвердите"
+        " песни для удаления\n\n✅ Количество: {count}\n✅ Позиции песен: {positions}"
+    )
     MAIN_MENU: str = "📻 Главное меню"
+    MY_MUSIC_COLLECTION: str = "📻 Моя Музыкальная Коллекция"
+    MY_COLLECTION_OF_SONGS: str = "🎧 Мой сборник песен"
     NO_SONGS_WERE_DROPPED: str = "🤷🏻‍♀️ Не было сброшено песен"
+    PRESS_ONE_OF_THE_BUTTONS: str = "👇 Нажмите одну из кнопок"
     SONGS_WILL_BE_ADDED_IN_QUANTITY: str = (
         "✅ Будут добавлены песни\n\n✅ Количество {count}"
     )
+    SELECT_THE_SONGS_TO_DELETE: str = "❗️ Выберите песни для удаления"
+    THERE_ARE_NO_SONGS: str = "🤷🏻‍♀️ У вас нет песен добавленных песен"
+    THE_SONG_HAS_ALREADY_BEEN_ADDED: str = "🤷🏻‍♀️ Песня {title} уже была добавленна"
+    THE_SONG_IS_SAVED: str = "🎼 Песня {title} была сохранена"
     THE_DATA_MUST_BE_IN_THE_FORMAT: str = "🖊 Данные должны быть в формате {format}"
-    MY_COLLECTION_OF_SONGS: str = "🎧 Мой сборник песен"
-    SONGS_ADDED_SUCCESSSFULLY: str = "✅ Песни успешно добавлены"
-    PRESS_ONE_OF_THE_BUTTONS: str = "👇 Нажмите одну из кнопок"
-    THE_NAME_OF_THE_SONG_HAS_BEEN_SUCCESSFULLY_CHANGED: str = (
-        "✅ Название " "песни успешно изменено\n\n✅ Новое название - {title}"
-    )
-    NO_SONGS_FOUND_WITH_THE_POSITION: str = "⚠️ Не найдено песни с позицией {position}"
+    USER_CANCEL_MESSAGE: str = "❌ Все запросы отменены"
+    USER_CANCEL_TEXT: str = "🚫 Отмена"
 
 
 user_messages: UserMessages = UserMessages()

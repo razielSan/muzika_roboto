@@ -14,14 +14,14 @@ from core.error_handlers.format import format_errors_message
 from core.response.messages import messages
 
 
-def ok(data: None, empty: bool = False) -> Result:
+def ok(
+    data: None,
+    empty: bool = False,
+    code=None,
+) -> Result:
     """Возвращает класс Result для успешного запроса."""
 
-    return Result(
-        ok=True,
-        data=data,
-        empty=empty,
-    )
+    return Result(ok=True, data=data, empty=empty, code=code)
 
 
 def fail(

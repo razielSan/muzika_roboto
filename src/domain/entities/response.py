@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Union
 
 
 @dataclass
@@ -8,10 +8,11 @@ class CollectionSongsResponse:
     file_unique_id: str
     title: str
     position: Optional[int] = None
+    id: Optional[int] = None
 
 
 @dataclass
 class UserCollectionSongsResponse:
-    collection_songs: List[CollectionSongsResponse]
+    collection_songs: Union[List[CollectionSongsResponse], List]
     collection_songs_photo_file_id: Optional[str] = None
     collection_songs_photo_file_unique_id: Optional[str] = None

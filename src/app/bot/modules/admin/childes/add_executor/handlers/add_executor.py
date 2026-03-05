@@ -3,7 +3,13 @@ import json
 from typing import Dict, List
 
 from aiogram import Router, F, Bot
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove, FSInputFile
+from aiogram.types import (
+    CallbackQuery,
+    Message,
+    ReplyKeyboardRemove,
+    FSInputFile,
+    InputMediaPhoto,
+)
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters.state import StateFilter
@@ -19,11 +25,17 @@ from app.app_utils.keyboards import get_reply_cancel_button
 from app.bot.modules.admin.childes.add_executor.settings import settings
 from app.bot.settings import settings as bot_settings
 from core.response.messages import telegram_emoji, messages
-from app.bot.filters.admin_filters import AdminFilter
+from app.bot.filters.admin_filters import (
+    AdminFilter,
+    AdminCreateExecutorCallback,
+    AdminCreateFullExecutorCallback,
+)
 from app.bot.modules.admin.response import get_keyboards_menu_buttons
+from app.bot.keyboards.inlinle import get_buttons_create_executor
 from app.bot.modules.admin.childes.add_executor.dto import ExecutorImportDTO
 from app.bot.modules.admin.settings import settings as admin_settings
 from infrastructure.aiogram.response import format_album
+from infrastructure.aiogram.messages import user_messages, resolve_message
 from app.app_utils.fsm import async_make_update_progress
 from core.response.response_data import Result
 
@@ -31,8 +43,8 @@ from core.response.response_data import Result
 router: Router = Router(name=__name__)
 
 
-class FSMAddExecutor(StatesGroup):
-    """FSM для добавления в базовый executor."""
+class FSMAddFullExecutor(StatesGroup):
+    """FSM для добавления в базовый executor с альбомами."""
 
     name: State = State()
     country: State = State()
@@ -54,11 +66,9 @@ async def go_to_photo_step(
 ) -> None:
     """
     Переходит в функцию add_photo_file_id.
-
-    Встает в состояние FSMAddExecutor.photo.
     """
 
-    await state.set_state(FSMAddExecutor.photo)
+    await state.set_state(FSMAddFullExecutor.photo)
     await add_photo_file_id(message, state, bot)
 
 
@@ -67,16 +77,98 @@ async def go_to_photo_step(
     StateFilter(None),
     F.data == settings.MENU_CALLBACK_DATA,
 )
-async def add_executor(
+async def start_add_executor(
     call: CallbackQuery,
     state: FSMContext,
     bot: Bot,
 ) -> None:
     """
     Главный обработчик модуля add_executor.
+    """
 
-    Работа с FSMAddExecutor.
-    Встает в состоние FSMAddExecutor.name
+    await call.message.edit_media(
+        media=InputMediaPhoto(
+            media=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+            caption=user_messages.PRESS_ONE_OF_THE_BUTTONS,
+        ),
+        reply_markup=get_buttons_create_executor(),
+    )
+
+
+# создание исполнителя без альбомов
+
+class FSMAddExecutor(StatesGroup):
+    """FSM для сценария добавления исполнителя без альбомов."""
+
+    name: State = State()
+
+
+@router.callback_query(AdminCreateExecutorCallback.filter())
+async def add_executor_without_albums(
+    call: CallbackQuery, callback_data: AdminCreateExecutorCallback, state: FSMContext
+):
+    await call.message.answer(
+        text=user_messages.ENTER_THE_EXECUTOR_NAME,
+        reply_markup=get_reply_cancel_button(),
+    )
+
+    await state.set_state(FSMAddExecutor.name)
+
+
+@router.message(FSMAddExecutor.name, F.text)
+async def finish_add_executor_without_albums(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+):
+    """Добавляет исполнителя в БД."""
+
+    name: str = message.text.lower()
+    result = await add_executor_service.add_executor_without_albums(
+        name=name,
+        genres_list_executor=["Неизвестно"],
+        country="Неизвестно",
+        file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+        file_unique_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_UNIQUE_ID,
+    )
+    await state.clear()
+    msg = None
+    if result.ok:
+        msg: str = resolve_message(code=result.data)
+
+    if not result.ok:
+        msg: str = resolve_message(code=result.error.code)
+    await message.answer(text=msg)
+    await bot.send_photo(
+        chat_id=message.chat.id,
+        reply_markup=get_keyboards_menu_buttons,
+        photo=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+        caption=messages.ADMIN_PANEL_TEXT,
+    )
+
+
+@router.message(FSMAddExecutor.name)
+async def finish_add_executor_without_albums_message(
+    message: Message,
+):
+    """Отправляет сообщение при вводе данных не в том формате."""
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст"),
+    )
+
+# добавление исполнителя с альбомами
+
+@router.callback_query(
+    AdminFilter(), StateFilter(None), AdminCreateFullExecutorCallback.filter()
+)
+async def add_executor(
+    call: CallbackQuery,
+    callback_data: AdminCreateFullExecutorCallback,
+    state: FSMContext,
+    bot: Bot,
+) -> None:
+    """
+    Просит ввести название исполнителя с альбомами.
     """
 
     await call.message.answer(
@@ -93,16 +185,14 @@ async def add_executor(
     except Exception:
         pass
 
-    await state.set_state(FSMAddExecutor.name)
+    await state.set_state(FSMAddFullExecutor.name)
 
 
-@router.message(FSMAddExecutor.processing, F.text)
+@router.message(FSMAddFullExecutor.processing, F.text)
 async def processing_message(message: Message, state: FSMContext) -> None:
     """
     Отправляют сообщение при вводе текста во время обработки запроса или
     отменяет запрос при нажатии кнопки.
-
-    Работа с FSMAddExecutor.
     """
 
     if message.text == messages.CANCEL_TEXT_UPLOAD_EXECUTOR:
@@ -116,21 +206,12 @@ async def processing_message(message: Message, state: FSMContext) -> None:
     await message.answer(text=messages.WAIT_AND_CANCEL_MESSAGE)
 
 
-@router.message(FSMAddExecutor.name, F.text)
+@router.message(FSMAddFullExecutor.name, F.text)
 async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
     """
     Просит ввести страну исполнителя.
-
-    Работа с FSMAddExecutor.
-    Встает в состояние FSMAddExecutor.country.
     """
-    try:  # удаляем предыдущее сообщение
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-        await bot.delete_message(
-            chat_id=message.chat.id, message_id=message.message_id - 1
-        )
-    except Exception:
-        pass
+
     executor_name = message.text.lower().strip()
 
     try:  # проверяем данные на валидность
@@ -152,26 +233,15 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
         f"{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_add_executor_button(),
     )
-    await state.set_state(FSMAddExecutor.country)
+    await state.set_state(FSMAddFullExecutor.country)
 
 
-@router.message(FSMAddExecutor.country, F.text)
+@router.message(FSMAddFullExecutor.country, F.text)
 async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
     """
     Просит ввести жанры исполнителя или переходит к обработчику для ввода пути,
     если есть исполнитель.
-
-    Работа с FSMAddExecutor.
-    Встает в состояние FSMAddExecutor.genres.
     """
-
-    try:
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-        await bot.delete_message(
-            chat_id=message.chat.id, message_id=message.message_id - 1
-        )
-    except Exception:
-        pass
 
     country: str = message.text.strip().lower()
 
@@ -216,10 +286,10 @@ async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
         f"{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_add_executor_button(),
     )
-    await state.set_state(FSMAddExecutor.genres)
+    await state.set_state(FSMAddFullExecutor.genres)
 
 
-@router.message(FSMAddExecutor.genres, F.text)
+@router.message(FSMAddFullExecutor.genres, F.text)
 async def add_genres(
     message: Message,
     state: FSMContext,
@@ -227,18 +297,7 @@ async def add_genres(
 ) -> None:
     """
     Просит скинуть фото исполнителя.
-
-    Работа с FSMAddExecutor.
-    Встает в состояние FSMAddExecutor.photo.
     """
-
-    try:
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-        await bot.delete_message(
-            chat_id=message.chat.id, message_id=message.message_id - 1
-        )
-    except Exception:
-        pass
 
     genres: List[str] = [genre.lower().strip() for genre in message.text.split(".")]
     await state.update_data(genres=genres)
@@ -248,25 +307,14 @@ async def add_genres(
         f" исполнителя или напечатайте любой символ\n\n{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
-    await state.set_state(FSMAddExecutor.photo)
+    await state.set_state(FSMAddFullExecutor.photo)
 
 
-@router.message(FSMAddExecutor.photo)
+@router.message(FSMAddFullExecutor.photo)
 async def add_photo_file_id(message: Message, state: FSMContext, bot: Bot):
     """
     Просит ввести путь до альбомов исполнителя.
-
-    Работа с FSMAddExecutor.
-    Встает в состояние FSMAddExecutor.path.
     """
-
-    try:
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-        await bot.delete_message(
-            chat_id=message.chat.id, message_id=message.message_id - 1
-        )
-    except Exception:
-        pass
 
     if message.photo:  # если сообщение является фотографией
         await state.update_data(file_id=message.photo[-1].file_id)
@@ -283,10 +331,10 @@ async def add_photo_file_id(message: Message, state: FSMContext, bot: Bot):
         f"{messages.CANCEL_TEXT}: Отмена",
         reply_markup=get_reply_cancel_button(),
     )
-    await state.set_state(FSMAddExecutor.path)
+    await state.set_state(FSMAddFullExecutor.path)
 
 
-@router.message(FSMAddExecutor.path)
+@router.message(FSMAddFullExecutor.path)
 async def add_executor_base(
     message: Message,
     state: FSMContext,
@@ -298,14 +346,6 @@ async def add_executor_base(
 
     # Формируем общие данные
     chat_id: int = message.chat.id
-
-    try:
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-        await bot.delete_message(
-            chat_id=message.chat.id, message_id=message.message_id - 1
-        )
-    except Exception:
-        pass
 
     # Формируем данные для добавления в БД
     data: Dict = await state.get_data()
@@ -353,7 +393,7 @@ async def add_executor_base(
         return msg
 
     # Для отправки сообщений при запросе и избежания спама
-    await state.set_state(FSMAddExecutor.processing)
+    await state.set_state(FSMAddFullExecutor.processing)
     await bot.send_message(
         chat_id=chat_id,
         text=messages.WAIT_MESSAGE,

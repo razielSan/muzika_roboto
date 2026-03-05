@@ -1,6 +1,6 @@
 from typing import List
 
-from domain.entities.db.uow import UnitOfWork
+from domain.entities.db.uow import AbstractUnitOfWork
 from domain.errors.error_code import ErorrCode, SuccessCode
 from domain.entities.response import CollectionSongsResponse
 from core.error_handlers.decorator import safe_async_execution
@@ -9,7 +9,7 @@ from core.response.response_data import Result
 
 
 class AddSongsToCollectionSongs:
-    def __init__(self, uow: UnitOfWork, logging_data):
+    def __init__(self, uow: AbstractUnitOfWork, logging_data):
         self.uow = uow
         self.logging_data = logging_data
 
@@ -41,4 +41,7 @@ class AddSongsToCollectionSongs:
                 user_id=user.id,
             )
 
-        return ok(data=SuccessCode.SUCCESS_COLLECTION_SONG.name)
+        return ok(
+            data=SuccessCode.ADD_SONGS_SUCCESS.name,
+            code=SuccessCode.ADD_SONGS_SUCCESS.name,
+        )

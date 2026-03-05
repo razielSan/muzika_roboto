@@ -36,9 +36,10 @@ router: Router = Router(name=__name__)
 
 
 @router.callback_query(StateFilter(None), F.data == settings.MENU_CALLBACK_DATA)
-async def base_music(call: CallbackQuery) -> None:
+async def base_music(call: CallbackQuery, user) -> None:
     """Возвращает первого исполнителя из базового музыкального хранилища."""
 
+    print(user)
     result_executor: Result = await base_music_service.show_executor(
         get_info_executor=get_info_executor,
     )

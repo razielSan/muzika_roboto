@@ -1,11 +1,12 @@
 from domain.entities.db.uow import AbstractUnitOfWork
+from domain.entities.response import CollectionSongsResponse
 from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok, fail
 from core.response.response_data import Result
 
 
-class UpdateTitleSongCollectionSongs:
+class GetSongCollectionSongs:
     def __init__(self, uow: AbstractUnitOfWork, logging_data):
         self.uow: AbstractUnitOfWork = uow
         self.logging_data = logging_data
@@ -16,8 +17,7 @@ class UpdateTitleSongCollectionSongs:
     async def execute(
         self,
         telegram: int,
-        title: str,
-        position: int,
+        song_id: int,
     ) -> Result:
         async with self.uow as uow:
             user = await uow.users.get_user_by_telegram(telegram=telegram)
@@ -26,18 +26,20 @@ class UpdateTitleSongCollectionSongs:
                     code=NotFoundCode.USER_NOT_FOUND.name,
                     message=NotFoundCode.USER_NOT_FOUND.value,
                 )
-
-            result_update = await uow.collection_songs.update_song_title(
-                user_id=user.id, title=title, position=position
+            song = await uow.collection_songs.get_song(
+                user_id=user.id,
+                song_id=song_id,
             )
-
-            if not result_update:  # если нет песен в сборнике
-                return ok(
-                    data=[],
-                    empty=True,
-                    code=NotFoundCode.SONG_POSITION_NOT_FOUND.name,
+            if not song:
+                return fail(
+                    code=NotFoundCode.SONGS_NOT_FOUND.name,
+                    message=NotFoundCode.SONGS_NOT_FOUND.value,
                 )
-
-            return ok(
-                data=result_update, code=SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name
+            song_response: CollectionSongsResponse = CollectionSongsResponse(
+                file_id=song.file_id,
+                file_unique_id=song.file_unique_id,
+                title=song.title,
+                position=song.position,
             )
+
+        return ok(data=song_response, code=SuccessCode.GET_SONGS_SUCCESS.name)

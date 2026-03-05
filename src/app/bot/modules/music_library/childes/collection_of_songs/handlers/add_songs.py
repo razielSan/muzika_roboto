@@ -26,7 +26,7 @@ from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.messages import (
     LIMIT_COLLECTION_SONGS,
-    resolve_error_message,
+    resolve_message,
 )
 from core.response.messages import messages
 from core.logging.api import get_loggers
@@ -47,11 +47,11 @@ class FSMAddSongCollection(StatesGroup):
 
 
 @router.callback_query(
-    StateFilter(None), AddCallbackDataFilters.SongCollectionSong.filter()
+    StateFilter(None), AddCallbackDataFilters.SongCollectionSongs.filter()
 )
 async def start_add_collection_song(
     call: CallbackQuery,
-    callback_data: AddCallbackDataFilters.SongCollectionSong,
+    callback_data: AddCallbackDataFilters.SongCollectionSongs,
     state: FSMContext,
 ):
     """Просит пользователю скинуть песни."""
@@ -90,7 +90,7 @@ async def add_songs(
         await state.update_data(counter=counter)
 
     if message.audio:
-        title: str = message.audio.file_name.split(".")[0].strip()
+        title: str = message.audio.file_name.lower()
         file_id: str = message.audio.file_id
         file_unique_id: str = message.audio.file_unique_id
 
@@ -178,12 +178,13 @@ async def final_add_collection_songs(
 
     await state.clear()
     if result_add_song.ok:
+        msg_add_song: str = resolve_message(code=result_add_song.code)
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
         ).execute(telegram=telegram)
 
-        if result.ok and not result.empty:
+        if result.ok:
             await show_user_collection(
                 user_response=result.data,
                 start_collection_songs=0,
@@ -191,13 +192,12 @@ async def final_add_collection_songs(
                 bot=bot,
                 chat_id=telegram,
                 caption=user_messages.MY_COLLECTION_OF_SONGS,
-                photo_file_id=music_library_settings.COLLECTION_SONGS_PHOTO_FILE_ID,
-                message=user_messages.SONGS_ADDED_SUCCESSSFULLY,
+                message=msg_add_song,
             )
             return
 
         if not result.ok:
-            error_message = resolve_error_message(error_code=result.error.code)
+            error_message = resolve_message(code=result.error.code)
             await get_inline_menu_music_library(
                 chat_id=telegram,
                 bot=bot,
@@ -207,9 +207,7 @@ async def final_add_collection_songs(
             return
 
     if not result_add_song.ok:
-        error_message: str = resolve_error_message(
-            error_code=result_add_song.error.code
-        )
+        error_message: str = resolve_message(code=result_add_song.error.code)
         await get_inline_menu_music_library(
             chat_id=telegram,
             bot=bot,

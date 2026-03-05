@@ -1,15 +1,19 @@
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram import Bot, Dispatcher
+from app.bot.settings import ProxySettings
 
 
-def create_bot(bot_settings, proxy_settings, logging_data):
+def create_bot(
+    bot_settings,
+    proxy_settings: ProxySettings,
+    logging_data,
+):
+    proxy = proxy_settings.get_proxy_url()
+    if proxy:
 
-    if proxy_settings.USE_PROXY:
-        session: AiohttpSession = AiohttpSession(proxy=proxy_settings.get_http_url())
+        session: AiohttpSession = AiohttpSession(proxy=proxy)
 
-        logging_data.info_logger.info(
-            msg="[USE PROXY] Прокси подключены"
-        )
+        logging_data.info_logger.info(msg="[USE PROXY] Прокси подключены")
         return Bot(token=bot_settings.TOKEN, session=session)
 
     logging_data.info_logger.info("[NOT USED PROXY] Прокси не были использованы")

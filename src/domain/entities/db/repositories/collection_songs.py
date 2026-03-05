@@ -13,6 +13,10 @@ class CollectionSongsRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_song(self, user_id: int, song_id: int) -> Optional[CollectionSongs]:
+        pass
+
+    @abstractmethod
     async def get_last_poistion_song(self, user_id: int) -> Optional[int]:
         pass
 
@@ -32,4 +36,8 @@ class CollectionSongsRepository(ABC):
         title: str,
         position: int,
     ) -> Optional[CollectionSongs]:
+        pass
+
+    @abstractmethod
+    async def delete_songs(self, user_id: int, list_ids: List[int]) -> True:
         pass

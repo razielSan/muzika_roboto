@@ -1,4 +1,4 @@
-from domain.entities.db.uow import UnitOfWork
+from domain.entities.db.uow import AbstractUnitOfWork
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok
 
@@ -6,7 +6,7 @@ from domain.errors.error_code import ErorrCode
 
 
 class GetOrCreateUser:
-    def __init__(self, uow: UnitOfWork, logging_data):
+    def __init__(self, uow: AbstractUnitOfWork, logging_data):
         self.uow = uow
         self.logging_data = logging_data
 

@@ -163,7 +163,7 @@ async def add_songs_audio_album(
         file_id: str = message.voice.file_id
         file_unique_id: str = message.voice.file_unique_id
     if message.audio:
-        song_title: str = message.audio.file_name.split(".")[0].strip()
+        song_title: str = message.audio.file_name.lower()
         file_id: str = message.audio.file_id
         file_unique_id: str = message.audio.file_unique_id
 
@@ -193,8 +193,6 @@ async def add_songs_album_confirm(
     bot: Bot,
 ):
     """Просит подтвердить или отменить добавление песен."""
-
-    await delete_previous_message(bot=bot, message=message)
 
     data: Dict = await state.get_data()
     album_title: str = data.get("album_title")
