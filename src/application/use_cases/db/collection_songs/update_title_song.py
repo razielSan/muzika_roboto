@@ -15,20 +15,14 @@ class UpdateTitleSongCollectionSongs:
     )
     async def execute(
         self,
-        telegram: int,
+        user_id: int,
         title: str,
         position: int,
     ) -> Result:
         async with self.uow as uow:
-            user = await uow.users.get_user_by_telegram(telegram=telegram)
-            if not user:  # если пользователя не существует
-                return fail(
-                    code=NotFoundCode.USER_NOT_FOUND.name,
-                    message=NotFoundCode.USER_NOT_FOUND.value,
-                )
 
             result_update = await uow.collection_songs.update_song_title(
-                user_id=user.id, title=title, position=position
+                user_id=user_id, title=title, position=position
             )
 
             if not result_update:  # если нет песен в сборнике
