@@ -32,6 +32,7 @@ class BotSettings(BaseSettings):
     ALBUM_DEFAULT_PHOTO_UNIQUE_ID: str = "AQADZQxrGyFj8Et-"
 
     AUDIO_EXTENSIONS: Set[str] = {".mp3", ".flac", ".wav", ".ogg", ".m4a"}
+    MUSICL_LIBRARY_MODULE_NAME: str = "music_library"
 
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_file=BOT_DIR / ".env", extra="ignore"
@@ -48,7 +49,7 @@ class ProxySettings(BaseSettings):
     WEBSHARE_PORT: Optional[str] = None
 
     USE_WEBSHARE_POXY: bool = False
-    USE_OTHER_PROXY: bool = True
+    USE_OTHER_PROXY: bool = False
 
     OTHER_HOST: Optional[str] = None
     OTHER_PORT: Optional[str] = None
