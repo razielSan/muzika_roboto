@@ -79,7 +79,7 @@ async def add_title(message: Message, state: FSMContext, bot: Bot):
 
     await delete_previous_message(message=message, bot=bot)
 
-    album_title: str = message.text
+    album_title: str = message.text.strip()
     await state.update_data(album_title=album_title)
     await state.set_state(FSMAddAlbum.year)
 
