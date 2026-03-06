@@ -18,17 +18,13 @@ class AddSongsToCollectionSongs:
     )
     async def execute(
         self,
-        user_name: str,
-        telegram: int,
+        user_id: int,
         collection_songs: List[CollectionSongsResponse],
     ) -> Result:
         async with self.uow as uow:
-            user = await uow.users.get_user_by_telegram(telegram=telegram)
-            if not user:
-                user = await uow.users.create_user(name=user_name, telegram=telegram)
 
             poisition = await uow.collection_songs.get_last_poistion_song(
-                user_id=user.id,
+                user_id=user_id,
             )
             if poisition:
                 poisition += 1
@@ -38,7 +34,7 @@ class AddSongsToCollectionSongs:
             songs = await uow.collection_songs.add_songs(
                 collection_songs=collection_songs,
                 start_position=poisition,
-                user_id=user.id,
+                user_id=user_id,
             )
 
         return ok(
