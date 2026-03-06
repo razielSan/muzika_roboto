@@ -6,7 +6,7 @@ from app.bot.modules.main.settings import settings
 from application.use_cases.db.user.get_or_create_user import GetOrCreateUser
 from domain.errors.error_code import ErorrCode
 from infrastructure.db.uow import UnitOfWork
-from infrastructure.aiogram.messages import ERRORS
+from infrastructure.aiogram.messages import ERRORS, resolve_message
 from infrastructure.aiogram.messages import user_messages
 from core.logging.api import get_loggers
 from core.response.response_data import Result, LoggingData
@@ -36,12 +36,9 @@ async def main(
         telegram=telegram,
     )
     if not result.ok:
-        if result.error.code == ErorrCode.UNKNOWN_ERROR.name:
-            await message.answer(
-                text=f"{ERRORS[result.error.code]}\n\n{user_messages.TRY_PRESSING_START_AGAIN}"
-            )
+        error_message: str = resolve_message(code=result.error.code)
+        await message.answer(text=error_message)
         return
-
     # Удаляет сообщение которое было последним
     try:
         await bot.delete_message(
