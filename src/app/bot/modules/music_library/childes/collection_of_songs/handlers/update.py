@@ -21,6 +21,8 @@ from application.use_cases.db.collection_songs.get_user_collection_songs import 
 from application.use_cases.db.user.update_user_collection_songs_photo_file_id import (
     UpdateUserCollectionSongsPhotoFileId,
 )
+from domain.entities.db.models.user import User as UserDomain
+from domain.entities.response import UserCollectionSongsResponse
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import (
@@ -90,6 +92,7 @@ async def finish_update_song_title(
     message: Message,
     state: FSMContext,
     bot: Bot,
+    user: UserDomain,
 ):
     """Обновляет имя песни."""
 
@@ -102,7 +105,7 @@ async def finish_update_song_title(
         return
     data: Dict = await state.get_data()
 
-    telegram: int = message.from_user.id
+    chat_id: int = message.chat.id
     title: str = data.get("title", "unknown")
     position: int = result_chek.data
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
@@ -110,7 +113,7 @@ async def finish_update_song_title(
     result_update: Result = await UpdateTitleSongCollectionSongs(
         logging_data=logging_data,
         uow=UnitOfWork(),
-    ).execute(telegram=telegram, title=title, position=position)
+    ).execute(user_id=user.id, title=title, position=position)
     if result_update.ok:
 
         if result_update.empty:  # Если позиция песни не была найдена
@@ -127,7 +130,7 @@ async def finish_update_song_title(
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
-        ).execute(telegram=telegram)
+        ).execute(user=user)
 
         await state.clear()
         if result.ok:
@@ -136,7 +139,7 @@ async def finish_update_song_title(
                 limit_collection_songs=LIMIT_COLLECTION_SONGS,
                 start_collection_songs=0,
                 bot=bot,
-                chat_id=telegram,
+                chat_id=chat_id,
                 caption=user_messages.MY_COLLECTION_OF_SONGS,
                 message=msg_update,
             )
@@ -145,7 +148,7 @@ async def finish_update_song_title(
         if not result.ok:
             error_message = resolve_message(code=result.error.code)
             await get_inline_menu_music_library(
-                chat_id=telegram,
+                chat_id=chat_id,
                 bot=bot,
                 message=error_message,
                 caption=user_messages.MAIN_MENU,
@@ -155,7 +158,7 @@ async def finish_update_song_title(
         await state.clear()
         error_message = resolve_message(code=result_update.error.code)
         await get_inline_menu_music_library(
-            chat_id=telegram,
+            chat_id=chat_id,
             bot=bot,
             message=error_message,
             caption=user_messages.MAIN_MENU,
@@ -200,11 +203,14 @@ async def start_update_user_collection_songs_photo_file_id(
 
 @router.message(FSMUpdateUserCollectionSongsPhotoFileId.photo_file_id, F.photo)
 async def finish_update_user_collection_songs_photo_file_id(
-    message: Message, state: FSMContext, bot: Bot
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+    user: UserDomain,
 ):
     """Обновляет фото сборника песен."""
 
-    telegram: int = message.from_user.id
+    chat_id: int = message.from_user.id
     photo_file_id: str = message.photo[-1].file_id
     photo_file_unique_id: str = message.photo[-1].file_unique_id
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
@@ -213,7 +219,7 @@ async def finish_update_user_collection_songs_photo_file_id(
         uow=UnitOfWork(),
         logging_data=logging_data,
     ).execute(
-        telegram=telegram,
+        user_id=user.id,
         photo_file_id=photo_file_id,
         photo_file_unique_id=photo_file_unique_id,
     )
@@ -224,13 +230,17 @@ async def finish_update_user_collection_songs_photo_file_id(
 
         result = await GetUserCollectionSongs(
             uow=UnitOfWork(), logging_data=logging_data
-        ).execute(telegram=telegram)
+        ).execute(user=user)
         if result.ok:
-            user_response = result.data
+            user_response: UserCollectionSongsResponse = result.data
+
+            # Обновляем photo_file_id на измененные
+            user_response.collection_songs_photo_file_id = photo_file_id
+            user_response.collection_songs_photo_file_unique_id = photo_file_unique_id
             await show_user_collection(
                 user_response=user_response,
                 bot=bot,
-                chat_id=telegram,
+                chat_id=chat_id,
                 caption=user_messages.MY_COLLECTION_OF_SONGS,
                 start_collection_songs=0,
                 limit_collection_songs=LIMIT_COLLECTION_SONGS,
@@ -240,7 +250,7 @@ async def finish_update_user_collection_songs_photo_file_id(
         if not result.ok:
             error_message = resolve_message(code=result.error.code)
             await get_inline_menu_music_library(
-                chat_id=telegram,
+                chat_id=chat_id,
                 bot=bot,
                 message=error_message,
                 caption=user_messages.MAIN_MENU,
@@ -249,7 +259,7 @@ async def finish_update_user_collection_songs_photo_file_id(
     if not result_update.ok:
         error_message = resolve_message(code=result_update.error.code)
         await get_inline_menu_music_library(
-            chat_id=telegram,
+            chat_id=chat_id,
             bot=bot,
             message=error_message,
             caption=user_messages.MAIN_MENU,
