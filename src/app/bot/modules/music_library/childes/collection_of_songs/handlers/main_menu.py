@@ -1,5 +1,3 @@
-from typing import List
-
 from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery
 from aiogram.filters.state import StateFilter
@@ -19,6 +17,7 @@ from domain.entities.response import (
     UserCollectionSongsResponse,
 )
 from domain.entities.response import CollectionSongsResponse
+from domain.entities.db.models.user import User
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.filters import (
     ScrollingCallbackDataFilters,
@@ -37,17 +36,19 @@ router: Router = Router(name=__name__)
 
 
 @router.callback_query(StateFilter(None), F.data == settings.MENU_CALLBACK_DATA)
-async def main_menu(call: CallbackQuery, bot: Bot):
+async def main_menu(
+    call: CallbackQuery,
+    bot: Bot,
+    user: User,
+):
     """Возвращает инлайн меню модуля music_library."""
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
-    telegram: int = call.message.chat.id
-
     result: Result = await GetUserCollectionSongs(
         logging_data=logging_data,
         uow=UnitOfWork(),
-    ).execute(telegram=telegram)
+    ).execute(user=user)
 
     if result.ok:
         user_response: UserCollectionSongsResponse = result.data
@@ -71,15 +72,15 @@ async def main_menu(call: CallbackQuery, bot: Bot):
 async def scrolling_song_collection(
     call: CallbackQuery,
     callback_data: ScrollingCallbackDataFilters.SongCollectionSongs,
+    user: User,
 ):
 
-    telegram: int = call.message.chat.id
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     position: int = callback_data.position + callback_data.offset
     result: Result = await GetUserCollectionSongs(
         logging_data=logging_data,
         uow=UnitOfWork(),
-    ).execute(telegram=telegram)
+    ).execute(user=user)
 
     if result.ok:
 
@@ -108,21 +109,22 @@ async def play_songs(
     call: CallbackQuery,
     callback_data: PlaySongsCollectionSongs,
     bot: Bot,
+    user: User,
 ):
     """Скидывает песню."""
 
     song_id: int = callback_data.song_id
-    telegram: int = call.message.chat.id
+    chat_id: int = call.message.chat.id
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_get_song: Result = await GetSongCollectionSongs(
         uow=UnitOfWork(),
         logging_data=logging_data,
-    ).execute(telegram=telegram, song_id=song_id)
+    ).execute(user_id=user.id, song_id=song_id)
     if result_get_song.ok:
         song: CollectionSongsResponse = result_get_song.data
         await bot.send_audio(
-            chat_id=telegram,
+            chat_id=chat_id,
             audio=song.file_id,
             caption=f"{song.position}. {song.title}",
         )
