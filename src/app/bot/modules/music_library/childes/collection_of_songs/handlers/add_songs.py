@@ -161,20 +161,21 @@ async def final_add_collection_songs(
     message: Message,
     state: FSMContext,
     bot: Bot,
+    user,
 ):
     """Сохраняет песни в сборник песен."""
 
     data: Dict = await state.get_data()
     songs: List[CollectionSongsResponse] = data.get("songs")
 
-    telegram: int = message.from_user.id
+    chat_id: int = message.chat.id
     name: str = message.from_user.first_name
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_add_song: Result = await AddSongsToCollectionSongs(
         uow=UnitOfWork(), logging_data=logging_data
-    ).execute(user_name=name, telegram=telegram, collection_songs=songs)
+    ).execute(collection_songs=songs, user_id=user.id)
 
     await state.clear()
     if result_add_song.ok:
@@ -182,7 +183,7 @@ async def final_add_collection_songs(
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
-        ).execute(telegram=telegram)
+        ).execute(user=user)
 
         if result.ok:
             await show_user_collection(
@@ -190,7 +191,7 @@ async def final_add_collection_songs(
                 start_collection_songs=0,
                 limit_collection_songs=LIMIT_COLLECTION_SONGS,
                 bot=bot,
-                chat_id=telegram,
+                chat_id=chat_id,
                 caption=user_messages.MY_COLLECTION_OF_SONGS,
                 message=msg_add_song,
             )
@@ -199,7 +200,7 @@ async def final_add_collection_songs(
         if not result.ok:
             error_message = resolve_message(code=result.error.code)
             await get_inline_menu_music_library(
-                chat_id=telegram,
+                chat_id=chat_id,
                 bot=bot,
                 message=error_message,
                 caption=user_messages.MAIN_MENU,
@@ -209,7 +210,7 @@ async def final_add_collection_songs(
     if not result_add_song.ok:
         error_message: str = resolve_message(code=result_add_song.error.code)
         await get_inline_menu_music_library(
-            chat_id=telegram,
+            chat_id=chat_id,
             bot=bot,
             message=error_message,
             caption=user_messages.MAIN_MENU,
