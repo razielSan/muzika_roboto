@@ -18,8 +18,9 @@ from application.use_cases.db.collection_songs.get_user_collection_songs import 
 from domain.entities.response import (
     UserCollectionSongsResponse,
 )
+from domain.entities.db.models.user import User as UserDomain
 from infrastructure.aiogram.messages import user_messages
-from infrastructure.aiogram.filters import DeleteCallbackDataFilters, BackMenuUserPanel
+from infrastructure.aiogram.filters import BackMenuUserPanel
 from infrastructure.aiogram.messages import LIMIT_COLLECTION_SONGS
 from infrastructure.db.uow import UnitOfWork
 from core.response.response_data import LoggingData, Result
@@ -55,6 +56,7 @@ async def music_library_cancel_handler(
     message: Message,
     state: FSMContext,
     bot: Bot,
+    user: UserDomain,
 ) -> None:
     """Отменяет все действия для модуля music_library."""
 
@@ -65,7 +67,7 @@ async def music_library_cancel_handler(
     data: Dict = await state.get_data()
     collection_songs: Optional[bool] = data.get("collection_songs")
 
-    telegram: int = message.chat.id
+    chat_id: int = message.chat.id
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
@@ -75,9 +77,8 @@ async def music_library_cancel_handler(
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
-        ).execute(telegram=telegram)
-
-        if result:
+        ).execute(user=user)
+        if result.ok:
             user_response: UserCollectionSongsResponse = result.data
 
             await show_user_collection(
@@ -85,7 +86,7 @@ async def music_library_cancel_handler(
                 start_collection_songs=0,
                 limit_collection_songs=LIMIT_COLLECTION_SONGS,
                 bot=bot,
-                chat_id=telegram,
+                chat_id=chat_id,
                 caption=user_messages.MY_COLLECTION_OF_SONGS,
                 message=user_messages.USER_CANCEL_MESSAGE,
             )
@@ -110,13 +111,13 @@ async def callback_music_library_cancel_handler(
     call: CallbackQuery,
     callback_data: BackMenuUserPanel,
     state: FSMContext,
+    user: UserDomain,
 ):
     """
     Каллбэк отмена всех действий для модуля music_library и возращение к нужной панели.
     """
     data: Dict = await state.get_data()
     collection_songs: Optional[bool] = data.get("collection_songs")
-    telegram: int = call.message.chat.id
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await state.clear()
@@ -124,7 +125,7 @@ async def callback_music_library_cancel_handler(
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
-        ).execute(telegram=telegram)
+        ).execute(user=user)
 
         if result:
             user_response: UserCollectionSongsResponse = result.data
