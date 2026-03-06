@@ -1,8 +1,8 @@
 from typing import List
 from domain.entities.db.uow import AbstractUnitOfWork
-from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
+from domain.errors.error_code import ErorrCode, SuccessCode
 from core.error_handlers.decorator import safe_async_execution
-from core.error_handlers.helpers import ok, fail
+from core.error_handlers.helpers import ok
 from core.response.response_data import Result
 
 
@@ -14,18 +14,11 @@ class DeleteSongsCollectionSongs:
     @safe_async_execution(
         message=ErorrCode.UNKNOWN_ERROR.value, code=ErorrCode.UNKNOWN_ERROR.name
     )
-    async def execute(self, telegram: int, list_ids: List[int]) -> Result:
+    async def execute(self, user_id: int, list_ids: List[int]) -> Result:
 
         async with self.uow as uow:
-            user = await uow.users.get_user_by_telegram(telegram=telegram)
-            if not user:  # если пользователя не существует
-                return fail(
-                    code=NotFoundCode.USER_NOT_FOUND.name,
-                    message=NotFoundCode.USER_NOT_FOUND.value,
-                )
-
-            await self.uow.collection_songs.delete_songs(
-                user_id=user.id,
+            await uow.collection_songs.delete_songs(
+                user_id=user_id,
                 list_ids=list_ids,
             )
         return ok(
