@@ -24,16 +24,20 @@ from app.bot.modules.admin.childes.base_music.services.crud import crud_service
 from app.bot.modules.admin.childes.base_music.services.base_music import (
     base_music_service,
 )
-from app.bot.modules.admin.utils.admin import get_admin_panel
-from app.bot.utils.delete import delete_previous_message
-from core.response.response_data import Result
-from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
-from infrastructure.aiogram.response import LIMIT_ALBUMS, LIMIT_SONGS
 from app.bot.utils.navigator import (
     open_album_pages,
     open_album_pages_with_not_songs,
     open_executor_pages,
 )
+from app.bot.keyboards.inlinle import (
+    show_base_executor_collections,
+)
+from app.bot.view_model import ExecutorResponse, AlbumResponse
+from app.bot.modules.admin.utils.admin import get_admin_panel
+from app.bot.utils.delete import delete_previous_message
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
+from infrastructure.aiogram.response import LIMIT_ALBUMS, LIMIT_SONGS
+from core.response.response_data import Result
 
 
 router: Router = Router(name=__name__)
@@ -323,7 +327,7 @@ async def finish_update_executor_name(
 
         data: Dict = await state.get_data()
         executor_id: int = data["executor_id"]
-        name: str = message.text.strip().lower()
+        name: str = message.text.strip()
 
         chat_id: int = message.chat.id
 
@@ -333,12 +337,42 @@ async def finish_update_executor_name(
         )
         await state.clear()
         if result_update_executor_name.ok:
-            await get_admin_panel(
-                caption=result_update_executor_name.data,
-                chat_id=chat_id,
-                bot=bot,
+            # Переходим на страницу исполнителя
+            current_page: int = result_update_executor_name.data
+
+            result_executor: Result = await base_music_service.show_executor(
+                get_info_executor=get_info_executor,
+                page_executor=current_page,
             )
-            return
+            if result_executor.ok:
+                executor: ExecutorResponse = result_executor.data.executor
+                albums_list: List[AlbumResponse] = result_executor.data.albums
+                len_list_albums: int = len(albums_list)
+                if albums_list:
+                    albums_list = albums_list[0:LIMIT_ALBUMS]
+                total_pages: int = result_executor.data.total_pages
+                await bot.send_photo(
+                    chat_id=chat_id,
+                    photo=executor.photo_file_id,
+                    caption=executor.info_executor,
+                    reply_markup=show_base_executor_collections(
+                        list_albums=albums_list,
+                        executor_id=executor.executor_id,
+                        count_pages_executor=total_pages,
+                        current_page_executor=current_page,
+                        limit_albums=LIMIT_ALBUMS,
+                        album_position=0,
+                        len_list_albums=len_list_albums,
+                    ),
+                )
+                return
+            if not result_executor.ok:
+                await get_admin_panel(
+                    caption=result_executor.error.message,
+                    chat_id=chat_id,
+                    bot=bot,
+                )
+                return
 
         # Если произошла ошибка при обновлении имени исполнителя
         await get_admin_panel(
@@ -401,7 +435,7 @@ async def finish_update_executor_country(message: Message, state: FSMContext, bo
 
         data: Dict = await state.get_data()
         executor_id: int = data["executor_id"]
-        country: str = message.text.strip().lower()
+        country: str = message.text.strip()
         chat_id: int = message.chat.id
         current_page_executor: int = data.get("current_page_executor")
         count_pages_executor: int = data.get("count_pages_executor")
