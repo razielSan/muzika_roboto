@@ -16,18 +16,12 @@ class GetSongCollectionSongs:
     )
     async def execute(
         self,
-        telegram: int,
+        user_id: int,
         song_id: int,
     ) -> Result:
         async with self.uow as uow:
-            user = await uow.users.get_user_by_telegram(telegram=telegram)
-            if not user:  # если пользователя не существует
-                return fail(
-                    code=NotFoundCode.USER_NOT_FOUND.name,
-                    message=NotFoundCode.USER_NOT_FOUND.value,
-                )
             song = await uow.collection_songs.get_song(
-                user_id=user.id,
+                user_id=user_id,
                 song_id=song_id,
             )
             if not song:
