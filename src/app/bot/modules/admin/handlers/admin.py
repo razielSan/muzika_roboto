@@ -21,11 +21,9 @@ router: Router = Router(name=__name__)
 async def admin(
     message: Message,
     bot: Bot,
-    user,
 ) -> None:
     """Возвращает главное меню админки."""
 
-    print(user.id, 11)
     await delete_previous_message(bot=bot, message=message)
 
     await bot.send_message(
