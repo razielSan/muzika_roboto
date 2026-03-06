@@ -14,10 +14,7 @@ def build_pages(current: int, total: int) -> List[int]:
     if current + 1 < total:
         pages.add(current + 1)
 
-    if current + 2 < total:
-        pages.add(current + 2)
-
-    if current + 2 < total:
-        pages.add(current + 3)
+    if current + 10 < total:
+        pages.add(current + 10)
 
     return sorted(pages)
