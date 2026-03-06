@@ -17,6 +17,7 @@ NOT_FOUND = {
 SUCCESS = {
     SuccessCode.ADD_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно создан",
     SuccessCode.ADD_SONGS_SUCCESS.name: "✅ Песни успешно добавлены",
+    SuccessCode.ADD_USER_SUCCESS.name:  "✅ Пользователь успешно добавлен",
     SuccessCode.GET_SONGS_SUCCESS.name: "✅ Песни успешно получены",
     SuccessCode.UPDATE_PHOTO_SUCCESS.name: "✅ Фото успешно изменено",
     SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name: "✅ Название "
