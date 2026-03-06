@@ -25,10 +25,10 @@ from app.bot.filters.admin_filters import (
     AdminScrollingExecutorsCallback,
     AdminScrollingAlbumsCallback,
 )
+from app.bot.modules.admin.utils.admin import callback_update_admin_panel_media_photo
 from app.bot.view_model import ExecutorResponse, AlbumResponse
 from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from infrastructure.aiogram.response import LIMIT_SONGS, LIMIT_ALBUMS
-from app.bot.modules.admin.utils.admin import callback_update_admin_panel_media_photo
 from core.response.response_data import Result
 
 
@@ -36,10 +36,9 @@ router: Router = Router(name=__name__)
 
 
 @router.callback_query(StateFilter(None), F.data == settings.MENU_CALLBACK_DATA)
-async def base_music(call: CallbackQuery, user) -> None:
+async def base_music(call: CallbackQuery) -> None:
     """Возвращает первого исполнителя из базового музыкального хранилища."""
 
-    print(user)
     result_executor: Result = await base_music_service.show_executor(
         get_info_executor=get_info_executor,
     )
