@@ -123,7 +123,7 @@ async def finish_add_executor_without_albums(
 ):
     """Добавляет исполнителя в БД."""
 
-    name: str = message.text.lower()
+    name: str = message.text.strip()
     result = await add_executor_service.add_executor_without_albums(
         name=name,
         genres_list_executor=["Неизвестно"],
@@ -212,7 +212,7 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
     Просит ввести страну исполнителя.
     """
 
-    executor_name = message.text.lower().strip()
+    executor_name = message.text.strip()
 
     try:  # проверяем данные на валидность
         ExecutorImportDTO(
@@ -243,7 +243,7 @@ async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
     если есть исполнитель.
     """
 
-    country: str = message.text.strip().lower()
+    country: str = message.text.strip()
 
     try:  # проверяем данные на валидность
         ExecutorImportDTO(

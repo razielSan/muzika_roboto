@@ -46,11 +46,11 @@ class ExecutorSqlalchemyRepository:
         stmt = await self.session.scalars(
             select(self.model)
             .where(self.model.user_id.is_(None))
-            .order_by(self.model.name)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
         executors = stmt.all()
+        executors.sort(key=lambda x: x.name.casefold())  # сортируем по нижнему регистру
         return executors
 
     async def get_base_executor_by_name_and_country(self, name: str, country: str):
