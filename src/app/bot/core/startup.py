@@ -121,11 +121,15 @@ async def setup_bot() -> Result:
             )
 
             # для возврата user
-            router.message.middleware(UserMiddleware())
-            router.callback_query.middleware(UserMiddleware())
+            if settings.MUSICL_LIBRARY_MODULE_NAME == config.SERVICE_NAME:
+                router.message.middleware(UserMiddleware())
+                router.callback_query.middleware(UserMiddleware())
+                logging_bot.info_logger.info(
+                    f"UserMiddleware для {logging_data.router_name} подключен"
+                )
 
             logging_bot.info_logger.info(
-                f"Middleware для {logging_data.router_name} подключены"
+                f"RouterErrorMiddleware для {logging_data.router_name} подключен"
             )
 
         telegram_bot = create_bot(
