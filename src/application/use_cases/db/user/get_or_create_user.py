@@ -2,7 +2,7 @@ from domain.entities.db.uow import AbstractUnitOfWork
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok
 
-from domain.errors.error_code import ErorrCode
+from domain.errors.error_code import ErorrCode, SuccessCode
 
 
 class GetOrCreateUser:
@@ -24,4 +24,4 @@ class GetOrCreateUser:
             if not user:
                 user = await uow.users.create_user(name=name, telegram=telegram)
             user_id = user.id
-        return ok(data=user_id)
+        return ok(data=user_id, code=SuccessCode.ADD_USER_SUCCESS.name)
