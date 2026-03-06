@@ -230,7 +230,17 @@ class CRUDService:
                 executor_id=executor_id,
                 name=name,
             )
-        return ok(data=ServerDatabaseResponse.SUCCESS_UPDATE_EXECUTOR_NAME.value)
+            executors = await uow.executors.get_all_executors()
+            current_page = 1
+            for page, executor in enumerate(executors, start=1):
+                if executor.name == name:
+                    current_page = page
+                    break
+
+        return ok(
+            data=current_page,
+            code=ServerDatabaseResponse.SUCCESS_UPDATE_EXECUTOR_NAME.value,
+        )
 
     @safe_async_execution(
         code=ServerDatabaseResponse.ERROR_UPDATE_EXECUTOR_COUNTRY.name,
