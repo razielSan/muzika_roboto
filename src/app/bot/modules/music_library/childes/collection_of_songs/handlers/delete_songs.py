@@ -21,6 +21,7 @@ from application.use_cases.db.collection_songs.get_user_collection_songs import 
 from application.use_cases.db.collection_songs.delete_songs_collection_songs import (
     DeleteSongsCollectionSongs,
 )
+from domain.entities.db.models.user import User as UserDomain
 from domain.entities.response import (
     CollectionSongsResponse,
     UserCollectionSongsResponse,
@@ -66,15 +67,15 @@ async def start_delete_songs_collection_songs(
     call: CallbackQuery,
     callback_data: DeleteCallbackDataFilters.SongCollectionSongs,
     state: FSMContext,
+    user: UserDomain,
 ):
     """Просит выбрать песню для удаления."""
 
-    telegram: int = call.message.chat.id
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result: Result = await GetUserCollectionSongs(
         uow=UnitOfWork(), logging_data=logging_data
-    ).execute(telegram=telegram)
+    ).execute(user=user)
     if result.ok:
         user_resonse: UserCollectionSongsResponse = result.data
 
@@ -171,19 +172,19 @@ async def scrolling_songe_menu_delete(
     call: CallbackQuery,
     callback_data: ScrollingCallbackDataFilters.DeleteMenuSongColletionSongs,
     state: FSMContext,
+    user: UserDomain,
 ):
     """Пролистывает песни из меню удаления песен."""
 
     data: Dict = await state.get_data()
 
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-    telegram: int = call.message.chat.id
     position: int = callback_data.position + callback_data.offset
     delete_songs: Set = set(data["state_data"].selected_songs_ids)
 
     result_scrolling = await GetUserCollectionSongs(
         uow=UnitOfWork(), logging_data=logging_data
-    ).execute(telegram=telegram)
+    ).execute(user=user)
     if result_scrolling.ok:
         user_resonse: UserCollectionSongsResponse = result_scrolling.data
 
@@ -258,18 +259,18 @@ async def delete_collection_songs(
     call: CallbackQuery,
     callback_data: DeleteCallbackDataFilters.CompleteDeleteSongCollectionSongs,
     state: FSMContext,
+    user: UserDomain,
 ):
-
+    """Удаляет песни."""
     data: Dict = await state.get_data()
     user_response: SongsDeleteCollectionSongs = data["state_data"]
     selected_songs_ids = user_response.selected_songs_ids
-    telegram: int = call.message.chat.id
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_delete = await DeleteSongsCollectionSongs(
         uow=UnitOfWork(),
         logging_data=logging_data,
-    ).execute(telegram=telegram, list_ids=selected_songs_ids)
+    ).execute(user_id=user.id, list_ids=selected_songs_ids)
 
     await state.clear()
     if result_delete.ok:
@@ -278,7 +279,7 @@ async def delete_collection_songs(
         result = await GetUserCollectionSongs(
             uow=UnitOfWork(), logging_data=logging_data
         ).execute(
-            telegram=telegram,
+            user=user,
         )
         if result.ok:
             user_response = result.data
