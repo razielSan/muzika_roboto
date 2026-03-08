@@ -12,8 +12,10 @@ class PlaySongsCollectionSongs(CallbackData, prefix="play_songs_collection_songs
 
 
 class ShowAlbumExecutor(CallbackData, prefix="show_album_executor"):
+    album_id: int
     user_id: Optional[int]
     executor_id: int
+    current_page_executor: int
 
 
 class AddCallbackDataFilters:
