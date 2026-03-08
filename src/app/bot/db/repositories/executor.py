@@ -34,6 +34,7 @@ class ExecutorSqlalchemyRepository:
         return executor
 
     async def get_base_executor(self, executor_id: int):
+
         executor = await self.session.scalar(
             select(self.model)
             .where(self.model.id == executor_id, self.model.user_id.is_(None))
@@ -43,6 +44,12 @@ class ExecutorSqlalchemyRepository:
         return executor
 
     async def get_all_executors(self):
+        """
+        Возвращает все исполнителей общей бибилотеки.
+
+        Сортирует исполнителей по нижнему регистру.
+        """
+
         stmt = await self.session.scalars(
             select(self.model)
             .where(self.model.user_id.is_(None))
@@ -54,6 +61,7 @@ class ExecutorSqlalchemyRepository:
         return executors
 
     async def get_base_executor_by_name_and_country(self, name: str, country: str):
+
         executor = await self.session.scalar(
             select(self.model)
             .where(

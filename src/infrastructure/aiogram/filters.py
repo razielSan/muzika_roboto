@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aiogram.filters.callback_data import CallbackData
 
 
@@ -7,6 +9,11 @@ class BackMenuUserPanel(CallbackData, prefix="back_menu_user_panel"):
 
 class PlaySongsCollectionSongs(CallbackData, prefix="play_songs_collection_songs"):
     song_id: int
+
+
+class ShowAlbumExecutor(CallbackData, prefix="show_album_executor"):
+    user_id: Optional[int]
+    executor_id: int
 
 
 class AddCallbackDataFilters:
@@ -24,6 +31,22 @@ class ScrollingCallbackDataFilters:
     ):
         position: int
         offset: int
+
+    class AlbumsExecutorGlobalLibrary(
+        CallbackData, prefix="albums_executor_scrolling_global_library"
+    ):
+        executor_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+        position: int
+        offset: int
+
+    class ExecutorPageGlobalLibrary(
+        CallbackData, prefix="executor_scrolling_global_library"
+    ):
+        executor_id: int
+        user_id: Optional[int]
+        current_page_executor: int
 
 
 class UpdateCallbackDataFilters:

@@ -16,6 +16,8 @@ class KeyboardResponse(Enum):
     BACK_TO_THE_ADMIN_PANEL: str = "⬅ Назад к админ панели"
     BACK_TO_THE_USER_PANEL: str = "⬅ Назад к главной панели"
     BACK_TO_ALBUMS: str = "⬅ Назад к альбомам"
+    NOT_FOUND_EXECUTORS: str = "🤷🏻‍♀️ Нет загруженных исполнителей"
+    NOT_FOUND_ALBUMS: str = "🤷🏻‍♀️ Нет загруженных альбомов"
     UPDATE_PHOTO_EXECUTOR: str = "📆 Обновить Фото Исполнителя"
     UPDATE_PHOTO_ALBUM: str = "📆 Обновить Фото Альбома"
     UPDATE_PHOTO_COLLECTION_SONGS: str = "📆 Обновить Фото Сборника Песен"

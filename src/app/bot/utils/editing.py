@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List
 
 from core.response.messages import telegram_emoji
 
@@ -14,6 +14,7 @@ def get_info_executor(
         f"{name}\n{telegram_emoji.planet_earth}Страна: {country}\n\n"
         f"{telegram_emoji.piano_keys} Жанры: {genre_str}"
     )
+
     return data
 
 

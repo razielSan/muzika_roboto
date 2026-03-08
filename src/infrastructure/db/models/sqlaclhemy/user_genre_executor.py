@@ -74,8 +74,8 @@ class Executor(Base):
     name: Mapped[str]
     country: Mapped[str]
 
-    photo_file_id: Mapped[str]
-    photo_file_unique_id: Mapped[str]
+    photo_file_id: Mapped[Optional[str]] = mapped_column(nullable=True)
+    photo_file_unique_id: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     albums: Mapped[List["Album"]] = relationship(
         back_populates="executor",

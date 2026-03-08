@@ -1,8 +1,10 @@
 from typing import List
+
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from domain.entities.response import CollectionSongsResponse, ExecutorPageResponse
 from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.filters import (
     AddCallbackDataFilters,
@@ -12,7 +14,11 @@ from infrastructure.aiogram.filters import (
     BackMenuUserPanel,
     PlaySongsCollectionSongs,
 )
-from domain.entities.response import CollectionSongsResponse
+from infrastructure.aiogram.filters import ScrollingCallbackDataFilters
+from infrastructure.aiogram.keyboards.utils import build_pages
+
+
+### инлайн клавиатуры для сборника песен
 
 
 def get_buttons_for_song_collection_empty_user():
@@ -190,4 +196,114 @@ def get_confirmation_delete_song_button():
             callback_data=BackMenuUserPanel().pack(),
         )
     )
+    return inline_kb.as_markup()
+
+
+#### инланй клавиатуры для глобальной библиотеки
+
+
+def show_executor_global_collections(
+    limit_albums: int,
+    album_position: int,
+    executor: ExecutorPageResponse = None,
+):
+
+    inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
+
+    if not executor:  # если на странице нет исполнителей
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.NOT_FOUND_EXECUTORS,
+                callback_data="NOT_FOUND_EXECUTORS",
+            )
+        )
+
+    else:
+        albums = executor.albums
+        count_albums = len(albums)
+
+        albums = albums[album_position : album_position + limit_albums]
+        executor_id = executor.id
+        user_id = executor.user_id
+        total_pages = executor.total_pages
+        current_page = executor.current_page
+
+        if not albums:
+            inline_kb.row(
+                InlineKeyboardButton(
+                    text=KeyboardResponse.NOT_FOUND_ALBUMS,
+                    callback_data="NOT_FOUND_ALBUMS",
+                )
+            )
+        else:
+            for album in albums:
+                inline_kb.row(
+                    InlineKeyboardButton(
+                        text=f"({album.year}) {album.title}", callback_data="ok"
+                    )
+                )
+            buttons = []
+            has_prev = album_position > 0
+            has_next = album_position + limit_albums < count_albums
+            if has_prev:
+                buttons.append(
+                    InlineKeyboardButton(
+                        text=KeyboardResponse.BACK_BUTTON,
+                        callback_data=ScrollingCallbackDataFilters.AlbumsExecutorGlobalLibrary(
+                            executor_id=executor_id,
+                            user_id=user_id,
+                            current_page_executor=current_page,
+                            position=album_position,
+                            offset=-limit_albums,
+                        ).pack(),
+                    )
+                )
+            if has_next:
+                buttons.append(
+                    InlineKeyboardButton(
+                        text=KeyboardResponse.FORWARD_BUTTON,
+                        callback_data=ScrollingCallbackDataFilters.AlbumsExecutorGlobalLibrary(
+                            executor_id=executor_id,
+                            user_id=user_id,
+                            current_page_executor=current_page,
+                            position=album_position,
+                            offset=limit_albums,
+                        ).pack(),
+                    )
+                )
+            inline_kb.row(*buttons)
+
+            pages = build_pages(current=current_page, total=total_pages)
+            for index, page in enumerate(pages, start=1):
+                page_data = f"[{page}]" if page == current_page else page
+                if index == 1:
+                    inline_kb.row(
+                        InlineKeyboardButton(
+                            text=f"{page_data}",
+                            callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                                executor_id=executor_id,
+                                current_page_executor=page,
+                                user_id=user_id,
+                            ).pack(),
+                        )
+                    )
+                else:
+                    inline_kb.add(
+                        InlineKeyboardButton(
+                            text=f"{page_data}",
+                            callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                                executor_id=executor_id,
+                                current_page_executor=page,
+                                user_id=user_id,
+                            ).pack(),
+                        )
+                    )
+
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+            callback_data=BackMenuUserPanel().pack(),
+        )
+    )
+
     return inline_kb.as_markup()

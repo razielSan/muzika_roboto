@@ -13,19 +13,22 @@ NOT_FOUND = {
     "🤷🏻‍♀️ Попробуйте нажать /start",
     NotFoundCode.SONGS_NOT_FOUND.name: "⚠ Песни не найдены",
     NotFoundCode.SONG_POSITION_NOT_FOUND.name: "⚠ Песня c позицией {position} не найдена",
+    NotFoundCode.EXECUTORS_NOT_FOUND.name: "⚠ Не найден ни один исполнитель",
 }
 SUCCESS = {
     SuccessCode.ADD_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно создан",
     SuccessCode.ADD_SONGS_SUCCESS.name: "✅ Песни успешно добавлены",
-    SuccessCode.ADD_USER_SUCCESS.name:  "✅ Пользователь успешно добавлен",
+    SuccessCode.ADD_USER_SUCCESS.name: "✅ Пользователь успешно добавлен",
     SuccessCode.GET_SONGS_SUCCESS.name: "✅ Песни успешно получены",
+    SuccessCode.GET_EXECUTORS_SUCCESS: "✅ Исполнители успешно получены",
     SuccessCode.UPDATE_PHOTO_SUCCESS.name: "✅ Фото успешно изменено",
     SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name: "✅ Название "
     "песни успешно изменено\n\n✅ Новое название - {title}",
     SuccessCode.DELETE_SONGS_SUCCESS.name: "✅ Песни успешно удалены",
 }
 
-LIMIT_COLLECTION_SONGS = 3
+LIMIT_COLLECTION_SONGS: int = 3
+LIMIT_ALBUMS: int = 5
 
 
 def resolve_message(code: str):
@@ -50,11 +53,12 @@ class UserMessages:
         "❗️ Подтвердите"
         " песни для удаления\n\n✅ Количество: {count}\n✅ Позиции песен: {positions}"
     )
-    MAIN_MENU: str = "📻 Главное меню"
+    MAIN_MENU: str = "🎤 Главное меню"
     MY_MUSIC_COLLECTION: str = "📻 Моя Музыкальная Коллекция"
     MY_COLLECTION_OF_SONGS: str = "🎧 Мой сборник песен"
     NO_SONGS_WERE_DROPPED: str = "🤷🏻‍♀️ Не было сброшено песен"
     PRESS_ONE_OF_THE_BUTTONS: str = "👇 Нажмите одну из кнопок"
+    PRESSING_THE_BUTTON_AGAIN_EXECUTOR: str= "Исполнитель уже загружен"
     SONGS_WILL_BE_ADDED_IN_QUANTITY: str = (
         "✅ Будут добавлены песни\n\n✅ Количество {count}"
     )

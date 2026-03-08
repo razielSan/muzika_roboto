@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 
 
 @dataclass
@@ -10,8 +10,5 @@ class Executor:
     photo_file_id: str
     photo_file_unique_id: str
     user_id: Optional[int] = None
-    
-    @property
-    def is_global(self):
-        return self.user_id is None
-
+    albums: Optional[List] = None
+    genres: Optional[List] = None

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, UniqueConstraint, Index
@@ -19,8 +19,8 @@ class Album(Base):
         ForeignKey("executor.id", ondelete="CASCADE")
     )
 
-    photo_file_id: Mapped[str]
-    photo_file_unique_id: Mapped[str]
+    photo_file_id: Mapped[Optional[str]] = mapped_column(nullable=True)
+    photo_file_unique_id: Mapped[Optional[str]] = mapped_column(nullable=True)
 
     executor: Mapped["Executor"] = relationship(back_populates="albums")
     songs: Mapped[List["Song"]] = relationship(
@@ -36,3 +36,6 @@ class Album(Base):
         ),
         Index("idx_album_executor", "executor_id"),
     )
+
+    def __repr__(self):
+        return f"({self.year}) {self.title}"

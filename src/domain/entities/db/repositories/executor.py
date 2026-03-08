@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import Optional, Sequence
 from abc import abstractmethod, ABC
 from typing import List
 
-from domain.entities.db.models.executor import Executor
+from domain.entities.db.models.executor import Executor as DomainExecutor
 
 
 class ExecutorRepository(ABC):
@@ -15,5 +15,11 @@ class ExecutorRepository(ABC):
         genres: List,
         photo_file_id: str,
         photo_file_unique_id: str,
-    ) -> Optional[Executor]:
+    ) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
+    async def get_all_executors(
+        self, user_id: Optional[int] = None
+    ) -> Sequence[DomainExecutor]:
         pass

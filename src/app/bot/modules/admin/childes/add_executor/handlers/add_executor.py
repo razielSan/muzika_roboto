@@ -126,8 +126,8 @@ async def finish_add_executor_without_albums(
     name: str = message.text.strip()
     result = await add_executor_service.add_executor_without_albums(
         name=name,
-        genres_list_executor=["Неизвестно"],
-        country="Неизвестно",
+        genres_list_executor=["неизвестно"],
+        country="неизвестно",
         file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         file_unique_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_UNIQUE_ID,
     )
@@ -225,7 +225,7 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
             f"{telegram_emoji.pencil} Введите,снова, название исполнителя"
         )
         return
-    await state.update_data(name=message.text.lower().strip())
+    await state.update_data(name=message.text.strip())
 
     await message.answer(
         text=f"{telegram_emoji.pencil} Введите страну исполнителя\n\n"

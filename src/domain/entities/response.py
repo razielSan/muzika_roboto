@@ -3,6 +3,28 @@ from typing import Optional, List, Union
 
 
 @dataclass
+class AlbumResponse:
+    id: int
+    executor_id: int
+    year: int
+    title: str
+
+
+@dataclass
+class ExecutorPageResponse:
+    id: int
+    user_id: int
+    name: str
+    country: str
+    photo_file_id: int
+    photo_file_unique_id: int
+    current_page: int
+    total_pages: int
+    albums: List[AlbumResponse]
+    genres: List[str]
+
+
+@dataclass
 class CollectionSongsResponse:
     file_id: str
     file_unique_id: str

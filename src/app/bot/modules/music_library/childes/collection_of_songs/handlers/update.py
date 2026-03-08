@@ -18,7 +18,7 @@ from application.use_cases.db.collection_songs.update_title_song import (
 from application.use_cases.db.collection_songs.get_user_collection_songs import (
     GetUserCollectionSongs,
 )
-from application.use_cases.db.user.update_user_collection_songs_photo_file_id import (
+from application.use_cases.db.collection_songs.update_user_collection_songs_photo_file_id import (
     UpdateUserCollectionSongsPhotoFileId,
 )
 from domain.entities.db.models.user import User as UserDomain

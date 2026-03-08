@@ -2,8 +2,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 
 from infrastructure.db.settings import data_base_settings
 
-print(data_base_settings.DATABASE_DIR)
-
 
 class DataBaseHelper:
     def __init__(self, url: str = data_base_settings.ASYNC_SQLITE_BASE):

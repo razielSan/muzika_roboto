@@ -129,7 +129,7 @@ class AddExecutorService:
                             audio_path,
                             parsed_album.title,
                         )
-                        file_name: str = audio_path.parts[-1].lower()
+                        file_name: str = audio_path.parts[-1]
                         if msg.audio:
                             array_songs.append(
                                 SongResponse(
