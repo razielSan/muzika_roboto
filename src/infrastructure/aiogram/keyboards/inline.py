@@ -7,6 +7,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from domain.entities.response import CollectionSongsResponse, ExecutorPageResponse
 from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.filters import (
+    ShowAlbumExecutor,
     AddCallbackDataFilters,
     ScrollingCallbackDataFilters,
     UpdateCallbackDataFilters,
@@ -239,7 +240,13 @@ def show_executor_global_collections(
             for album in albums:
                 inline_kb.row(
                     InlineKeyboardButton(
-                        text=f"({album.year}) {album.title}", callback_data="ok"
+                        text=f"({album.year}) {album.title}",
+                        callback_data=ShowAlbumExecutor(
+                            album_id=album.id,
+                            user_id=user_id,
+                            executor_id=executor_id,
+                            current_page_executor=current_page,
+                        ).pack(),
                     )
                 )
             buttons = []
