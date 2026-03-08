@@ -1,6 +1,7 @@
 from typing import Union, Callable
 
 from aiogram.types import InputMediaPhoto, CallbackQuery
+from aiogram.exceptions import TelegramBadRequest
 
 from application.use_cases.db.music_library.get_executor_with_albums import (
     GetExecutorWihtAlbums,
@@ -69,8 +70,10 @@ class ShowExecutorPageService:
                             album_position=album_position,
                         ),
                     )
-                except Exception:
-                    await self.call.answer(text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR)
+                except TelegramBadRequest:
+                    await self.call.answer(
+                        text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR
+                    )
                 return
 
             # если исполнители не были найдены
