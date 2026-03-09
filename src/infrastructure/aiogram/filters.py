@@ -3,15 +3,15 @@ from typing import Optional
 from aiogram.filters.callback_data import CallbackData
 
 
-class BackMenuUserPanel(CallbackData, prefix="back_menu_user_panel"):
+class BackMenuUserPanel(CallbackData, prefix="back_menu_u_p"):
     pass
 
 
-class PlaySongsCollectionSongs(CallbackData, prefix="play_songs_collection_songs"):
+class PlaySongsCollectionSongs(CallbackData, prefix="play_s_coll_s"):
     song_id: int
 
 
-class ShowAlbumExecutor(CallbackData, prefix="show_album_executor"):
+class ShowAlbumExecutor(CallbackData, pref="show_al_ex"):
     album_id: int
     user_id: Optional[int]
     executor_id: int
@@ -19,69 +19,66 @@ class ShowAlbumExecutor(CallbackData, prefix="show_album_executor"):
 
 
 class AddCallbackDataFilters:
-    class SongCollectionSongs(CallbackData, prefix="add_collection_song"):
+    class SongCollectionSongs(CallbackData, prefix="add_coll_s"):
         pass
 
 
 class ScrollingCallbackDataFilters:
-    class SongCollectionSongs(CallbackData, prefix="scrolling_collection_song"):
+    class SongCollectionSongs(CallbackData, prefix="scr_s_coll_s"):
         position: int
         offset: int
 
-    class DeleteMenuSongColletionSongs(
-        CallbackData, prefix="delete_menu_scrolling_collection_songs"
-    ):
+    class DeleteMenuSongColletionSongs(CallbackData, prefix="scr_del_menu_coll_s"):
+        """Фильтря для пролистывания песен в меню удаления песен."""
+
         position: int
         offset: int
 
-    class AlbumsExecutorGlobalLibrary(
-        CallbackData, prefix="albums_executor_scrolling_global_library"
-    ):
+    class SongsAlbumGlobalLibrary(CallbackData, prefix="scr_s_al_gl_lib"):
+        position: int
+        offset: int
+        executor_id: int
+        current_page_executor: int
+        album_id: int
+
+    class AlbumsExecutorGlobalLibrary(CallbackData, prefix="scr_al_ex_gl_lib"):
         executor_id: int
         user_id: Optional[int]
         current_page_executor: int
         position: int
         offset: int
 
-    class ExecutorPageGlobalLibrary(
-        CallbackData, prefix="executor_scrolling_global_library"
-    ):
+    class ExecutorPageGlobalLibrary(CallbackData, prefix="scr_ex_p_gl_lib"):
         executor_id: int
         user_id: Optional[int]
         current_page_executor: int
 
 
 class UpdateCallbackDataFilters:
-    class SongTitleCollectionSongs(CallbackData, prefix="update_tilte_song_collection"):
+    class SongTitleCollectionSongs(CallbackData, prefix="upd_s_t_coll_s"):
         pass
 
-    class UserCollectionSongsPhotoFileId(
-        CallbackData, prefix="update_Аuser_collection_songs_file_id"
-    ):
+    class UserCollectionSongsPhotoFileId(CallbackData, prefix="upd_u_coll_s_p_f_id"):
         pass
 
 
 class DeleteCallbackDataFilters:
-    class SongCollectionSongs(CallbackData, prefix="delete_songs_collection_songs"):
+    class SongCollectionSongs(CallbackData, prefix="del_s_coll_s"):
         pass
 
-    class ButtonsDeleteSongColletionSongs(
-        CallbackData, prefix="delete_buttons_song_collection_songs"
-    ):
+    class ButtonsDeleteSongColletionSongs(CallbackData, prefix="del_b_del_s_coll_s"):
         """Фильтр для размечивания песен как на готовые к удалению."""
 
         song_id: int
         position: int
 
-    class ConfirmDeleteSongCollectionSongs(
-        CallbackData, prefix="confirm_delete_songs_collection_songs"
-    ):
+    class ConfirmDeleteSongCollectionSongs(CallbackData, prefix="del_con_del_s_coll_s"):
         """Подтверждение на удаление песен."""
 
         pass
 
     class CompleteDeleteSongCollectionSongs(
-        CallbackData, prefix="complete_del_songs_coll_songs"
+        CallbackData, prefix="del_com_del_s_coll_s"
     ):
         """Cценарий удаления песен."""
 
