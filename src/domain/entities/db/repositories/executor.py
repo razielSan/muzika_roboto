@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 from abc import abstractmethod, ABC
 from typing import List
 
@@ -9,7 +9,7 @@ class ExecutorRepository(ABC):
     @abstractmethod
     async def create_user_executor(
         self,
-        user_id: int,
+        user_id: Union[int, None],
         name: str,
         country: str,
         genres: List,
@@ -22,4 +22,12 @@ class ExecutorRepository(ABC):
     async def get_all_executors(
         self, user_id: Optional[int] = None
     ) -> Sequence[DomainExecutor]:
+        pass
+
+    @abstractmethod
+    async def get_executor(
+        self,
+        user_id: Union[int, None],
+        executor_id: int,
+    ) -> Optional[DomainExecutor]:
         pass
