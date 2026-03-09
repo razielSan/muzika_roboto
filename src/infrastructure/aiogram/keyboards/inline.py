@@ -4,7 +4,12 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from domain.entities.response import CollectionSongsResponse, ExecutorPageResponse
+from domain.entities.response import (
+    CollectionSongsResponse,
+    ExecutorPageResponse,
+    SongResponse,
+    AlbumPageResponse,
+)
 from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.filters import (
     ShowAlbumExecutor,
@@ -313,4 +318,75 @@ def show_executor_global_collections(
         )
     )
 
+    return inline_kb.as_markup()
+
+
+def show_album_collections(
+    songs: List[SongResponse],
+    album: AlbumPageResponse,
+    song_position: int,
+    limit_songs: int,
+):
+    inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    if not songs:  # в альбоме нет песен
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.NOT_FOUND_SONGS,
+                callback_data="NOT_FOUND_SONGS",
+            )
+        )
+
+    else:
+        songs = album.songs
+        number_of_songs = len(songs)
+        executor_id = album.executor_id
+        album_id = album.id
+
+        songs = songs[song_position : song_position + limit_songs]
+        current_page_executor: int = album.current_page_executor
+
+        for song in songs:
+            inline_kb.row(
+                InlineKeyboardButton(
+                    text=f"{song.position}. {song.title}",
+                    callback_data="data",
+                ),
+            )
+        buttons = []
+        has_prev = song_position > 0
+        has_next = song_position + limit_songs < number_of_songs
+        if has_prev:
+            buttons.append(
+                InlineKeyboardButton(
+                    text=KeyboardResponse.BACK_BUTTON,
+                    callback_data=ScrollingCallbackDataFilters.SongsAlbumGlobalLibrary(
+                        position=song_position,
+                        offset=-limit_songs,
+                        executor_id=executor_id,
+                        current_page_executor=current_page_executor,
+                        album_id=album_id,
+                    ).pack(),
+                )
+            )
+        if has_next:
+            buttons.append(
+                InlineKeyboardButton(
+                    text=KeyboardResponse.FORWARD_BUTTON,
+                    callback_data=ScrollingCallbackDataFilters.SongsAlbumGlobalLibrary(
+                        position=song_position,
+                        offset=limit_songs,
+                        executor_id=executor_id,
+                        current_page_executor=current_page_executor,
+                        album_id=album_id,
+                    ).pack(),
+                )
+            )
+        inline_kb.row(*buttons)
+
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+            callback_data=BackMenuUserPanel().pack(),
+        )
+    )
     return inline_kb.as_markup()
