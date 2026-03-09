@@ -1,4 +1,4 @@
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -16,7 +16,7 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
 
     async def create_user_executor(
         self,
-        user_id: int,
+        user_id: Union[int, None],
         name: str,
         country: str,
         genres: List[Genre],
@@ -53,3 +53,15 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         executors = stmt.all()
         executors.sort(key=lambda x: x.name.casefold())
         return executors
+
+    async def get_executor(
+        self,
+        user_id: Union[int, None],
+        executor_id: int,
+    ) -> Optional[Executor]:
+        executor = await self.session.scalar(
+            select(self.model).where(
+                self.model.user_id == user_id, self.model.id == executor_id
+            )
+        )
+        return executor
