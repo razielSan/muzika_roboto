@@ -2,10 +2,6 @@ from dataclasses import dataclass
 from enum import Enum
 
 
-LIMIT_SONGS: int = 5
-LIMIT_ALBUMS: int = 5
-
-
 class KeyboardResponse(Enum):
     YES: str = "✅ [ Да ]"
     NO: str = "❌ [ Нет ]"
@@ -18,6 +14,7 @@ class KeyboardResponse(Enum):
     BACK_TO_ALBUMS: str = "⬅ Назад к альбомам"
     NOT_FOUND_EXECUTORS: str = "🤷🏻‍♀️ Нет загруженных исполнителей"
     NOT_FOUND_ALBUMS: str = "🤷🏻‍♀️ Нет загруженных альбомов"
+    NOT_FOUND_SONGS: str = "🤷🏻‍♀️ Нет загруженных песен"
     UPDATE_PHOTO_EXECUTOR: str = "📆 Обновить Фото Исполнителя"
     UPDATE_PHOTO_ALBUM: str = "📆 Обновить Фото Альбома"
     UPDATE_PHOTO_COLLECTION_SONGS: str = "📆 Обновить Фото Сборника Песен"
