@@ -34,11 +34,11 @@ from app.bot.modules.admin.childes.base_music.services.base_music import (
 )
 from app.bot.view_model import SongResponse
 from app.bot.modules.admin.utils.admin import callback_update_admin_panel_media_photo
-from core.error_handlers.helpers import Result
-from infrastructure.aiogram.response import LIMIT_ALBUMS, LIMIT_SONGS
-from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from app.bot.utils.editing import get_info_album, get_info_executor
 from app.bot.view_model import ExecutorPageRepsonse
+from infrastructure.aiogram.messages import LIMIT_ALBUMS, LIMIT_SONGS
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
+from core.error_handlers.helpers import Result
 
 
 router: Router = Router(name=__name__)
