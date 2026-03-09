@@ -20,10 +20,10 @@ from app.bot.utils.navigator import (
     open_album_pages,
     open_album_pages_with_not_songs,
 )
-from infrastructure.aiogram.response import LIMIT_SONGS
+from app.bot.modules.admin.utils.admin import get_admin_panel
+from infrastructure.aiogram.messages import LIMIT_SONGS
 from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from core.response.response_data import Result
-from app.bot.modules.admin.utils.admin import get_admin_panel
 
 
 router: Router = Router(name=__name__)
