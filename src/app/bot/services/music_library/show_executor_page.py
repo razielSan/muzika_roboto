@@ -27,7 +27,7 @@ class ShowExecutorPageService:
     async def execute(
         self,
         get_information_executor: Callable,
-        EXECUTOR_DEFAULT_PHOTO_FILE_ID: str,
+        executor_default_photo_file_id: str,
         user_id: Union[int, None],
         limit_albums: int,
         album_position=0,
@@ -57,7 +57,7 @@ class ShowExecutorPageService:
                     name=executor.name,
                     country=executor.country,
                     genres=executor.genres,
-                    len_albums=len(executor.albums),
+                    number_of_albums=len(executor.albums),
                 )
                 try:
                     await self.call.message.edit_media(
@@ -81,7 +81,7 @@ class ShowExecutorPageService:
             await self.call.message.edit_media(
                 media=InputMediaPhoto(
                     caption=not_found_message,
-                    media=EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+                    media=executor_default_photo_file_id,
                 ),
                 reply_markup=show_executor_global_collections(
                     executor=None,
