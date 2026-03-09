@@ -21,6 +21,7 @@ SUCCESS = {
     SuccessCode.ADD_USER_SUCCESS.name: "✅ Пользователь успешно добавлен",
     SuccessCode.GET_SONGS_SUCCESS.name: "✅ Песни успешно получены",
     SuccessCode.GET_EXECUTORS_SUCCESS: "✅ Исполнители успешно получены",
+    SuccessCode.GET_ALBUMS_SUCCESS.name: "✅ Альбомы успешно получены",
     SuccessCode.UPDATE_PHOTO_SUCCESS.name: "✅ Фото успешно изменено",
     SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name: "✅ Название "
     "песни успешно изменено\n\n✅ Новое название - {title}",
@@ -29,6 +30,7 @@ SUCCESS = {
 
 LIMIT_COLLECTION_SONGS: int = 3
 LIMIT_ALBUMS: int = 5
+LIMIT_SONGS: int = 5
 
 
 def resolve_message(code: str):
@@ -58,7 +60,7 @@ class UserMessages:
     MY_COLLECTION_OF_SONGS: str = "🎧 Мой сборник песен"
     NO_SONGS_WERE_DROPPED: str = "🤷🏻‍♀️ Не было сброшено песен"
     PRESS_ONE_OF_THE_BUTTONS: str = "👇 Нажмите одну из кнопок"
-    PRESSING_THE_BUTTON_AGAIN_EXECUTOR: str= "Исполнитель уже загружен"
+    PRESSING_THE_BUTTON_AGAIN_EXECUTOR: str = "Исполнитель уже загружен"
     SONGS_WILL_BE_ADDED_IN_QUANTITY: str = (
         "✅ Будут добавлены песни\n\n✅ Количество {count}"
     )
