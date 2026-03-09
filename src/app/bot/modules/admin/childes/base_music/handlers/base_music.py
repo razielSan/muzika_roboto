@@ -28,7 +28,7 @@ from app.bot.filters.admin_filters import (
 from app.bot.modules.admin.utils.admin import callback_update_admin_panel_media_photo
 from app.bot.view_model import ExecutorResponse, AlbumResponse
 from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
-from infrastructure.aiogram.response import LIMIT_SONGS, LIMIT_ALBUMS
+from infrastructure.aiogram.messages import LIMIT_SONGS, LIMIT_ALBUMS
 from core.response.response_data import Result
 
 
