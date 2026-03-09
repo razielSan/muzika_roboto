@@ -3,11 +3,33 @@ from typing import Optional, List, Union
 
 
 @dataclass
+class SongResponse:
+    id: int
+    title: str
+    position: int
+    file_id: str
+    file_unique_id: str
+    album_id: int
+
+
+@dataclass
 class AlbumResponse:
     id: int
     executor_id: int
     year: int
     title: str
+
+
+@dataclass
+class AlbumPageResponse:
+    id: int
+    executor_id: int
+    year: int
+    title: int
+    photo_file_id: str
+    photo_file_unique_id: str
+    current_page_executor: int
+    songs: List[SongResponse]
 
 
 @dataclass
