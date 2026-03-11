@@ -5,15 +5,18 @@ ERRORS = {
     ErorrCode.UNKNOWN_ERROR.name: "❌ Произошла неизвестная ошибка",
     ErorrCode.USER_ALREADY_EXISTS.name: "⚠ Пользователь уже существует",
     ErorrCode.EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель уже существует",
+    ErorrCode.USER_EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнителя уже в библиотеке",
 }
 
 
 NOT_FOUND = {
     NotFoundCode.USER_NOT_FOUND.name: "⚠ Пользователь не найден\n\n"
-    "🤷🏻‍♀️ Попробуйте нажать /start",
+    "🤷🏻‍♀️ Нажмите /start для регистрации",
     NotFoundCode.SONGS_NOT_FOUND.name: "⚠ Песни не найдены",
+    NotFoundCode.SONG_NOT_FOUND.name: "⚠ Песня не найдена",
     NotFoundCode.SONG_POSITION_NOT_FOUND.name: "⚠ Песня c позицией {position} не найдена",
     NotFoundCode.EXECUTORS_NOT_FOUND.name: "⚠ Не найден ни один исполнитель",
+    NotFoundCode.ALBUM_NOT_FOUND.name: "⚠ Альбом не найден",
 }
 SUCCESS = {
     SuccessCode.ADD_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно создан",
@@ -26,6 +29,7 @@ SUCCESS = {
     SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name: "✅ Название "
     "песни успешно изменено\n\n✅ Новое название - {title}",
     SuccessCode.DELETE_SONGS_SUCCESS.name: "✅ Песни успешно удалены",
+    SuccessCode.SYNC_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно добавлен в библиотеку",
 }
 
 LIMIT_COLLECTION_SONGS: int = 3

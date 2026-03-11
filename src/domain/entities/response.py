@@ -23,19 +23,21 @@ class AlbumResponse:
 @dataclass
 class AlbumPageResponse:
     id: int
+    user_id: Optional[int]
     executor_id: int
     year: int
     title: int
     photo_file_id: str
     photo_file_unique_id: str
     current_page_executor: int
+    album_position: int
     songs: List[SongResponse]
 
 
 @dataclass
 class ExecutorPageResponse:
     id: int
-    user_id: int
+    user_id: Optional[int]
     name: str
     country: str
     photo_file_id: int

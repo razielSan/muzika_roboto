@@ -12,6 +12,10 @@ from infrastructure.db.repositories.sqlaclhemy.collection_songs import (
     SQLAlchemyCollectionSongsRepository,
 )
 from infrastructure.db.repositories.sqlaclhemy.album import SQLAlchemyAlbumRepository
+from infrastructure.db.repositories.sqlaclhemy.song import SQLAlchemySongRepository
+from infrastructure.db.repositories.sqlaclhemy.user_executor import (
+    SQLAlchemyUserExecutorRepository,
+)
 
 
 class UnitOfWork(AbstractUnitOfWork):
@@ -29,6 +33,15 @@ class UnitOfWork(AbstractUnitOfWork):
         self.albums: SQLAlchemyAlbumRepository = SQLAlchemyAlbumRepository(
             session=self.session
         )
+        self.songs: SQLAlchemySongRepository = SQLAlchemySongRepository(
+            session=self.session
+        )
+        self.user_executors: SQLAlchemyUserExecutorRepository = (
+            SQLAlchemyUserExecutorRepository(
+                session=self.session,
+            )
+        )
+
         return self
 
     async def __aexit__(self, exc_type, exc, tb):

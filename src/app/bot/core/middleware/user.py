@@ -25,6 +25,7 @@ class UserMiddleware(BaseMiddleware):
         async with UnitOfWork() as uwo:
             user: UserDomain = await uwo.users.get_user_by_telegram(telegram=telegram_id)
             if not user:  # если пользователь не найден
+                user = await uwo.users.create_user()
                 state: FSMContext = data.get("state")
                 await state.clear()
                 error_message: str = resolve_message(code=NotFoundCode.USER_NOT_FOUND.name)

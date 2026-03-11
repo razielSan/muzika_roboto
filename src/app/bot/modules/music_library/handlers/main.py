@@ -6,10 +6,12 @@ from aiogram.filters.state import StateFilter
 from aiogram.fsm.context import FSMContext
 
 from app.bot.modules.music_library.settings import settings
+from app.bot.settings import settings as bot_settings
 from app.bot.modules.music_library.services.collection_songs import (
     show_user_collection,
     callback_show_user_collection,
 )
+from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
 from app.bot.modules.music_library.response import get_keyboards_menu_buttons
 from app.bot.utils.delete import delete_previous_message
 from application.use_cases.db.collection_songs.get_user_collection_songs import (
@@ -20,9 +22,10 @@ from domain.entities.response import (
 )
 from domain.entities.db.models.user import User as UserDomain
 from infrastructure.aiogram.messages import user_messages
-from infrastructure.aiogram.filters import BackMenuUserPanel
-from infrastructure.aiogram.messages import LIMIT_COLLECTION_SONGS
+from infrastructure.aiogram.filters import BackMenuUserPanel, BackExecutorPage
+from infrastructure.aiogram.messages import LIMIT_COLLECTION_SONGS, LIMIT_ALBUMS
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.db.utils.editing import get_information_executor
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
 
@@ -147,4 +150,30 @@ async def callback_music_library_cancel_handler(
             caption=settings.MENU_CALLBACK_TEXT,
         ),
         reply_markup=get_keyboards_menu_buttons,
+    )
+
+
+@router.callback_query(BackExecutorPage.filter())
+async def get_executor_page_panel(
+    call: CallbackQuery,
+    callback_data: BackExecutorPage,
+):
+    """Сценария для показа исполнителя с альбомами при нажатии кнопки возврата."""
+
+    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    user_id = callback_data.user_id
+    album_position = callback_data.album_position
+    current_page_executor = callback_data.current_page
+
+    await ShowExecutorPageService(
+        uow=UnitOfWork,
+        logging_data=logging_data,
+        call=call,
+    ).execute(
+        user_id=user_id,
+        get_information_executor=get_information_executor,
+        executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+        limit_albums=LIMIT_ALBUMS,
+        album_position=album_position,
+        current_page=current_page_executor,
     )

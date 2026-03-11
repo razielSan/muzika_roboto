@@ -18,7 +18,10 @@ from infrastructure.aiogram.filters import (
     UpdateCallbackDataFilters,
     DeleteCallbackDataFilters,
     BackMenuUserPanel,
+    BackExecutorPage,
     PlaySongsCollectionSongs,
+    PlaySongsAlbums,
+    SyncExecutor,
 )
 from infrastructure.aiogram.filters import ScrollingCallbackDataFilters
 from infrastructure.aiogram.keyboards.utils import build_pages
@@ -212,6 +215,7 @@ def show_executor_global_collections(
     limit_albums: int,
     album_position: int,
     executor: ExecutorPageResponse = None,
+    sync_button: bool = True,
 ):
 
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
@@ -228,6 +232,7 @@ def show_executor_global_collections(
         albums = executor.albums
         count_albums = len(albums)
 
+        album_position = max(0, album_position)  # страховка
         albums = albums[album_position : album_position + limit_albums]
         executor_id = executor.id
         user_id = executor.user_id
@@ -247,6 +252,7 @@ def show_executor_global_collections(
                     InlineKeyboardButton(
                         text=f"({album.year}) {album.title}",
                         callback_data=ShowAlbumExecutor(
+                            album_position=album_position,
                             album_id=album.id,
                             user_id=user_id,
                             executor_id=executor_id,
@@ -310,6 +316,12 @@ def show_executor_global_collections(
                             ).pack(),
                         )
                     )
+            inline_kb.row(
+                InlineKeyboardButton(
+                    text=KeyboardResponse.SYNC_EXECUTOR,
+                    callback_data=SyncExecutor(executor_id=executor_id).pack(),
+                )
+            )
 
     inline_kb.row(
         InlineKeyboardButton(
@@ -342,6 +354,7 @@ def show_album_collections(
         executor_id = album.executor_id
         album_id = album.id
 
+        song_position: int = max(0, song_position)  # страховка
         songs = songs[song_position : song_position + limit_songs]
         current_page_executor: int = album.current_page_executor
 
@@ -349,8 +362,11 @@ def show_album_collections(
             inline_kb.row(
                 InlineKeyboardButton(
                     text=f"{song.position}. {song.title}",
-                    callback_data="data",
-                ),
+                    callback_data=PlaySongsAlbums(
+                        song_id=song.id,
+                        album_id=song.album_id,
+                    ).pack(),
+                )
             )
         buttons = []
         has_prev = song_position > 0
@@ -383,6 +399,16 @@ def show_album_collections(
             )
         inline_kb.row(*buttons)
 
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.BACK_TO_ALBUMS,
+            callback_data=BackExecutorPage(
+                album_position=album.album_position,
+                current_page=album.current_page_executor,
+                user_id=album.user_id,
+            ).pack(),
+        )
+    )
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.BACK_TO_THE_USER_PANEL,

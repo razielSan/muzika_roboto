@@ -1,7 +1,7 @@
 from typing import Union
 
 from domain.entities.db.uow import AbstractUnitOfWork
-from domain.errors.error_code import ErorrCode, SuccessCode
+from domain.errors.error_code import ErorrCode, SuccessCode, NotFoundCode
 from domain.entities.db.models.album import Album as AlbumDomain
 from domain.entities.db.models.executor import Executor as ExecutorDomain
 from domain.entities.response import AlbumPageResponse, SongResponse
@@ -23,6 +23,7 @@ class GetAlbumWithSongs:
         user_id: Union[int, None],
         executor_id: int,
         album_id: int,
+        album_position=0,
         current_page_executor=1,
     ) -> Result:
         async with self.uow as uow:
@@ -32,6 +33,8 @@ class GetAlbumWithSongs:
             album: AlbumDomain = await uow.albums.get_album(
                 executor_id=executor.id, album_id=album_id
             )
+            if not album:
+                return ok(data=[], empty=True, code=NotFoundCode.ALBUM_NOT_FOUND.name)
             songs = [
                 SongResponse(
                     id=song.id,
@@ -44,6 +47,7 @@ class GetAlbumWithSongs:
                 for song in album.songs
             ]
             response_album = AlbumPageResponse(
+                user_id=user_id,
                 id=album.id,
                 executor_id=album.executor_id,
                 year=album.year,
@@ -52,5 +56,6 @@ class GetAlbumWithSongs:
                 songs=songs,
                 title=album.title,
                 current_page_executor=current_page_executor,
+                album_position=album_position,
             )
         return ok(data=response_album, code=SuccessCode.GET_ALBUMS_SUCCESS.name)

@@ -30,10 +30,11 @@ class ShowAlbumPageService:
         user_id: Union[int, None],
         limit_songs: int,
         song_position=0,
+        album_position: int = 0,
         current_page_executor=1,
     ) -> Result:
         """
-        Application service для сценария пока альбома с песнями.
+        Application service для сценария показа альбома с песнями.
 
         Отвечает за:
         - отправку сообщений пользователю
@@ -51,8 +52,14 @@ class ShowAlbumPageService:
             executor_id=executor_id,
             album_id=album_id,
             current_page_executor=current_page_executor,
+            album_position=album_position,
         )
         if response_album.ok:
+            if response_album.empty:
+                not_found_message = resolve_message(code=response_album.code)
+                await self.call.message.answer(text=not_found_message)
+                return
+
             album = response_album.data
 
             info_album = get_information_album(

@@ -48,6 +48,6 @@ async def main(
         pass
 
     await message.answer(
-        text=f"☕ Будь как дома, {name}",
+        text=f"☕ Будь как дома, {name}\n\n☕ Музыкальная библиотека открыта",
         reply_markup=ReplyKeyboardRemove(),
     )

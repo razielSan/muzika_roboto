@@ -10,6 +10,7 @@ from domain.entities.db.uow import AbstractUnitOfWork
 from domain.entities.response import ExecutorPageResponse
 from infrastructure.aiogram.keyboards.inline import show_executor_global_collections
 from infrastructure.aiogram.messages import resolve_message, user_messages
+from infrastructure.aiogram.response import KeyboardResponse
 from core.response.response_data import Result, LoggingData
 
 
@@ -59,6 +60,7 @@ class ShowExecutorPageService:
                     genres=executor.genres,
                     number_of_albums=len(executor.albums),
                 )
+
                 try:
                     await self.call.message.edit_media(
                         media=InputMediaPhoto(
@@ -90,6 +92,7 @@ class ShowExecutorPageService:
                 ),
             )
             return
+
         if not result.ok:
             error_message: str = resolve_message(code=result.error.code)
             await self.call.message.answer(text=error_message)

@@ -7,15 +7,31 @@ class BackMenuUserPanel(CallbackData, prefix="back_menu_u_p"):
     pass
 
 
+class BackExecutorPage(CallbackData, prefix="back_exc_p"):
+    user_id: Optional[int]
+    album_position: int
+    current_page: int
+
+
+class PlaySongsAlbums(CallbackData, prefix="play_s_coll_s"):
+    song_id: int
+    album_id: int
+
+
 class PlaySongsCollectionSongs(CallbackData, prefix="play_s_coll_s"):
     song_id: int
 
 
-class ShowAlbumExecutor(CallbackData, pref="show_al_ex"):
+class ShowAlbumExecutor(CallbackData, prefix="show_al_ex"):
+    album_position: int
     album_id: int
     user_id: Optional[int]
     executor_id: int
     current_page_executor: int
+
+
+class SyncExecutor(CallbackData, prefix="sync_ex"):
+    executor_id: int
 
 
 class AddCallbackDataFilters:
