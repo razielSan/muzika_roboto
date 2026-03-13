@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, List
 from abc import abstractmethod, ABC
 
 from domain.entities.db.models.user import User
+from domain.entities.db.models.executor import Executor
 
 
 class UserRepository(ABC):
@@ -20,4 +21,8 @@ class UserRepository(ABC):
         photo_file_id: str,
         photo_file_unique_id: str,
     ) -> Optional[User]:
+        pass
+
+    @abstractmethod
+    async def get_library_executors(self, user_id: int) -> List[Executor]:
         pass
