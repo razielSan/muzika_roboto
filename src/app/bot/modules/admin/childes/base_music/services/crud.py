@@ -1,15 +1,15 @@
 from typing import List, Optional
 
 from app.bot.db.uow import UnitOfWork
+from app.bot.utils.editing import get_info_executor, get_info_album
+from app.bot.view_model import SongResponse
+from app.bot.modules.admin.childes.base_music.settings import settings
+from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from core.error_handlers.helpers import ok, fail
 from core.response.response_data import LoggingData
-from app.bot.utils.editing import get_info_executor, get_info_album
 from core.error_handlers.helpers import Result
-from app.bot.view_model import SongResponse
-from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
 from core.error_handlers.decorator import safe_async_execution
 from core.logging.api import get_loggers
-from app.bot.modules.admin.childes.base_music.settings import settings
 
 
 class CRUDService:
@@ -227,8 +227,7 @@ class CRUDService:
         """
         async with UnitOfWork() as uow:
             await uow.executors.update_name(
-                executor_id=executor_id,
-                name=name,
+                executor_id=executor_id, name=name, name_lower=name.casefold()
             )
             executors = await uow.executors.get_all_executors()
             current_page = 1
