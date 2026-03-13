@@ -11,7 +11,6 @@ from app.bot.modules.music_library.utils.music_library import (
 )
 from app.bot.modules.music_library.services.collection_songs import show_user_collection
 from app.bot.modules.music_library.childes.collection_of_songs.settings import settings
-from app.bot.modules.music_library.settings import settings as music_library_settings
 from application.use_cases.db.collection_songs.update_title_song import (
     UpdateTitleSongCollectionSongs,
 )
