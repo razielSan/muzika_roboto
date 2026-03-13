@@ -60,38 +60,48 @@ class ShowExecutorPageService:
                     genres=executor.genres,
                     number_of_albums=len(executor.albums),
                 )
+                if user_id:  # пользовательская библиотека
+                    if executor.is_global:  # глобальный исполнитель
+                        try:
+                            await self.call.message.edit_media(
+                                media=InputMediaPhoto(
+                                    caption=info_executor, media=executor.photo_file_id
+                                ),
+                                reply_markup=show_executor_global_collections(
+                                    executor=executor,
+                                    limit_albums=limit_albums,
+                                    album_position=album_position,
+                                    is_sync_executor=False,
+                                ),
+                            )
+                        except TelegramBadRequest:
+                            await self.call.answer(
+                                text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR
+                            )
+                        return
 
-                try:
-                    await self.call.message.edit_media(
-                        media=InputMediaPhoto(
-                            caption=info_executor, media=executor.photo_file_id
-                        ),
-                        reply_markup=show_executor_global_collections(
-                            executor=executor,
-                            limit_albums=limit_albums,
-                            album_position=album_position,
-                        ),
-                    )
-                except TelegramBadRequest:
-                    await self.call.answer(
-                        text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR
-                    )
-                return
+                else:  # глобальная библиотека
+                    try:
+                        await self.call.message.edit_media(
+                            media=InputMediaPhoto(
+                                caption=info_executor, media=executor.photo_file_id
+                            ),
+                            reply_markup=show_executor_global_collections(
+                                executor=executor,
+                                limit_albums=limit_albums,
+                                album_position=album_position,
+                                is_sync_executor=True,
+                            ),
+                        )
+                    except TelegramBadRequest:
+                        await self.call.answer(
+                            text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR
+                        )
+                    return
 
             # если исполнители не были найдены
             not_found_message: str = resolve_message(code=result.code)
-            await self.call.message.edit_media(
-                media=InputMediaPhoto(
-                    caption=not_found_message,
-                    media=executor_default_photo_file_id,
-                ),
-                reply_markup=show_executor_global_collections(
-                    executor=None,
-                    limit_albums=limit_albums,
-                    album_position=album_position,
-                ),
-            )
-            return
+            await self.call.message.answer(text=not_found_message)
 
         if not result.ok:
             error_message: str = resolve_message(code=result.error.code)
