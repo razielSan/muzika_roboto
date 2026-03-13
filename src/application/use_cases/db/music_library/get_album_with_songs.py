@@ -27,9 +27,17 @@ class GetAlbumWithSongs:
         current_page_executor=1,
     ) -> Result:
         async with self.uow as uow:
-            executor: ExecutorDomain = await uow.executors.get_executor(
-                user_id=user_id, executor_id=executor_id
-            )
+            if user_id:  # пользовательская библиотека
+                executor: ExecutorDomain = (
+                    await uow.executors.get_executor_by_user_library(
+                        executor_id=executor_id
+                    )
+                )
+            if not user_id:  # глобальная
+                executor: ExecutorDomain = await uow.executors.get_executor(
+                    user_id=None,
+                    executor_id=executor_id,
+                )
             album: AlbumDomain = await uow.albums.get_album(
                 executor_id=executor.id, album_id=album_id
             )
