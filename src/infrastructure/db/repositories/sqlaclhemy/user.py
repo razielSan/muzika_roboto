@@ -1,10 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import Optional
+from typing import Optional, Union, List
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from infrastructure.db.models.sqlaclhemy import User
+from infrastructure.db.models.sqlaclhemy import Executor
 from domain.entities.db.repositories.user import UserRepository
 from domain.exceptions.db.user import UserAlreadyExists
 
@@ -35,7 +36,32 @@ class SQLAlchemyUserRepository(UserRepository):
             .where(self.model.telegram == telegram)
             .options(selectinload(self.model.library_executors))
         )
+
         return user
+
+    async def get_library_executors(self, user_id: int) -> List[Executor]:
+        user: Optional[User] = await self.session.scalar(
+            select(self.model)
+            .where(self.model.id == user_id)
+            .options(
+                selectinload(self.model.library_executors).selectinload(
+                    Executor.genres
+                ),
+                selectinload(self.model.library_executors).selectinload(
+                    Executor.albums
+                ),
+                selectinload(self.model.executors).selectinload(Executor.genres),
+                selectinload(self.model.executors).selectinload(Executor.albums),
+            )
+        )
+        executors = []
+        library_executors: Union[List, List[Executor]] = user.library_executors
+        user_executors: Union[List, List[Executor]] = user.executors
+        executors.extend(library_executors)
+        executors.extend(user_executors)
+        if executors:
+            executors.sort(key=lambda x: x.name.casefold())
+        return executors
 
     async def update_collection_songs_photo_file_id(
         self,
