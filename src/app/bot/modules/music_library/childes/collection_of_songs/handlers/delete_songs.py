@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Dict, Set
 
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
