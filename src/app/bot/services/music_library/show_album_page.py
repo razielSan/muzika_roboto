@@ -74,6 +74,7 @@ class ShowAlbumPageService:
                     album=album,
                     song_position=song_position,
                     limit_songs=limit_songs,
+                    user_id=user_id,
                 ),
             )
 
