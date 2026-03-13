@@ -47,6 +47,7 @@ class AddExecutorService:
                 country=country,
                 file_id=file_id,
                 file_unique_id=file_unique_id,
+                name_lower=name.casefold()
             )
         return ok(data=SuccessCode.ADD_EXECUTOR_SUCCESS.name)
 
@@ -100,6 +101,7 @@ class AddExecutorService:
                         country=country,
                         file_id=file_id,
                         file_unique_id=file_unique_id,
+                        name_lower=executor_name.casefold()
                     )
                 executor_id = executor.id
 
