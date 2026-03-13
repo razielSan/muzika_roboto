@@ -37,7 +37,8 @@ class AlbumPageResponse:
 @dataclass
 class ExecutorPageResponse:
     id: int
-    user_id: Optional[int]
+    current_user_id: Optional[int]  # user_id пользователя для скроллинга
+    is_global: Optional[bool]  # для определения глобальный или пользовательский исполнитель
     name: str
     country: str
     photo_file_id: int
