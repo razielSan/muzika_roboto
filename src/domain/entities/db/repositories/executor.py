@@ -15,6 +15,7 @@ class ExecutorRepository(ABC):
         genres: List,
         photo_file_id: str,
         photo_file_unique_id: str,
+        name_lower: str,
     ) -> Optional[DomainExecutor]:
         pass
 
@@ -28,6 +29,13 @@ class ExecutorRepository(ABC):
     async def get_executor(
         self,
         user_id: Union[int, None],
+        executor_id: int,
+    ) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
+    async def get_executor_by_user_library(
+        self,
         executor_id: int,
     ) -> Optional[DomainExecutor]:
         pass
