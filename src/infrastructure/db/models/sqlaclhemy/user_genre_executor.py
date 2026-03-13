@@ -73,6 +73,7 @@ class Executor(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     country: Mapped[str]
+    name_lower: Mapped[str] = mapped_column(nullable=True)
 
     photo_file_id: Mapped[Optional[str]] = mapped_column(nullable=True)
     photo_file_unique_id: Mapped[Optional[str]] = mapped_column(nullable=True)
