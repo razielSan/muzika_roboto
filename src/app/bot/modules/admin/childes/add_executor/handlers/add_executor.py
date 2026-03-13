@@ -34,9 +34,9 @@ from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.keyboards.inlinle import get_buttons_create_executor
 from app.bot.modules.admin.childes.add_executor.dto import ExecutorImportDTO
 from app.bot.modules.admin.settings import settings as admin_settings
+from app.app_utils.fsm import async_make_update_progress
 from infrastructure.aiogram.response import format_album
 from infrastructure.aiogram.messages import user_messages, resolve_message
-from app.app_utils.fsm import async_make_update_progress
 from core.response.response_data import Result
 
 
@@ -97,6 +97,7 @@ async def start_add_executor(
 
 # создание исполнителя без альбомов
 
+
 class FSMAddExecutor(StatesGroup):
     """FSM для сценария добавления исполнителя без альбомов."""
 
@@ -156,7 +157,9 @@ async def finish_add_executor_without_albums_message(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст"),
     )
 
+
 # добавление исполнителя с альбомами
+
 
 @router.callback_query(
     AdminFilter(), StateFilter(None), AdminCreateFullExecutorCallback.filter()
