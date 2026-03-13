@@ -4,10 +4,8 @@ from aiogram.filters.state import StateFilter
 
 from app.bot.modules.main.settings import settings
 from application.use_cases.db.user.get_or_create_user import GetOrCreateUser
-from domain.errors.error_code import ErorrCode
 from infrastructure.db.uow import UnitOfWork
-from infrastructure.aiogram.messages import ERRORS, resolve_message
-from infrastructure.aiogram.messages import user_messages
+from infrastructure.aiogram.messages import resolve_message
 from core.logging.api import get_loggers
 from core.response.response_data import Result, LoggingData
 
@@ -23,7 +21,7 @@ async def main(
     message: Message,
     bot: Bot,
 ) -> None:
-    """Отправляет пользователю reply клавиатуру главного меню."""
+    """Регестрирует пользователя."""
 
     name: str = message.from_user.first_name
     telegram: int = message.from_user.id
