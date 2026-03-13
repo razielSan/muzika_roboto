@@ -31,7 +31,7 @@ class KeyboardResponse(Enum):
     UPDATE_TITLE_SONG: str = "📆 Обновить Имя Песни"
     UPDATE_EXECUTOR_GENRES: str = "📆 Обновить Жанры Исполнителя"
     UPDATE_COUNTRY_EXECUTOR: str = "📆 Обновить Страну Исполнителя"
-    SYNC_EXECUTOR: str = "👯‍♂️ Довавить В Библиотеку"
+    SYNC_EXECUTOR: str = "👯‍♂️ Добавить В Библиотеку"
     DESYNC_EXECUTOR: str = "🗑 Убрать Из Библиотеки"
 
 
