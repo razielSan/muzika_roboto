@@ -5,7 +5,7 @@ ERRORS = {
     ErorrCode.UNKNOWN_ERROR.name: "❌ Произошла неизвестная ошибка",
     ErorrCode.USER_ALREADY_EXISTS.name: "⚠ Пользователь уже существует",
     ErorrCode.EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель уже существует",
-    ErorrCode.USER_EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнителя уже в библиотеке",
+    ErorrCode.USER_EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель присутствует в библиотеке",
 }
 
 
@@ -17,6 +17,7 @@ NOT_FOUND = {
     NotFoundCode.SONG_POSITION_NOT_FOUND.name: "⚠ Песня c позицией {position} не найдена",
     NotFoundCode.EXECUTORS_NOT_FOUND.name: "⚠ Не найден ни один исполнитель",
     NotFoundCode.ALBUM_NOT_FOUND.name: "⚠ Альбом не найден",
+    NotFoundCode.USER_EXECUTOR_NOT_FOND.name: "⚠ Исполнитель для рассинхронизации не найден"
 }
 SUCCESS = {
     SuccessCode.ADD_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно создан",
@@ -30,6 +31,7 @@ SUCCESS = {
     "песни успешно изменено\n\n✅ Новое название - {title}",
     SuccessCode.DELETE_SONGS_SUCCESS.name: "✅ Песни успешно удалены",
     SuccessCode.SYNC_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно добавлен в библиотеку",
+    SuccessCode.DESYNC_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно удален из библиотеки",
 }
 
 LIMIT_COLLECTION_SONGS: int = 3
@@ -69,7 +71,7 @@ class UserMessages:
         "✅ Будут добавлены песни\n\n✅ Количество {count}"
     )
     SELECT_THE_SONGS_TO_DELETE: str = "❗️ Выберите песни для удаления"
-    THERE_ARE_NO_SONGS: str = "🤷🏻‍♀️ У вас нет песен добавленных песен"
+    THERE_ARE_NO_SONGS: str = "🤷🏻‍♀️ У вас нет песен в сборнике"
     THE_SONG_HAS_ALREADY_BEEN_ADDED: str = "🤷🏻‍♀️ Песня {title} уже была добавленна"
     THE_SONG_IS_SAVED: str = "🎼 Песня {title} была сохранена"
     THE_DATA_MUST_BE_IN_THE_FORMAT: str = "🖊 Данные должны быть в формате {format}"
