@@ -20,7 +20,6 @@ from infrastructure.db.utils.editing import (
 )
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.messages import LIMIT_ALBUMS, LIMIT_SONGS, resolve_message
-from infrastructure.db.uow import UnitOfWork
 from core.logging.api import get_loggers
 from core.response.response_data import LoggingData
 
@@ -61,6 +60,7 @@ async def scrolling_albums_executor(
 
     current_page: int = callback_data.current_page_executor
     position: int = callback_data.position + callback_data.offset
+    user_id = callback_data.user_id
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
@@ -68,7 +68,7 @@ async def scrolling_albums_executor(
         uow=UnitOfWork, logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-        user_id=None,
+        user_id=user_id,
         limit_albums=LIMIT_ALBUMS,
         album_position=position,
         current_page=current_page,
@@ -85,6 +85,7 @@ async def scrolling_global_executors(
 ):
     """Пролистывает исполнителей."""
 
+    user_id = callback_data.user_id
     current_page: int = callback_data.current_page_executor
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
@@ -93,7 +94,7 @@ async def scrolling_global_executors(
         uow=UnitOfWork, logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-        user_id=None,
+        user_id=user_id,
         limit_albums=LIMIT_ALBUMS,
         album_position=0,
         current_page=current_page,
@@ -108,6 +109,7 @@ async def show_album_executor(
 ):
     """Показывает альбом исполнителя с песнями."""
 
+    user_id = callback_data.user_id
     executor_id = callback_data.executor_id
     current_page_executor = callback_data.current_page_executor
     album_id: int = callback_data.album_id
@@ -117,7 +119,7 @@ async def show_album_executor(
     await ShowAlbumPageService(
         uow=UnitOfWork, logging_data=logging_data, call=call
     ).execute(
-        user_id=None,
+        user_id=user_id,
         get_information_album=get_information_album,
         album_id=album_id,
         executor_id=executor_id,
@@ -141,13 +143,14 @@ async def scrolling_songs_album(
     current_page_executor = callback_data.current_page_executor
     album_id: int = callback_data.album_id
     position = callback_data.position + callback_data.offset
+    user_id = callback_data.user_id
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowAlbumPageService(
         uow=UnitOfWork, logging_data=logging_data, call=call
     ).execute(
-        user_id=None,
+        user_id=user_id,
         get_information_album=get_information_album,
         album_id=album_id,
         executor_id=executor_id,
@@ -185,8 +188,6 @@ async def sync_executor(
 ):
     user_id = user.id
     executor_id = callback_data.executor_id
-    print(executor_id, 111)
-    telegram = call.from_user.id
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_sync = await SyncExecutorLibrary(
@@ -194,10 +195,9 @@ async def sync_executor(
     ).execute(executor_id=executor_id, user_id=user_id)
 
     if result_sync.ok:
-        print(44444)
         success_message = resolve_message(code=result_sync.code)
-        await call.message.answer(text=success_message)
+        await call.answer(text=success_message)
 
     if not result_sync.ok:
         error_message = resolve_message(code=result_sync.error.code)
-        await call.message.answer(text=error_message)
+        await call.answer(text=error_message)
