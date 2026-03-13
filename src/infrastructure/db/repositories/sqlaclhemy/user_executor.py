@@ -25,3 +25,15 @@ class SQLAlchemyUserExecutorRepository:
             )
         )
         return user_executor is not None
+
+    async def delete(self, user_id: int, executor_id: int) -> bool:
+        user_executor = await self.session.scalar(
+            select(self.model).where(
+                self.model.user_id == user_id, self.model.executor_id == executor_id
+            )
+        )
+        if not user_executor:
+            return False
+        await self.session.delete(user_executor)
+        await self.session.flush()
+        return True
