@@ -36,9 +36,8 @@ from app.bot.filters.admin_filters import (
     AdminCreateFullExecutorCallback,
     AdminCreateExecutorCallback,
 )
-
 from infrastructure.aiogram.response import KeyboardResponse
-from infrastructure.aiogram.keyboards.utils import build_pages
+from infrastructure.aiogram.keyboards.utils import build_pages_to_step
 
 
 def show_one_album_songs_with_base_executor(
@@ -274,7 +273,7 @@ def show_base_executor_collections(
         pass
 
     else:
-        list_buttons = build_pages(
+        list_buttons = build_pages_to_step(
             current=current_page_executor,
             total=count_pages_executor,
         )
