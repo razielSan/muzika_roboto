@@ -20,6 +20,7 @@ class ExecutorSqlalchemyRepository:
         genres: List[Genre],
         file_id: str,
         file_unique_id: str,
+        name_lower: str,
     ):
         executor = self.model(
             name=name,
@@ -27,6 +28,7 @@ class ExecutorSqlalchemyRepository:
             photo_file_id=file_id,
             photo_file_unique_id=file_unique_id,
             user_id=None,
+            name_lower=name_lower,
         )
         executor.genres.extend(genres)
         self.session.add(executor)
@@ -52,12 +54,12 @@ class ExecutorSqlalchemyRepository:
 
         stmt = await self.session.scalars(
             select(self.model)
+            .order_by(self.model.name_lower)
             .where(self.model.user_id.is_(None))
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
         executors = stmt.all()
-        executors.sort(key=lambda x: x.name.casefold())  # сортируем по нижнему регистру
         return executors
 
     async def get_base_executor_by_name_and_country(self, name: str, country: str):
@@ -146,17 +148,14 @@ class ExecutorSqlalchemyRepository:
         await self.session.flush()
         return executor
 
-    async def update_name(
-        self,
-        executor_id: int,
-        name: str,
-    ):
+    async def update_name(self, executor_id: int, name: str, name_lower: str):
         executor = await self.session.scalar(
             select(self.model).where(
                 self.model.id == executor_id, self.model.user_id.is_(None)
             )
         )
         executor.name = name
+        executor.name_lower = name_lower
         await self.session.flush()
         return executor
 
