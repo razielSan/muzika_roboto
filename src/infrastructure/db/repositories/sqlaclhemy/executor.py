@@ -46,12 +46,13 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
 
         stmt = await self.session.scalars(
             select(self.model)
+            .order_by(self.model.name_lower)
             .where(self.model.user_id.is_(user_id))
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
         executors = stmt.all()
-        executors.sort(key=lambda x: x.name.casefold())
+
         return executors
 
     async def get_executor(
@@ -63,5 +64,14 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
             select(self.model).where(
                 self.model.user_id == user_id, self.model.id == executor_id
             )
+        )
+        return executor
+
+    async def get_executor_by_user_library(
+        self,
+        executor_id: int,
+    ) -> Optional[Executor]:
+        executor = await self.session.scalar(
+            select(self.model).where(self.model.id == executor_id)
         )
         return executor
