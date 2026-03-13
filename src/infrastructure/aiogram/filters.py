@@ -34,6 +34,10 @@ class SyncExecutor(CallbackData, prefix="sync_ex"):
     executor_id: int
 
 
+class DesyncExecutor(CallbackData, prefix="desync_ex"):
+    executor_id: int
+
+
 class AddCallbackDataFilters:
     class SongCollectionSongs(CallbackData, prefix="add_coll_s"):
         pass
@@ -51,6 +55,7 @@ class ScrollingCallbackDataFilters:
         offset: int
 
     class SongsAlbumGlobalLibrary(CallbackData, prefix="scr_s_al_gl_lib"):
+        user_id: Optional[int]
         position: int
         offset: int
         executor_id: int
