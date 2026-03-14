@@ -101,8 +101,8 @@ class ShowExecutorPageService:
 
             # если исполнители не были найдены
             not_found_message: str = resolve_message(code=result.code)
-            await self.call.message.answer(text=not_found_message)
+            await self.call.answer(text=not_found_message)
 
         if not result.ok:
             error_message: str = resolve_message(code=result.error.code)
-            await self.call.message.answer(text=error_message)
+            await self.call.answer(text=error_message)
