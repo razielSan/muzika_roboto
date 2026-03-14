@@ -24,11 +24,15 @@ class DesyncExecutorLibrary:
     ) -> Result:
 
         async with self.uow as uow:
-            user_executor: bool = await uow.user_executors.delete(
-                user_id=user_id, executor_id=executor_id
-            )
-            if not user_executor:
-                return ok(data=[], code=NotFoundCode.USER_EXECUTOR_NOT_FOND.name)
+            await uow.user_executors.delete(user_id=user_id, executor_id=executor_id)
+
+            user_executors = await self.uow.users.get_library_executors(user_id=user_id)
+            if not user_executors:  # если не осталось исполнителей
+                return ok(
+                    data=[],
+                    code=NotFoundCode.USER_EXECUTOR_NOT_FOND.name,
+                    empty=True,
+                )
 
         return ok(
             data=SuccessCode.DESYNC_EXECUTOR_SUCCESS.value,
