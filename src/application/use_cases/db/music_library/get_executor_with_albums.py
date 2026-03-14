@@ -52,7 +52,6 @@ class GetExecutorWihtAlbums:
                 total_pages: int = await self.uow.executors.get_total_executors(
                     user_id=None,
                 )
-                print(total_pages, 123)
 
             genres: List[str] = [genre.title for genre in executor.genres]
             executor_albums = []
