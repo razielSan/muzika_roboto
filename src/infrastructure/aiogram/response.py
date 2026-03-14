@@ -7,6 +7,7 @@ class KeyboardResponse(Enum):
     NO: str = "❌ [ Нет ]"
     ADD_SONGS: str = "🎼 Добавить Песни"
     ADD_ALBUM: str = "🎼 Добавить Альбом"
+    USER_PANEL_CAPTION: str = "🤔 Что же мне сегодня послушать ?"
     CANCEL_THE_DELETION_OF_SONGS: str = "❌ ОТМЕНИТЬ УДАЛЕНИЕ"
     CONFIRM_THE_DELETION_OF_SONGS: str = "✅ НАЖМИТЕ ДЛЯ ПОДТВЕРЖДЕНИЯ"
     CREATE_EXECUTOR: str = "👩🏾‍💻 Создание исполнителя"
@@ -33,7 +34,6 @@ class KeyboardResponse(Enum):
     UPDATE_COUNTRY_EXECUTOR: str = "📆 Обновить Страну Исполнителя"
     SYNC_EXECUTOR: str = "👯‍♂️ Добавить В Библиотеку"
     DESYNC_EXECUTOR: str = "🗑 Убрать Из Библиотеки"
-
 
 
 @dataclass
