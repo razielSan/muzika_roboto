@@ -1,7 +1,7 @@
 from typing import List, Optional, Sequence, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from infrastructure.db.models.sqlaclhemy.user_genre_executor import Genre, Executor
@@ -66,6 +66,30 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
             )
         )
         return executor
+
+    async def get_global_executor_page(self, page: int) -> Optional[Executor]:
+        executor = await self.session.scalar(
+            select(self.model)
+            .where(self.model.user_id.is_(None))
+            .order_by(self.model.name_lower)
+            .limit(1)
+            .offset(page - 1)
+            .options(selectinload(self.model.genres), selectinload(self.model.albums))
+        )
+        return executor
+
+    async def get_total_executors(self, user_id: Union[None, int]) -> Optional[int]:
+
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            condition: bool = self.model.user_id.is_(None)
+        else:
+            condition: bool = self.model.user_id == user_id
+
+        total_executors = await self.session.scalar(
+            select(func.count(self.model.id)).where(condition)
+        )
+        return total_executors
 
     async def get_executor_by_user_library(
         self,
