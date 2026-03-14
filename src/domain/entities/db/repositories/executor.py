@@ -39,3 +39,11 @@ class ExecutorRepository(ABC):
         executor_id: int,
     ) -> Optional[DomainExecutor]:
         pass
+
+    @abstractmethod
+    async def get_global_executor_page(self, page: int) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
+    async def get_total_executors(self, user_id: Optional[int]) -> Optional[int]:
+        pass
