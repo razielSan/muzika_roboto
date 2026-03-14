@@ -17,7 +17,7 @@ NOT_FOUND = {
     NotFoundCode.SONG_POSITION_NOT_FOUND.name: "⚠ Песня c позицией {position} не найдена",
     NotFoundCode.EXECUTORS_NOT_FOUND.name: "⚠ Не найден ни один исполнитель",
     NotFoundCode.ALBUM_NOT_FOUND.name: "⚠ Альбом не найден",
-    NotFoundCode.USER_EXECUTOR_NOT_FOND.name: "⚠ Исполнитель для рассинхронизации не найден"
+    NotFoundCode.USER_EXECUTOR_NOT_FOND.name: "⚠ В библиотеке не исполнителей",
 }
 SUCCESS = {
     SuccessCode.ADD_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно создан",
