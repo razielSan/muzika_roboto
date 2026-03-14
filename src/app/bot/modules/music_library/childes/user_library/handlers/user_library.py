@@ -3,12 +3,16 @@ from aiogram.types import CallbackQuery
 from aiogram.filters.state import StateFilter
 
 from app.bot.modules.music_library.childes.user_library.settings import settings
+from app.bot.modules.music_library.utils.music_library import (
+    callback_update_menu_inline_music_library,
+)
 from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
 from app.bot.settings import settings as bot_settings
 from application.use_cases.db.music_library.desync_executor import DesyncExecutorLibrary
 from infrastructure.aiogram.messages import LIMIT_ALBUMS
 from infrastructure.aiogram.filters import DesyncExecutor
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.db.utils.editing import get_information_executor
 from infrastructure.aiogram.messages import resolve_message
 from core.logging.api import get_loggers
@@ -53,9 +57,15 @@ async def desync_executor(
     ).execute(executor_id=executor_id, user_id=user_id)
 
     if result_desync_executor.ok:
-        if result_desync_executor.empty:
+        if (
+            result_desync_executor.empty
+        ):  # если после десинхронизации в библиотеке нет исполнителей
             not_found_message = resolve_message(code=result_desync_executor.code)
             await call.answer(text=not_found_message)
+            await callback_update_menu_inline_music_library(
+                call=call,
+                caption=KeyboardResponse.USER_PANEL_CAPTION,
+            )
             return
 
         success_message = resolve_message(code=result_desync_executor.code)
