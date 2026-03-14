@@ -6,13 +6,13 @@ from domain.entities.response import ExecutorPageResponse, AlbumResponse
 from domain.entities.db.models.executor import Executor as ExecutorDomain
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok
-from core.response.response_data import Result
+from core.response.response_data import Result, LoggingData
 
 
 class GetExecutorWihtAlbums:
     def __init__(self, uow: AbstractUnitOfWork, logging_data):
-        self.uow = uow
-        self.logging_data = logging_data
+        self.uow: AbstractUnitOfWork = uow
+        self.logging_data: LoggingData = logging_data
 
     @safe_async_execution(
         message=ErorrCode.UNKNOWN_ERROR.value, code=ErorrCode.UNKNOWN_ERROR.name
@@ -24,22 +24,36 @@ class GetExecutorWihtAlbums:
     ) -> Result:
         async with self.uow as uow:
             if user_id:  # пользовательская библиотека
-                executors = await uow.users.get_library_executors(user_id=user_id)
+                executors: Union[
+                    Sequence[ExecutorDomain], None
+                ] = await uow.users.get_library_executors(user_id=user_id)
+
+                if not executors:  # если нет исполнителей
+                    return ok(
+                        data=None,
+                        empty=True,
+                        code=NotFoundCode.EXECUTORS_NOT_FOUND.name,
+                    )
+
+                total_pages: int = len(executors)
+                executor: ExecutorDomain = executors[current_page - 1]
+
             else:  # глобальная библиотека
-                executors: Sequence[
-                    ExecutorDomain
-                ] = await uow.executors.get_all_executors(user_id=user_id)
 
-            if not executors:  # если нет исполнителей
-                return ok(
-                    data=None,
-                    empty=True,
-                    code=NotFoundCode.EXECUTORS_NOT_FOUND.name,
+                executor: Union[
+                    ExecutorDomain, None
+                ] = await self.uow.executors.get_global_executor_page(page=current_page)
+                if not executor:
+                    return ok(
+                        data=None,
+                        empty=True,
+                        code=NotFoundCode.EXECUTORS_NOT_FOUND.name,
+                    )
+                total_pages: int = await self.uow.executors.get_total_executors(
+                    user_id=None,
                 )
+                print(total_pages, 123)
 
-            total_pages: int = len(executors)
-
-            executor: ExecutorDomain = executors[current_page - 1]
             genres: List[str] = [genre.title for genre in executor.genres]
             executor_albums = []
             if executor.albums:  # если есть альбомы
