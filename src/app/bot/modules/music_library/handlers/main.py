@@ -25,7 +25,9 @@ from infrastructure.aiogram.messages import user_messages
 from infrastructure.aiogram.filters import BackMenuUserPanel, BackExecutorPage
 from infrastructure.aiogram.messages import LIMIT_COLLECTION_SONGS, LIMIT_ALBUMS
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.db.utils.editing import get_information_executor
+from infrastructure.aiogram.response import KeyboardResponse
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
 
@@ -49,7 +51,7 @@ async def menu_music_library(message: Message, bot: Bot):
     await bot.send_photo(
         chat_id=chat_id,
         photo=settings.MENU_IMAGE_FILE_ID,
-        caption=settings.MENU_CALLBACK_TEXT,
+        caption=KeyboardResponse.USER_PANEL_CAPTION,
         reply_markup=get_keyboards_menu_buttons,
     )
 
@@ -103,7 +105,7 @@ async def music_library_cancel_handler(
 
     await bot.send_photo(
         chat_id=message.chat.id,
-        caption=settings.MENU_CALLBACK_TEXT,
+        caption=KeyboardResponse.USER_PANEL_CAPTION,
         reply_markup=get_keyboards_menu_buttons,
         photo=settings.MENU_IMAGE_FILE_ID,
     )
@@ -147,7 +149,7 @@ async def callback_music_library_cancel_handler(
     await call.message.edit_media(
         media=InputMediaPhoto(
             media=settings.MENU_IMAGE_FILE_ID,
-            caption=settings.MENU_CALLBACK_TEXT,
+            caption=KeyboardResponse.USER_PANEL_CAPTION,
         ),
         reply_markup=get_keyboards_menu_buttons,
     )
