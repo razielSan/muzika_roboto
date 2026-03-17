@@ -13,8 +13,5 @@ class MainRouterSettings(BaseModel):
     NAME_FOR_LOG_FOLDER: str = "main"
     ROOT_PACKAGE: str = "app.bot.modules.main"
 
-    DELETE_IMAGE_FILE_ID: str = "AgACAgIAAxkBAAIJvGmFdN5orJwkcWn2wwv7J-2ALiaBAALzC2sbm8kwSKCgwqBOos5mAQADAgADeAADOAQ"
-    DELETE_IMAGE_FILE_UNIQUE_ID: str = "AQAD8wtrG5vJMEh9"
-
 
 settings: MainRouterSettings = MainRouterSettings()
