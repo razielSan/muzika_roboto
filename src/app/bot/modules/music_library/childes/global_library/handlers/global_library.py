@@ -4,7 +4,9 @@ from aiogram.filters.state import StateFilter
 
 from app.bot.modules.music_library.childes.global_library.settings import settings
 from app.bot.settings import settings as bot_settings
-from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
+from app.bot.services.music_library.show_executor_page import (
+    ShowExecutorPageCallbackService,
+)
 from app.bot.services.music_library.show_song import ShowSongService
 from app.bot.services.music_library.show_album_page import ShowAlbumPageService
 from application.use_cases.db.music_library.sync_executor import SyncExecutorLibrary
@@ -36,7 +38,7 @@ async def global_libaray(call: CallbackQuery):
     """
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
-    await ShowExecutorPageService(
+    await ShowExecutorPageCallbackService(
         uow=UnitOfWork, logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
@@ -64,7 +66,7 @@ async def scrolling_albums_executor(
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
-    await ShowExecutorPageService(
+    await ShowExecutorPageCallbackService(
         uow=UnitOfWork, logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
@@ -90,7 +92,7 @@ async def scrolling_global_executors(
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
-    await ShowExecutorPageService(
+    await ShowExecutorPageCallbackService(
         uow=UnitOfWork, logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
