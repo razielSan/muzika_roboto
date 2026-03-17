@@ -6,15 +6,14 @@ from app.bot.modules.music_library.childes.user_library.settings import settings
 from app.bot.modules.music_library.utils.music_library import (
     callback_update_menu_inline_music_library,
 )
-from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
+from app.bot.services.music_library.show_executor_page import ShowExecutorPageCallbackService
 from app.bot.settings import settings as bot_settings
 from application.use_cases.db.music_library.desync_executor import DesyncExecutorLibrary
 from infrastructure.aiogram.messages import LIMIT_ALBUMS
 from infrastructure.aiogram.filters import DesyncExecutor
 from infrastructure.db.uow import UnitOfWork
-from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.db.utils.editing import get_information_executor
-from infrastructure.aiogram.messages import resolve_message
+from infrastructure.aiogram.messages import resolve_message, user_messages
 from core.logging.api import get_loggers
 
 router = Router(name=__name__)
@@ -28,7 +27,7 @@ async def user_library(
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     user_id = user.id
 
-    await ShowExecutorPageService(
+    await ShowExecutorPageCallbackService(
         uow=UnitOfWork,
         logging_data=logging_data,
         call=call,
@@ -64,13 +63,13 @@ async def desync_executor(
             await call.answer(text=not_found_message)
             await callback_update_menu_inline_music_library(
                 call=call,
-                caption=KeyboardResponse.USER_PANEL_CAPTION,
+                caption=user_messages.USER_PANEL_CAPTION
             )
             return
 
         success_message = resolve_message(code=result_desync_executor.code)
         await call.answer(text=success_message)
-        await ShowExecutorPageService(
+        await ShowExecutorPageCallbackService(
             uow=UnitOfWork,
             logging_data=logging_data,
             call=call,
