@@ -81,12 +81,14 @@ class UpdateCallbackDataFilters:
 
     class UserCollectionSongsPhotoFileId(CallbackData, prefix="upd_u_coll_s_p_f_id"):
         pass
+    
+    class UserExecutorPhotoFileId(CallbackData, prefix="upd_u_exc_p_f_id"):
+        excecutor_id: int
+        user_id: Optional[int]
+        current_page_executor: int
 
 
 class DeleteCallbackDataFilters:
-    class SongCollectionSongs(CallbackData, prefix="del_s_coll_s"):
-        pass
-
     class ButtonsDeleteSongColletionSongs(CallbackData, prefix="del_b_del_s_coll_s"):
         """Фильтр для размечивания песен как на готовые к удалению."""
 
@@ -104,3 +106,17 @@ class DeleteCallbackDataFilters:
         """Cценарий удаления песен."""
 
         pass
+
+    class SongCollectionSongs(CallbackData, prefix="del_s_coll_s"):
+        pass
+
+    class UserExecutor(CallbackData, prefix="del_u_exc"):
+        user_id: Optional[int]
+        executor_id: int
+        name: str
+        current_page_executor: int
+
+    class ConfirmDeleteExecutor(CallbackData, prefix="del_con_exc"):
+        user_id: Optional[int]
+        executor_id: Optional[int] # для сценария отмены удаления
+        current_page_executor: int
