@@ -12,7 +12,7 @@ def create_bot(
     if proxy:
         proxy_source: str = (
             "WEBSHARE PROXY"
-            if proxy_settings.USE_WEBSHARE_POXY
+            if proxy_settings.USE_WEBSHARE_PROXY
             else "OTHER PROXY"
         )
 
