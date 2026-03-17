@@ -20,8 +20,9 @@ class ExecutorSqlalchemyRepository:
         genres: List[Genre],
         file_id: str,
         file_unique_id: str,
-        name_lower: str,
     ):
+        name_lower = name.casefold()
+
         executor = self.model(
             name=name,
             country=country,
@@ -148,14 +149,14 @@ class ExecutorSqlalchemyRepository:
         await self.session.flush()
         return executor
 
-    async def update_name(self, executor_id: int, name: str, name_lower: str):
+    async def update_name(self, executor_id: int, name: str):
         executor = await self.session.scalar(
             select(self.model).where(
                 self.model.id == executor_id, self.model.user_id.is_(None)
             )
         )
         executor.name = name
-        executor.name_lower = name_lower
+        executor.name_lower = name.casefold()
         await self.session.flush()
         return executor
 
