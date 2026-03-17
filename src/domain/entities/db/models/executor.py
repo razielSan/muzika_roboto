@@ -9,7 +9,7 @@ class Executor:
     country: str
     photo_file_id: str
     photo_file_unique_id: str
-    name_lower: Optional[str]
+    name_lower: Optional[str] = None
     user_id: Optional[int] = None
     albums: Optional[List] = None
     genres: Optional[List] = None
