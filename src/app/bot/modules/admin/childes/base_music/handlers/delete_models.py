@@ -27,7 +27,7 @@ from app.bot.keyboards.inlinle import (
     show_one_album_songs_with_base_executor,
     show_base_executor_collections,
 )
-from app.bot.modules.main.settings import settings as main_settings
+from app.bot.settings import settings as bot_settings
 from app.bot.modules.admin.childes.base_music.services.crud import crud_service
 from app.bot.modules.admin.childes.base_music.services.base_music import (
     base_music_service,
@@ -60,7 +60,7 @@ async def confirm_delete_base_executor(
     if result.ok:
         await call.message.edit_media(
             media=InputMediaPhoto(
-                media=main_settings.DELETE_IMAGE_FILE_ID,
+                media=bot_settings.DELETE_IMAGE_FILE_ID,
                 caption=f"Вы точно хотите удалить исполнителя ?\n\n{result.data}",
             ),
             reply_markup=get_confirmation_delete_executor_button(
@@ -121,7 +121,7 @@ async def confirm_delete_album(
     if result.ok:
         await call.message.edit_media(
             media=InputMediaPhoto(
-                media=main_settings.DELETE_IMAGE_FILE_ID,
+                media=bot_settings.DELETE_IMAGE_FILE_ID,
                 caption=f"Вы точно хотите удалить альбом ?\n\n{result.data}",
             ),
             reply_markup=get_confirmation_delete_album_button(
@@ -160,9 +160,7 @@ async def delete_album(
                 page_executor=current_page_executor,
             )
             await call.message.answer(text=result_delete.data)
-            print(1)
             if result.ok:
-                print(2)
                 executor_response: ExecutorPageRepsonse = result.data
                 photo_file_id: str = executor_response.executor.photo_file_id
                 caption: str = executor_response.executor.info_executor
@@ -259,7 +257,7 @@ async def menu_delete_songs(
         await state.set_state(FSMBaseDeleteSongs.state_data)
         await call.message.edit_media(
             media=InputMediaPhoto(
-                media=main_settings.DELETE_IMAGE_FILE_ID,
+                media=bot_settings.DELETE_IMAGE_FILE_ID,
                 caption="Выберите песни для удаления",
             ),
             reply_markup=get_menu_song_delete(
@@ -337,7 +335,7 @@ async def delete_songs_buttons(
 
     await call.message.edit_media(
         media=InputMediaPhoto(
-            media=main_settings.DELETE_IMAGE_FILE_ID,
+            media=bot_settings.DELETE_IMAGE_FILE_ID,
             caption="Выберите песни для удаления",
         ),
         reply_markup=get_menu_song_delete(
@@ -378,7 +376,7 @@ async def scrolling_songe_menu_delete(
 
         await call.message.edit_media(
             media=InputMediaPhoto(
-                media=main_settings.DELETE_IMAGE_FILE_ID,
+                media=bot_settings.DELETE_IMAGE_FILE_ID,
                 caption="Выберите песни для удаления",
             ),
             reply_markup=get_menu_song_delete(
@@ -423,7 +421,7 @@ async def confirm_delete_songs(
             count: int = len(songs)
             await call.message.edit_media(
                 media=InputMediaPhoto(
-                    media=main_settings.DELETE_IMAGE_FILE_ID,
+                    media=bot_settings.DELETE_IMAGE_FILE_ID,
                     caption=f"Вы действительно хотите удалить песни ?"
                     f"\n\nКоличество песен: {count}\nНомера позиций песен: {str(songs)}",
                 ),
