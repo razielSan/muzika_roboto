@@ -7,7 +7,7 @@ from domain.entities.db.models.executor import Executor as DomainExecutor
 
 class ExecutorRepository(ABC):
     @abstractmethod
-    async def create_user_executor(
+    async def create_executor(
         self,
         user_id: Union[int, None],
         name: str,
@@ -15,7 +15,6 @@ class ExecutorRepository(ABC):
         genres: List,
         photo_file_id: str,
         photo_file_unique_id: str,
-        name_lower: str,
     ) -> Optional[DomainExecutor]:
         pass
 
@@ -46,4 +45,31 @@ class ExecutorRepository(ABC):
 
     @abstractmethod
     async def get_total_executors(self, user_id: Optional[int]) -> Optional[int]:
+        pass
+
+    @abstractmethod
+    async def get_executor_by_name_lower_and_country(
+        self,
+        user_id: Union[None, int],
+        name_lower: str,
+        country: str,
+    ) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
+    async def delete_executor(
+        self,
+        user_id: Optional[int],
+        executor_id: int,
+    ) -> bool:
+        pass
+
+    @abstractmethod
+    async def update_executor_photo_file_id(
+        self,
+        executoro_id: int,
+        user_id: Optional[int],
+        photo_file_id: str,
+        photo_file_unique_id: str,
+    ) -> Optional[DomainExecutor]:
         pass
