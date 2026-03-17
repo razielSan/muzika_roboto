@@ -485,14 +485,14 @@ def get_menu_song_delete(
 
     inline_kb.row(
         InlineKeyboardButton(
-            text=KeyboardResponse.CONFIRM_THE_DELETION_OF_SONGS.value,
+            text=KeyboardResponse.CONFIRM_DELETE.value,
             callback_data=AdminConfirmDeleteSongCallback(album_id=album_id).pack(),
         )
     )
 
     inline_kb.row(
         InlineKeyboardButton(
-            text=KeyboardResponse.CANCEL_THE_DELETION_OF_SONGS.value,
+            text=KeyboardResponse.CANCEL_DELETE.value,
             callback_data=AdminCancelDeleteSongCallback().pack(),
         )
     )
@@ -511,7 +511,7 @@ def get_confirmation_delete_song_button():
     )
     inline_kb.row(
         InlineKeyboardButton(
-            text=KeyboardResponse.CANCEL_THE_DELETION_OF_SONGS.value,
+            text=KeyboardResponse.CANCEL_DELETE.value,
             callback_data=AdminCancelDeleteSongCallback().pack(),
         )
     )
