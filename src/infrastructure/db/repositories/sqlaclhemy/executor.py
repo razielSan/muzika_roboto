@@ -14,25 +14,49 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def create_user_executor(
+    async def create_executor(
         self,
         user_id: Union[int, None],
         name: str,
         country: str,
         genres: List[Genre],
-        file_id: str,
-        file_unique_id: str,
+        photo_file_id: str,
+        photo_file_unique_id: str,
     ) -> Executor:
+        name_lower = name.casefold()
+
         executor = self.model(
             name=name,
             country=country,
-            photo_file_id=file_id,
-            photo_file_unique_id=file_unique_id,
+            photo_file_id=photo_file_id,
+            photo_file_unique_id=photo_file_unique_id,
             user_id=user_id,
+            name_lower=name_lower,
         )
         executor.genres.extend(genres)
         self.session.add(executor)
         await self.session.flush()
+        return executor
+
+    async def get_executor_by_name_lower_and_country(
+        self,
+        user_id: Union[None, int],
+        name_lower: str,
+        country: str,
+    ) -> Optional[Executor]:
+
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
+        executor = await self.session.scalar(
+            select(self.model).where(
+                self.model.name_lower == name_lower,
+                self.model.country == country,
+                user_id_condition,
+            )
+        )
         return executor
 
     async def get_all_executors(
@@ -98,4 +122,47 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         executor = await self.session.scalar(
             select(self.model).where(self.model.id == executor_id)
         )
+        return executor
+
+    async def delete_executor(self, user_id: Optional[int], executor_id: int) -> bool:
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
+
+        executor = await self.session.scalar(
+            select(self.model)
+            .where(user_id_condition, self.model.id == executor_id)
+            .options(selectinload(self.model.genres))
+            .options(selectinload(self.model.library_users))
+        )
+
+        if not executor:
+            return None
+
+        executor.genres = []
+        executor.library_users = []
+        await self.session.delete(executor)
+        await self.session.flush()
+        return True
+
+    async def update_executor_photo_file_id(
+        self,
+        executoro_id: int,
+        user_id: Optional[int],
+        photo_file_id: str,
+        photo_file_unique_id: str,
+    ) -> Optional[Executor]:
+        executor: Optional[Executor] = await self.session.scalar(
+            select(self.model).where(
+                self.model.user_id == user_id, self.model.id == executoro_id
+            )
+        )
+        if not executor:
+            return None
+
+        executor.photo_file_id = photo_file_id
+        executor.photo_file_unique_id = photo_file_unique_id
+        await self.session.flush()
         return executor
