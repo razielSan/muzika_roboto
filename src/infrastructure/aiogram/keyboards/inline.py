@@ -183,14 +183,14 @@ def get_menu_songs_collection_songs_delete(
 
     inline_kb.row(
         InlineKeyboardButton(
-            text=KeyboardResponse.CONFIRM_THE_DELETION_OF_SONGS.value,
+            text=KeyboardResponse.CONFIRM_DELETE.value,
             callback_data=DeleteCallbackDataFilters.ConfirmDeleteSongCollectionSongs().pack(),
         )
     )
 
     inline_kb.row(
         InlineKeyboardButton(
-            text=KeyboardResponse.CANCEL_THE_DELETION_OF_SONGS.value,
+            text=KeyboardResponse.CANCEL_DELETE.value,
             callback_data=BackMenuUserPanel().pack(),
         )
     )
@@ -208,7 +208,7 @@ def get_confirmation_delete_song_button():
     )
     inline_kb.row(
         InlineKeyboardButton(
-            text=KeyboardResponse.CANCEL_THE_DELETION_OF_SONGS.value,
+            text=KeyboardResponse.CANCEL_DELETE.value,
             callback_data=BackMenuUserPanel().pack(),
         )
     )
@@ -299,9 +299,9 @@ def show_executor_global_collections(
             inline_kb.row(*buttons)
 
             pages = build_pages(current=current_page, total=total_pages)
-            
-            # для избежания выхода за границы 
-            back_button_page = max(1, current_page - 1) 
+
+            # для избежания выхода за границы
+            back_button_page = max(1, current_page - 1)
             forward_button_page = min(total_pages, current_page + 1)
             if pages:  # если исполнителей больше одного
                 inline_kb.row(
@@ -360,6 +360,118 @@ def show_executor_global_collections(
     )
 
     return inline_kb.as_markup()
+
+
+# инлайн клавиатуры для пользовательской библиотеки
+
+
+def show_executor_user_collections(
+    limit_albums: int,
+    album_position: int,
+    executor: ExecutorPageResponse = None,
+):
+
+    inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
+
+    if not executor:  # если на странице нет исполнителей
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.NOT_FOUND_EXECUTORS,
+                callback_data="NOT_FOUND_EXECUTORS",
+            )
+        )
+
+    else:
+        albums = executor.albums
+        count_albums = len(albums)
+
+        album_position = max(0, album_position)  # страховка
+        albums = albums[album_position : album_position + limit_albums]
+        executor_id = executor.id
+        user_id = executor.current_user_id
+        total_pages = executor.total_pages
+        current_page = executor.current_page
+        name: str = executor.name
+
+        if not albums:
+            inline_kb.row(
+                InlineKeyboardButton(
+                    text=KeyboardResponse.NOT_FOUND_ALBUMS,
+                    callback_data="NOT_FOUND_ALBUMS",
+                )
+            )
+        pages = build_pages(current=current_page, total=total_pages)
+
+        # для избежания выхода за границы
+        back_button_page = max(1, current_page - 1)
+        forward_button_page = min(total_pages, current_page + 1)
+        if pages:  # если исполнителей больше одного
+            inline_kb.row(
+                InlineKeyboardButton(
+                    text="⬅️",
+                    callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                        executor_id=executor_id,
+                        current_page_executor=back_button_page,
+                        user_id=user_id,
+                    ).pack(),
+                )
+            )
+            for index, page in enumerate(pages, start=1):
+                page_data = f"[{page}]" if page == current_page else page
+                inline_kb.add(
+                    InlineKeyboardButton(
+                        text=f"{page_data}",
+                        callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                            executor_id=executor_id,
+                            current_page_executor=page,
+                            user_id=user_id,
+                        ).pack(),
+                    )
+                )
+            inline_kb.add(
+                InlineKeyboardButton(
+                    text="➡️",
+                    callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                        executor_id=executor_id,
+                        current_page_executor=forward_button_page,
+                        user_id=user_id,
+                    ).pack(),
+                )
+            )
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.UPDATE_PHOTO_EXECUTOR,
+                callback_data=UpdateCallbackDataFilters.UserExecutorPhotoFileId(
+                    excecutor_id=executor_id,
+                    user_id=user_id,
+                    current_page_executor=current_page,
+                ).pack(),
+            )
+        )
+
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.DELETE_EXECUTOR,
+                callback_data=DeleteCallbackDataFilters.UserExecutor(
+                    user_id=user_id,
+                    executor_id=executor_id,
+                    name=name,
+                    current_page_executor=current_page,
+                ).pack(),
+            )
+        )
+
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+            callback_data=BackMenuUserPanel().pack(),
+        )
+    )
+
+    return inline_kb.as_markup()
+
+
+# общие клавиатуры
 
 
 def show_album_collections(
@@ -445,6 +557,35 @@ def show_album_collections(
         InlineKeyboardButton(
             text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
             callback_data=BackMenuUserPanel().pack(),
+        )
+    )
+    return inline_kb.as_markup()
+
+
+def get_confirmation_delete_executor_button(
+    executor_id: int,
+    user_id: Optional[int],
+    current_page_executor: int,
+):
+    inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.YES.value,
+            callback_data=DeleteCallbackDataFilters.ConfirmDeleteExecutor(
+                executor_id=executor_id,
+                user_id=user_id,
+                current_page_executor=current_page_executor,
+            ).pack(),
+        )
+    )
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.NO.value,
+            callback_data=BackExecutorPage(
+                user_id=user_id,
+                current_page=current_page_executor,
+                album_position=0,
+            ).pack()
         )
     )
     return inline_kb.as_markup()
