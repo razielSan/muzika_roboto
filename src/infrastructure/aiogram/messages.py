@@ -16,6 +16,7 @@ NOT_FOUND = {
     NotFoundCode.SONG_NOT_FOUND.name: "⚠ Песня не найдена",
     NotFoundCode.SONG_POSITION_NOT_FOUND.name: "⚠ Песня c позицией {position} не найдена",
     NotFoundCode.EXECUTORS_NOT_FOUND.name: "⚠ Не найден ни один исполнитель",
+    NotFoundCode.EXECUTOR_NOT_FOUND.name: "⚠ Исполнитель не найден",
     NotFoundCode.ALBUM_NOT_FOUND.name: "⚠ Альбом не найден",
     NotFoundCode.USER_EXECUTOR_NOT_FOND.name: "⚠ В библиотеке не исполнителей",
 }
@@ -31,7 +32,8 @@ SUCCESS = {
     "песни успешно изменено\n\n✅ Новое название - {title}",
     SuccessCode.DELETE_SONGS_SUCCESS.name: "✅ Песни успешно удалены",
     SuccessCode.SYNC_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно добавлен в библиотеку",
-    SuccessCode.DESYNC_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно удален из библиотеки",
+    SuccessCode.DESYNC_EXECUTOR_SUCCESS.name: "✅ Исполнитель убран из библиотеки",
+    SuccessCode.DELETE_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно удален из библиотеки",
 }
 
 LIMIT_COLLECTION_SONGS: int = 3
@@ -51,12 +53,22 @@ def resolve_message(code: str):
 
 class UserMessages:
     CONFIRMATION_TEXT: str = "✅ Подтверждаю"
+    CAPTION_DELETE_EXECUTOR: str = "❗️ Будет удален исполнитель\n\n❗️ {name}"
     CLICK_ONE_OF_THE_BUTTONS_ABOVE: str = "👆🏾 Нажмите одну из кнопок выше"
     DROP_THE_SONG: str = "🎸 Скидывайте песни"
-    DROP_THE_PHOTO: str = "🖼 Скидывайте фотографию"
-    ENTER_THE_SONG_NAME: str = "🖌 Введите имя песни"
-    ENTER_THE_EXECUTOR_NAME: str = "🖌 Введите имя исполнителя"
-    ENTER_THE_SONG_POSITION: str = "🖌 Введите позицию песни"
+    DROP_THE_PHOTO: str = "❗️ Скидывайте фотографию"
+    ENTER_THE_SONG_NAME: str = "❗️ Введите имя песни"
+    ENTER_THE_СOUNTRY_EXECUTOR: str = "❗️ Введите страну исполнителя"
+    ENTER_THE_PHOTO_DEFAULT: str = (
+        "❗️ Скидывайте фотографию\n\n🖌 Любой символ: Дефолтная фотография"
+    )
+    ENTER_THE_PHOTO: str = "❗️ Скидывайте фотографию"
+    ENTER_THE_GENRES: str = (
+        "❗️ Введите жанры исполнителя через точку\n\n"
+        "🖌 Пример: панк-рок.метал.русский рок\n\n"
+    )
+    ENTER_THE_EXECUTOR_NAME: str = "❗️ Введите имя исполнителя"
+    ENTER_THE_SONG_POSITION: str = "❗️ Введите позицию песни"
     MESSAGE_TO_CONFIRM_THE_DELETION_OF_SONGS: str = (
         "❗️ Подтвердите"
         " песни для удаления\n\n✅ Количество: {count}\n✅ Позиции песен: {positions}"
@@ -66,7 +78,7 @@ class UserMessages:
     MY_COLLECTION_OF_SONGS: str = "🎧 Мой сборник песен"
     NO_SONGS_WERE_DROPPED: str = "🤷🏻‍♀️ Не было сброшено песен"
     PRESS_ONE_OF_THE_BUTTONS: str = "👇 Нажмите одну из кнопок"
-    PRESSING_THE_BUTTON_AGAIN_EXECUTOR: str = "Исполнитель уже загружен"
+    PRESSING_THE_BUTTON_AGAIN_EXECUTOR: str = "❗️ Исполнитель уже загружен"
     SONGS_WILL_BE_ADDED_IN_QUANTITY: str = (
         "✅ Будут добавлены песни\n\n✅ Количество {count}"
     )
@@ -76,7 +88,7 @@ class UserMessages:
     THE_SONG_IS_SAVED: str = "🎼 Песня {title} была сохранена"
     THE_DATA_MUST_BE_IN_THE_FORMAT: str = "🖊 Данные должны быть в формате {format}"
     USER_CANCEL_MESSAGE: str = "❌ Все запросы отменены"
-    USER_CANCEL_TEXT: str = "🚫 Отмена"
+    USER_PANEL_CAPTION: str = "🤔 Что же мне сегодня послушать ?"
 
 
 user_messages: UserMessages = UserMessages()
