@@ -1,0 +1,129 @@
+from typing import Optional
+
+from aiogram import Router, F
+from aiogram.types import CallbackQuery, Message
+from aiogram.filters.state import StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+
+from app.bot.modules.music_library.settings import settings as music_library_settings
+from app.bot.modules.music_library.utils.music_library import (
+    get_inline_menu_music_library,
+)
+from app.bot.settings import settings as bot_settings
+from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
+from application.use_cases.db.music_library.update_photo_executor import (
+    UpdatePhotoExecutor,
+)
+from infrastructure.aiogram.filters import UpdateCallbackDataFilters
+from infrastructure.aiogram.messages import user_messages, LIMIT_ALBUMS, resolve_message
+from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
+from infrastructure.db.utils.editing import get_information_executor
+from infrastructure.db.uow import UnitOfWork
+from core.response.response_data import LoggingData, Result
+from core.logging.api import get_loggers
+
+
+router: Router = Router(name=__name__)
+
+
+class FSMUpdateExecutorPhotoFileId(StatesGroup):
+    """Сценарий для обновления фотографии исполнителя."""
+
+    music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    user_id: State = State()
+    executor_id: State = State()
+    current_page_executor: State = State()
+    photo: State = State()
+
+
+@router.callback_query(
+    StateFilter(None), UpdateCallbackDataFilters.UserExecutorPhotoFileId.filter()
+)
+async def start_update_photo_executor(
+    call: CallbackQuery,
+    callback_data: UpdateCallbackDataFilters.UserExecutorPhotoFileId,
+    state: FSMContext,
+):
+    """Просит скинуть фотографию исполнителя."""
+
+    executor_id: int = callback_data.excecutor_id
+    user_id: Optional[int] = callback_data.user_id
+    current_page_executor: int = callback_data.current_page_executor
+
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    await state.update_data(executor_id=executor_id)
+    await state.update_data(user_id=user_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(music_library_executor=True)
+    await state.set_state(FSMUpdateExecutorPhotoFileId.photo)
+    await call.message.answer(
+        text=user_messages.ENTER_THE_PHOTO,
+        reply_markup=get_reply_cancel_button(),
+    )
+
+
+@router.message(FSMUpdateExecutorPhotoFileId.photo, F.photo)
+async def end_update_photo_executor(
+    message: Message,
+    state: FSMContext,
+    bot,
+):
+    """Обновляет фотографию исполнителя."""
+
+    photo_file_id: str = message.photo[-1].file_id
+    photo_file_unique_id: str = message.photo[-1].file_unique_id
+
+    chat_id: int = message.chat.id
+    update_photo_executor_data = await state.get_data()
+    executor_id: int = update_photo_executor_data.get("executor_id")
+    user_id: Optional[int] = update_photo_executor_data.get("user_id")
+    current_page_executor: int = update_photo_executor_data.get("current_page_executor")
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
+
+    await state.clear()
+    result_update_photo_executor: Result = await UpdatePhotoExecutor(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(
+        user_id=user_id,
+        executor_id=executor_id,
+        photo_file_id=photo_file_id,
+        photo_file_unique_id=photo_file_unique_id,
+    )
+    if result_update_photo_executor.ok:
+        msg: str = resolve_message(code=result_update_photo_executor.code)
+
+        await message.answer(text=msg)
+
+        await ShowExecutorPageService(
+            uow=UnitOfWork, bot=bot, logging_data=logging_data
+        ).execute(
+            chat_id=chat_id,
+            current_page=current_page_executor,
+            limit_albums=LIMIT_ALBUMS,
+            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+            user_id=user_id,
+            album_position=0,
+            get_information_executor=get_information_executor,
+        )
+        return
+    if not result_update_photo_executor.ok:
+        error_message = resolve_message(code=result_update_photo_executor.error.code)
+        await get_inline_menu_music_library(
+            chat_id=chat_id,
+            bot=bot,
+            caption=user_messages.USER_PANEL_CAPTION,
+            message=error_message,
+        )
+
+
+@router.message(FSMUpdateExecutorPhotoFileId.photo)
+async def end_update_photo_executor_message(message: Message):
+    """Отравляет сообщение если были отправлены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="фото")
+    )
