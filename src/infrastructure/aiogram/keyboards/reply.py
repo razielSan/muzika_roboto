@@ -4,11 +4,11 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.types.keyboard_button import KeyboardButton
 from aiogram.types.reply_keyboard_markup import ReplyKeyboardMarkup
 
-from infrastructure.aiogram.messages import user_messages
+from infrastructure.aiogram.response import KeyboardResponse
 
 
 def get_reply_cancel_button(
-    cancel_text: str = user_messages.USER_CANCEL_TEXT,
+    cancel_text: str = KeyboardResponse.USER_CANCEL_BUTTON.value,
     optional_button_text: Optional[str] = None,
 ) -> ReplyKeyboardMarkup:
     """Reply кнопка отмены."""
