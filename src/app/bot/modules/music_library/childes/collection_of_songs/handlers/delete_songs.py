@@ -14,7 +14,7 @@ from app.bot.modules.music_library.utils.music_library import (
 from app.bot.modules.music_library.services.collection_songs import (
     callback_show_user_collection,
 )
-from app.bot.modules.main.settings import settings as main_settings
+from app.bot.settings import settings as bot_settings
 from application.use_cases.db.collection_songs.get_user_collection_songs import (
     GetUserCollectionSongs,
 )
@@ -98,7 +98,7 @@ async def start_delete_songs_collection_songs(
         await state.set_state(FSMDeleteSongsCollectionSongs.state_data)
         await call.message.edit_media(
             media=InputMediaPhoto(
-                media=main_settings.DELETE_IMAGE_FILE_ID,
+                media=bot_settings.DELETE_IMAGE_FILE_ID,
                 caption=user_messages.SELECT_THE_SONGS_TO_DELETE,
             ),
             reply_markup=get_menu_songs_collection_songs_delete(
@@ -151,7 +151,7 @@ async def delete_songs_buttons(
 
     await call.message.edit_media(
         media=InputMediaPhoto(
-            media=main_settings.DELETE_IMAGE_FILE_ID,
+            media=bot_settings.DELETE_IMAGE_FILE_ID,
             caption=user_messages.SELECT_THE_SONGS_TO_DELETE,
         ),
         reply_markup=get_menu_songs_collection_songs_delete(
@@ -195,7 +195,7 @@ async def scrolling_songe_menu_delete(
 
         await call.message.edit_media(
             media=InputMediaPhoto(
-                media=main_settings.DELETE_IMAGE_FILE_ID,
+                media=bot_settings.DELETE_IMAGE_FILE_ID,
                 caption=user_messages.SELECT_THE_SONGS_TO_DELETE,
             ),
             reply_markup=get_menu_songs_collection_songs_delete(
@@ -238,7 +238,7 @@ async def confirm_delete_songs(
                 positions.append(song.position)
         await call.message.edit_media(
             media=InputMediaPhoto(
-                media=main_settings.DELETE_IMAGE_FILE_ID,
+                media=bot_settings.DELETE_IMAGE_FILE_ID,
                 caption=user_messages.MESSAGE_TO_CONFIRM_THE_DELETION_OF_SONGS.format(
                     count=count, positions=str(positions)
                 ),
