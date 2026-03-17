@@ -227,7 +227,7 @@ class CRUDService:
         """
         async with UnitOfWork() as uow:
             await uow.executors.update_name(
-                executor_id=executor_id, name=name, name_lower=name.casefold()
+                executor_id=executor_id, name=name
             )
             executors = await uow.executors.get_all_executors()
             current_page = 1
