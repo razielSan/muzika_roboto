@@ -31,6 +31,9 @@ class BotSettings(BaseSettings):
     ALBUM_DEFAULT_PHOTO_FILE_ID: str = "AgACAgIAAxkBAAIBZ2l9oQn144OfNwEmtdJD6NVVbyFcAAJlDGsbIWPwS8FbQ1M2cbvAAQADAgADeQADOAQ"
     ALBUM_DEFAULT_PHOTO_UNIQUE_ID: str = "AQADZQxrGyFj8Et-"
 
+    DELETE_IMAGE_FILE_ID: str = "AgACAgIAAxkBAAIJvGmFdN5orJwkcWn2wwv7J-2ALiaBAALzC2sbm8kwSKCgwqBOos5mAQADAgADeAADOAQ"
+    DELETE_IMAGE_FILE_UNIQUE_ID: str = "AQAD8wtrG5vJMEh9"
+
     AUDIO_EXTENSIONS: Set[str] = {".mp3", ".flac", ".wav", ".ogg", ".m4a"}
     MUSICL_LIBRARY_MODULE_NAME: str = "music_library"
 
@@ -48,14 +51,14 @@ class ProxySettings(BaseSettings):
     WEBSHARE_HOST: Optional[str] = None
     WEBSHARE_PORT: Optional[str] = None
 
-    USE_WEBSHARE_POXY: bool = True
+    USE_WEBSHARE_PROXY: bool = True
     USE_OTHER_PROXY: bool = False
 
     OTHER_HOST: Optional[str] = None
     OTHER_PORT: Optional[str] = None
 
     def get_proxy_url(self):
-        if self.USE_WEBSHARE_POXY:
+        if self.USE_WEBSHARE_PROXY:
             return (
                 f"http://{self.WEBSHARE_LOGIN}:{self.WEBSHARE_PASSWORD}"
                 f"@{self.WEBSHARE_HOST}:{self.WEBSHARE_PORT}"
