@@ -11,7 +11,13 @@ from app.bot.modules.music_library.services.collection_songs import (
     show_user_collection,
     callback_show_user_collection,
 )
-from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
+from app.bot.services.music_library.show_executor_page import (
+    ShowExecutorPageCallbackService,
+    ShowExecutorPageService,
+)
+from app.bot.modules.music_library.utils.music_library import (
+    get_inline_menu_music_library,
+)
 from app.bot.modules.music_library.response import get_keyboards_menu_buttons
 from app.bot.utils.delete import delete_previous_message
 from application.use_cases.db.collection_songs.get_user_collection_songs import (
@@ -25,8 +31,8 @@ from infrastructure.aiogram.messages import user_messages
 from infrastructure.aiogram.filters import BackMenuUserPanel, BackExecutorPage
 from infrastructure.aiogram.messages import LIMIT_COLLECTION_SONGS, LIMIT_ALBUMS
 from infrastructure.db.uow import UnitOfWork
-from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.db.utils.editing import get_information_executor
+from infrastructure.aiogram.messages import user_messages
 from infrastructure.aiogram.response import KeyboardResponse
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
@@ -43,20 +49,15 @@ async def menu_music_library(message: Message, bot: Bot):
 
     chat_id: int = message.chat.id
 
-    await message.answer(
-        text=user_messages.MAIN_MENU,
-        reply_markup=ReplyKeyboardRemove(),
-    )
-
-    await bot.send_photo(
+    await get_inline_menu_music_library(
         chat_id=chat_id,
-        photo=settings.MENU_IMAGE_FILE_ID,
-        caption=KeyboardResponse.USER_PANEL_CAPTION,
-        reply_markup=get_keyboards_menu_buttons,
+        bot=bot,
+        caption=user_messages.USER_PANEL_CAPTION,
+        message=user_messages.MAIN_MENU,
     )
 
 
-@router.message(F.text == user_messages.USER_CANCEL_TEXT)
+@router.message(F.text == KeyboardResponse.USER_CANCEL_BUTTON.value)
 async def music_library_cancel_handler(
     message: Message,
     state: FSMContext,
@@ -71,6 +72,7 @@ async def music_library_cancel_handler(
 
     data: Dict = await state.get_data()
     collection_songs: Optional[bool] = data.get("collection_songs")
+    music_library_executor: Optional[bool] = data.get("music_library_executor")
 
     chat_id: int = message.chat.id
 
@@ -78,7 +80,6 @@ async def music_library_cancel_handler(
 
     await state.clear()
     if collection_songs:  # Возвращаемся к сборнику песен пользователя
-
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
@@ -97,6 +98,19 @@ async def music_library_cancel_handler(
             )
             return
 
+    if music_library_executor:  # возращает на страницу исполлнителя
+        current_page_executor = data.get("current_page_executor")
+        await ShowExecutorPageService(
+            uow=UnitOfWork, logging_data=logging_data, bot=bot
+        ).execute(
+            chat_id=chat_id,
+            current_page=current_page_executor,
+            get_information_executor=get_information_executor,
+            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+            limit_albums=LIMIT_ALBUMS,
+            album_position=0,
+        )
+
     # возвращаемся к главному меню модуля
     await message.answer(
         text=f"{user_messages.USER_CANCEL_MESSAGE}\n\n{user_messages.MAIN_MENU}",
@@ -105,7 +119,7 @@ async def music_library_cancel_handler(
 
     await bot.send_photo(
         chat_id=message.chat.id,
-        caption=KeyboardResponse.USER_PANEL_CAPTION,
+        caption=user_messages.USER_PANEL_CAPTION,
         reply_markup=get_keyboards_menu_buttons,
         photo=settings.MENU_IMAGE_FILE_ID,
     )
@@ -135,7 +149,6 @@ async def callback_music_library_cancel_handler(
         if result:
             user_response: UserCollectionSongsResponse = result.data
 
-            await call.message.answer(text=user_messages.USER_CANCEL_MESSAGE)
             await callback_show_user_collection(
                 call=call,
                 user_response=user_response,
@@ -149,7 +162,7 @@ async def callback_music_library_cancel_handler(
     await call.message.edit_media(
         media=InputMediaPhoto(
             media=settings.MENU_IMAGE_FILE_ID,
-            caption=KeyboardResponse.USER_PANEL_CAPTION,
+            caption=user_messages.USER_PANEL_CAPTION,
         ),
         reply_markup=get_keyboards_menu_buttons,
     )
@@ -167,7 +180,7 @@ async def get_executor_page_panel(
     album_position = callback_data.album_position
     current_page_executor = callback_data.current_page
 
-    await ShowExecutorPageService(
+    await ShowExecutorPageCallbackService(
         uow=UnitOfWork,
         logging_data=logging_data,
         call=call,
