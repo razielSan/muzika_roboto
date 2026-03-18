@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import Optional, Dict, List
 
-from aiogram import Router, F
-from aiogram.types import CallbackQuery, Message
+from aiogram import Router, F, Bot
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.filters.state import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -12,8 +12,14 @@ from app.bot.modules.music_library.utils.music_library import (
 )
 from app.bot.settings import settings as bot_settings
 from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
-from application.use_cases.db.music_library.update_photo_executor import (
+from application.use_cases.db.music_library.update.update_photo_executor import (
     UpdatePhotoExecutor,
+)
+from application.use_cases.db.music_library.update.update_country_executor import (
+    UpdateCountryExecutor,
+)
+from application.use_cases.db.music_library.update.update_genre_executor import (
+    UpdateGenreExecutor,
 )
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import user_messages, LIMIT_ALBUMS, resolve_message
@@ -25,6 +31,8 @@ from core.logging.api import get_loggers
 
 
 router: Router = Router(name=__name__)
+
+# обновления фото исполнителя
 
 
 class FSMUpdateExecutorPhotoFileId(StatesGroup):
@@ -96,7 +104,10 @@ async def end_update_photo_executor(
     if result_update_photo_executor.ok:
         msg: str = resolve_message(code=result_update_photo_executor.code)
 
-        await message.answer(text=msg)
+        await message.answer(
+            text=msg,
+            reply_markup=ReplyKeyboardRemove(),
+        )
 
         await ShowExecutorPageService(
             uow=UnitOfWork, bot=bot, logging_data=logging_data
@@ -126,4 +137,221 @@ async def end_update_photo_executor_message(message: Message):
 
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="фото")
+    )
+
+
+# обновление страны исполнителя
+
+
+class FSMUpdateCountryExecutor(StatesGroup):
+    """Сценарий для обновления страны исполнителя."""
+
+    music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    user_id: State = State()
+    executor_id: State = State()
+    current_page_executor: State = State()
+    country: State = State()
+
+
+@router.callback_query(
+    StateFilter(None), UpdateCallbackDataFilters.UserExecutorCountry.filter()
+)
+async def start_update_country_executor(
+    call: CallbackQuery,
+    callback_data: UpdateCallbackDataFilters.UserExecutorCountry,
+    state: FSMContext,
+):
+    """Просит ввести страну исполнителя."""
+
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    user_id: Optional[int] = callback_data.user_id
+    executor_id: int = callback_data.excecutor_id
+    current_page_executor: int = callback_data.current_page_executor
+
+    await state.update_data(user_id=user_id)
+    await state.update_data(executor_id=executor_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(music_library_executor=True)
+    await state.set_state(FSMUpdateCountryExecutor.country)
+
+    await call.message.answer(
+        text=user_messages.ENTER_THE_СOUNTRY_EXECUTOR,
+        reply_markup=get_reply_cancel_button(),
+    )
+
+
+@router.message(FSMUpdateCountryExecutor.country)
+async def end_update_country_executor(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+):
+    """Обновляет страну исполнителя."""
+
+    update_country_executor_data: Dict = await state.get_data()
+    executor_id: int = update_country_executor_data.get("executor_id")
+    user_id: Optional[int] = update_country_executor_data.get("user_id")
+    current_page_executor: int = update_country_executor_data.get(
+        "current_page_executor"
+    )
+    chat_id: int = message.chat.id
+    country: str = message.text.strip()
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
+
+    await state.clear()
+    result_update_country_executor: Result = await UpdateCountryExecutor(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(
+        user_id=user_id,
+        executor_id=executor_id,
+        country=country,
+    )
+    if result_update_country_executor.ok:
+        msg: str = resolve_message(code=result_update_country_executor.code)
+
+        await message.answer(
+            text=msg,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+
+        await ShowExecutorPageService(
+            uow=UnitOfWork, bot=bot, logging_data=logging_data
+        ).execute(
+            chat_id=chat_id,
+            current_page=current_page_executor,
+            limit_albums=LIMIT_ALBUMS,
+            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+            user_id=user_id,
+            album_position=0,
+            get_information_executor=get_information_executor,
+        )
+        return
+    if not result_update_country_executor.ok:
+        error_message = resolve_message(code=result_update_country_executor.error.code)
+        await get_inline_menu_music_library(
+            chat_id=chat_id,
+            bot=bot,
+            caption=user_messages.USER_PANEL_CAPTION,
+            message=error_message,
+        )
+
+
+@router.message(FSMUpdateCountryExecutor.country)
+async def end_update_country_executor_message(message: Message):
+    """Отравляет сообщение если были отправлены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+
+
+# Обновление жанров исполнителя
+
+
+class FSMUpdateGenresExecutor(StatesGroup):
+    """Сценарий для обновления жанров исполнителя."""
+
+    music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    user_id: State = State()
+    executor_id: State = State()
+    current_page_executor: State = State()
+    genres: State = State()
+
+
+@router.callback_query(
+    StateFilter(None), UpdateCallbackDataFilters.UserExecutorGenres.filter()
+)
+async def start_update_executor_genres(
+    call: CallbackQuery,
+    callback_data: UpdateCallbackDataFilters.UserExecutorGenres,
+    state: FSMContext,
+):
+    "Просит ввести жанры исполнителя."
+
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    user_id: Optional[int] = callback_data.user_id
+    executor_id: int = callback_data.excecutor_id
+    current_page_executor: int = callback_data.current_page_executor
+
+    await state.update_data(user_id=user_id)
+    await state.update_data(executor_id=executor_id)
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(music_library_executor=True)
+    await state.set_state(FSMUpdateGenresExecutor.genres)
+    await call.message.answer(
+        text=user_messages.ENTER_THE_GENRES,
+        reply_markup=get_reply_cancel_button(),
+    )
+
+
+@router.message(FSMUpdateGenresExecutor.genres)
+async def end_update_genres_executor(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+):
+    """Обновляет жанры исполнителя."""
+
+    update_genres_executor_data: Dict = await state.get_data()
+    executor_id: int = update_genres_executor_data.get("executor_id")
+    user_id: Optional[int] = update_genres_executor_data.get("user_id")
+    current_page_executor: int = update_genres_executor_data.get(
+        "current_page_executor"
+    )
+    chat_id: int = message.chat.id
+    genres: List[str] = message.text.split(".")
+    genres = [genre.strip() for genre in genres]
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
+    await state.clear()
+    result_update_country_executor: Result = await UpdateGenreExecutor(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(
+        user_id=user_id,
+        executor_id=executor_id,
+        genres=genres,
+    )
+    if result_update_country_executor.ok:
+        msg: str = resolve_message(code=result_update_country_executor.code)
+
+        await message.answer(
+            text=msg,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+
+        await ShowExecutorPageService(
+            uow=UnitOfWork, bot=bot, logging_data=logging_data
+        ).execute(
+            chat_id=chat_id,
+            current_page=current_page_executor,
+            limit_albums=LIMIT_ALBUMS,
+            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+            user_id=user_id,
+            album_position=0,
+            get_information_executor=get_information_executor,
+        )
+        return
+    if not result_update_country_executor.ok:
+        error_message: str = resolve_message(
+            code=result_update_country_executor.error.code
+        )
+        await get_inline_menu_music_library(
+            chat_id=chat_id,
+            bot=bot,
+            caption=user_messages.USER_PANEL_CAPTION,
+            message=error_message,
+        )
+
+
+@router.message(FSMUpdateGenresExecutor.genres)
+async def end_update_country_executor_message(message: Message):
+    """Отравляет сообщение если были отправлены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
