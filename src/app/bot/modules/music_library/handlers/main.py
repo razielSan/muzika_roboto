@@ -80,6 +80,12 @@ async def music_library_cancel_handler(
 
     await state.clear()
     if collection_songs:  # Возвращаемся к сборнику песен пользователя
+
+        await message.answer(
+            text=user_messages.USER_CANCEL_MESSAGE,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
@@ -99,7 +105,12 @@ async def music_library_cancel_handler(
             return
 
     if music_library_executor:  # возращает на страницу исполлнителя
-        current_page_executor = data.get("current_page_executor")
+        await message.answer(
+            text=user_messages.USER_CANCEL_MESSAGE,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        current_page_executor: int = data.get("current_page_executor")
+        user_id: int = data.get("user_id")
         await ShowExecutorPageService(
             uow=UnitOfWork, logging_data=logging_data, bot=bot
         ).execute(
@@ -109,7 +120,9 @@ async def music_library_cancel_handler(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             limit_albums=LIMIT_ALBUMS,
             album_position=0,
+            user_id=user_id,
         )
+        return
 
     # возвращаемся к главному меню модуля
     await message.answer(
