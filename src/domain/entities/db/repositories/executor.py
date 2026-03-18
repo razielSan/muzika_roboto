@@ -3,6 +3,7 @@ from abc import abstractmethod, ABC
 from typing import List
 
 from domain.entities.db.models.executor import Executor as DomainExecutor
+from domain.entities.db.models.genre import Genre as DomainGenre
 
 
 class ExecutorRepository(ABC):
@@ -71,5 +72,20 @@ class ExecutorRepository(ABC):
         user_id: Optional[int],
         photo_file_id: str,
         photo_file_unique_id: str,
+    ) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
+    async def update_executor_country(
+        self,
+        executoro_id: int,
+        user_id: Optional[int],
+        country: str,
+    ) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
+    async def update_executor_genres(
+        self, executor_id: int, user_id: Optional[int], genres: List[DomainGenre]
     ) -> Optional[DomainExecutor]:
         pass
