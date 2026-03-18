@@ -448,6 +448,27 @@ def show_executor_user_collections(
                 ).pack(),
             )
         )
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.UPDATE_COUNTRY_EXECUTOR,
+                callback_data=UpdateCallbackDataFilters.UserExecutorCountry(
+                    excecutor_id=executor_id,
+                    user_id=user_id,
+                    current_page_executor=current_page,
+                ).pack(),
+            )
+        )
+        
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.UPDATE_EXECUTOR_GENRES,
+                callback_data=UpdateCallbackDataFilters.UserExecutorGenres(
+                    excecutor_id=executor_id,
+                    user_id=user_id,
+                    current_page_executor=current_page,
+                ).pack(),
+            )
+        )
 
         inline_kb.row(
             InlineKeyboardButton(
@@ -585,7 +606,7 @@ def get_confirmation_delete_executor_button(
                 user_id=user_id,
                 current_page=current_page_executor,
                 album_position=0,
-            ).pack()
+            ).pack(),
         )
     )
     return inline_kb.as_markup()
