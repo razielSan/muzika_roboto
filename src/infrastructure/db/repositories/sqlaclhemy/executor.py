@@ -166,3 +166,37 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         executor.photo_file_unique_id = photo_file_unique_id
         await self.session.flush()
         return executor
+
+    async def update_executor_country(
+        self,
+        executoro_id: int,
+        user_id: Optional[int],
+        country: str,
+    ) -> Optional[Executor]:
+        executor: Optional[Executor] = await self.session.scalar(
+            select(self.model).where(
+                self.model.user_id == user_id, self.model.id == executoro_id
+            )
+        )
+        if not executor:
+            return None
+
+        executor.country = country
+        await self.session.flush()
+        return executor
+
+    async def update_executor_genres(
+        self, executor_id: int, user_id: Optional[int], genres: List[Genre]
+    ) -> Optional[Executor]:
+        executor: Optional[Executor] = await self.session.scalar(
+            select(self.model)
+            .where(self.model.user_id == user_id, self.model.id == executor_id)
+            .options(selectinload(self.model.genres))
+            .options(selectinload(self.model.albums))
+        )
+        if not executor:
+            return None
+
+        executor.genres = genres
+        await self.session.flush()
+        return executor
