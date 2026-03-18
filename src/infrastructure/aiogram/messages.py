@@ -28,6 +28,8 @@ SUCCESS = {
     SuccessCode.GET_EXECUTORS_SUCCESS: "✅ Исполнители успешно получены",
     SuccessCode.GET_ALBUMS_SUCCESS.name: "✅ Альбомы успешно получены",
     SuccessCode.UPDATE_PHOTO_SUCCESS.name: "✅ Фото успешно изменено",
+    SuccessCode.UPDATE_EXECUTOR_COUNTRY_SUCCESS.name: "✅ Страна успешно изменена",
+    SuccessCode.UPDATE_GENRES_SUCCESS.name: "✅ Жанры успешно изменены",
     SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name: "✅ Название "
     "песни успешно изменено\n\n✅ Новое название - {title}",
     SuccessCode.DELETE_SONGS_SUCCESS.name: "✅ Песни успешно удалены",
