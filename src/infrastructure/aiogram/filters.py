@@ -86,6 +86,17 @@ class UpdateCallbackDataFilters:
         excecutor_id: int
         user_id: Optional[int]
         current_page_executor: int
+        
+    class UserExecutorCountry(CallbackData, prefix="upd_u_exc_c"):
+        excecutor_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+        
+    class UserExecutorGenres(CallbackData, prefix="upd_u_exc_g"):
+        excecutor_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+
 
 
 class DeleteCallbackDataFilters:
