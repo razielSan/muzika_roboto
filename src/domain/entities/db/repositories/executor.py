@@ -89,3 +89,9 @@ class ExecutorRepository(ABC):
         self, executor_id: int, user_id: Optional[int], genres: List[DomainGenre]
     ) -> Optional[DomainExecutor]:
         pass
+
+    @abstractmethod
+    async def update_executor_name(
+        self, executor_id: int, user_id: Optional[int], name: str
+    ) -> Optional[DomainExecutor]:
+        pass
