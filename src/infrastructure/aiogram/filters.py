@@ -81,22 +81,26 @@ class UpdateCallbackDataFilters:
 
     class UserCollectionSongsPhotoFileId(CallbackData, prefix="upd_u_coll_s_p_f_id"):
         pass
-    
+
     class UserExecutorPhotoFileId(CallbackData, prefix="upd_u_exc_p_f_id"):
         excecutor_id: int
         user_id: Optional[int]
         current_page_executor: int
-        
+
     class UserExecutorCountry(CallbackData, prefix="upd_u_exc_c"):
         excecutor_id: int
         user_id: Optional[int]
         current_page_executor: int
-        
+
     class UserExecutorGenres(CallbackData, prefix="upd_u_exc_g"):
         excecutor_id: int
         user_id: Optional[int]
         current_page_executor: int
 
+    class UserExecutorName(CallbackData, prefix="upd_u_exc_n"):
+        country: str
+        excecutor_id: int
+        user_id: Optional[int]
 
 
 class DeleteCallbackDataFilters:
@@ -129,5 +133,5 @@ class DeleteCallbackDataFilters:
 
     class ConfirmDeleteExecutor(CallbackData, prefix="del_con_exc"):
         user_id: Optional[int]
-        executor_id: Optional[int] # для сценария отмены удаления
+        executor_id: Optional[int]  # для сценария отмены удаления
         current_page_executor: int
