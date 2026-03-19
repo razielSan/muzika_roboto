@@ -31,8 +31,8 @@ from infrastructure.aiogram.messages import user_messages
 from infrastructure.aiogram.filters import BackMenuUserPanel, BackExecutorPage
 from infrastructure.aiogram.messages import LIMIT_COLLECTION_SONGS, LIMIT_ALBUMS
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.aiogram.fsm.keys import FSMFlags
 from infrastructure.db.utils.editing import get_information_executor
-from infrastructure.aiogram.messages import user_messages
 from infrastructure.aiogram.response import KeyboardResponse
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
@@ -71,8 +71,8 @@ async def music_library_cancel_handler(
         return
 
     data: Dict = await state.get_data()
-    collection_songs: Optional[bool] = data.get("collection_songs")
-    music_library_executor: Optional[bool] = data.get("music_library_executor")
+    collection_songs: Optional[bool] = data.get(FSMFlags.COLLECTION_SONGS)
+    music_library_executor: Optional[bool] = data.get(FSMFlags.MUSIC_LIBRARY_EXECUTOR)
 
     chat_id: int = message.chat.id
 
@@ -109,7 +109,7 @@ async def music_library_cancel_handler(
             text=user_messages.USER_CANCEL_MESSAGE,
             reply_markup=ReplyKeyboardRemove(),
         )
-        current_page_executor: int = data.get("current_page_executor")
+        current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
         user_id: int = data.get("user_id")
         await ShowExecutorPageService(
             uow=UnitOfWork, logging_data=logging_data, bot=bot
@@ -149,7 +149,7 @@ async def callback_music_library_cancel_handler(
     Каллбэк отмена всех действий для модуля music_library и возращение к нужной панели.
     """
     data: Dict = await state.get_data()
-    collection_songs: Optional[bool] = data.get("collection_songs")
+    collection_songs: Optional[bool] = data.get(FSMFlags.COLLECTION_SONGS)
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await state.clear()
