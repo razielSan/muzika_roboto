@@ -11,6 +11,7 @@ from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
 from app.bot.settings import settings as bot_settings
+from app.bot.helpers.executor import return_to_executor_page
 from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
 from application.use_cases.db.music_library.update.update_photo_executor import (
     UpdatePhotoExecutor,
@@ -20,6 +21,9 @@ from application.use_cases.db.music_library.update.update_country_executor impor
 )
 from application.use_cases.db.music_library.update.update_genre_executor import (
     UpdateGenreExecutor,
+)
+from application.use_cases.db.music_library.update.update_name_executor import (
+    UpdateNameExecutor,
 )
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import user_messages, LIMIT_ALBUMS, resolve_message
@@ -36,7 +40,7 @@ router: Router = Router(name=__name__)
 
 
 class FSMUpdateExecutorPhotoFileId(StatesGroup):
-    """Сценарий для обновления фотографии исполнителя."""
+    """FSM для сценария обновления фотографии исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
     user_id: State = State()
@@ -102,25 +106,22 @@ async def end_update_photo_executor(
         photo_file_unique_id=photo_file_unique_id,
     )
     if result_update_photo_executor.ok:
-        msg: str = resolve_message(code=result_update_photo_executor.code)
-
-        await message.answer(
-            text=msg,
-            reply_markup=ReplyKeyboardRemove(),
-        )
-
-        await ShowExecutorPageService(
-            uow=UnitOfWork, bot=bot, logging_data=logging_data
-        ).execute(
+        result_message: str = resolve_message(code=result_update_photo_executor.code)
+        await return_to_executor_page(
             chat_id=chat_id,
-            current_page=current_page_executor,
+            bot=bot,
+            message=result_message,
             limit_albums=LIMIT_ALBUMS,
+            logging_data=logging_data,
+            current_page_executor=current_page_executor,
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-            user_id=user_id,
-            album_position=0,
             get_information_executor=get_information_executor,
+            uow=UnitOfWork,
+            album_position=0,
+            user_id=user_id,
         )
         return
+
     if not result_update_photo_executor.ok:
         error_message = resolve_message(code=result_update_photo_executor.error.code)
         await get_inline_menu_music_library(
@@ -144,7 +145,7 @@ async def end_update_photo_executor_message(message: Message):
 
 
 class FSMUpdateCountryExecutor(StatesGroup):
-    """Сценарий для обновления страны исполнителя."""
+    """FSM для сценария обновления страны исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
     user_id: State = State()
@@ -181,7 +182,7 @@ async def start_update_country_executor(
     )
 
 
-@router.message(FSMUpdateCountryExecutor.country)
+@router.message(FSMUpdateCountryExecutor.country, F.text)
 async def end_update_country_executor(
     message: Message,
     state: FSMContext,
@@ -210,27 +211,26 @@ async def end_update_country_executor(
         country=country,
     )
     if result_update_country_executor.ok:
-        msg: str = resolve_message(code=result_update_country_executor.code)
-
-        await message.answer(
-            text=msg,
-            reply_markup=ReplyKeyboardRemove(),
-        )
-
-        await ShowExecutorPageService(
-            uow=UnitOfWork, bot=bot, logging_data=logging_data
-        ).execute(
+        result_message: str = resolve_message(code=result_update_country_executor.code)
+        await return_to_executor_page(
             chat_id=chat_id,
-            current_page=current_page_executor,
+            bot=bot,
+            message=result_message,
             limit_albums=LIMIT_ALBUMS,
+            logging_data=logging_data,
+            current_page_executor=current_page_executor,
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-            user_id=user_id,
-            album_position=0,
             get_information_executor=get_information_executor,
+            uow=UnitOfWork,
+            album_position=0,
+            user_id=user_id,
         )
         return
+
     if not result_update_country_executor.ok:
-        error_message = resolve_message(code=result_update_country_executor.error.code)
+        error_message: str = resolve_message(
+            code=result_update_country_executor.error.code
+        )
         await get_inline_menu_music_library(
             chat_id=chat_id,
             bot=bot,
@@ -252,7 +252,7 @@ async def end_update_country_executor_message(message: Message):
 
 
 class FSMUpdateGenresExecutor(StatesGroup):
-    """Сценарий для обновления жанров исполнителя."""
+    """FSM для сценария обновления жанров исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
     user_id: State = State()
@@ -288,7 +288,7 @@ async def start_update_executor_genres(
     )
 
 
-@router.message(FSMUpdateGenresExecutor.genres)
+@router.message(FSMUpdateGenresExecutor.genres, F.text)
 async def end_update_genres_executor(
     message: Message,
     state: FSMContext,
@@ -317,23 +317,19 @@ async def end_update_genres_executor(
         genres=genres,
     )
     if result_update_country_executor.ok:
-        msg: str = resolve_message(code=result_update_country_executor.code)
-
-        await message.answer(
-            text=msg,
-            reply_markup=ReplyKeyboardRemove(),
-        )
-
-        await ShowExecutorPageService(
-            uow=UnitOfWork, bot=bot, logging_data=logging_data
-        ).execute(
+        result_message: str = resolve_message(code=result_update_country_executor.code)
+        await return_to_executor_page(
             chat_id=chat_id,
-            current_page=current_page_executor,
+            bot=bot,
+            message=result_message,
             limit_albums=LIMIT_ALBUMS,
+            logging_data=logging_data,
+            current_page_executor=current_page_executor,
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-            user_id=user_id,
-            album_position=0,
             get_information_executor=get_information_executor,
+            uow=UnitOfWork,
+            album_position=0,
+            user_id=user_id,
         )
         return
     if not result_update_country_executor.ok:
@@ -349,7 +345,104 @@ async def end_update_genres_executor(
 
 
 @router.message(FSMUpdateGenresExecutor.genres)
-async def end_update_country_executor_message(message: Message):
+async def end_update_genres_executor_message(message: Message):
+    """Отравляет сообщение если были отправлены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+
+
+# обновляет имя исполнителя
+class FSMUpdateNameExecutor(StatesGroup):
+    """FSM для сценария для обновления имения исполнителя."""
+
+    music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    user_id: State = State()
+    executor_id: State = State()
+    name: State = State()
+    country: State = State()
+
+
+@router.callback_query(
+    StateFilter(None), UpdateCallbackDataFilters.UserExecutorName.filter()
+)
+async def start_update_name_executor(
+    call: CallbackQuery,
+    callback_data: UpdateCallbackDataFilters.UserExecutorName,
+    state: FSMContext,
+):
+    """Просит скинуть фотографию исполнителя."""
+
+    executor_id: int = callback_data.excecutor_id
+    user_id: Optional[int] = callback_data.user_id
+    country: str = callback_data.country
+
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    await state.update_data(executor_id=executor_id)
+    await state.update_data(user_id=user_id)
+    await state.update_data(country=country)
+    await state.update_data(music_library_executor=True)
+    await state.set_state(FSMUpdateNameExecutor.name)
+    await call.message.answer(
+        text=user_messages.ENTER_THE_EXECUTOR_NAME,
+        reply_markup=get_reply_cancel_button(),
+    )
+
+
+@router.message(FSMUpdateNameExecutor.name, F.text)
+async def end_update_name_excutor(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+):
+    """Обновляет имя исполнителя."""
+
+    name: str = message.text.strip()
+    update_name_executor_data: Dict = await state.get_data()
+    executor_id: int = update_name_executor_data.get("executor_id")
+    user_id: Optional[int] = update_name_executor_data.get("user_id")
+    country: str = update_name_executor_data.get("country")
+    chat_id: int = message.chat.id
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
+    await state.clear()
+    result_update_country_executor: Result = await UpdateNameExecutor(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(user_id=user_id, executor_id=executor_id, name=name, country=country)
+    if result_update_country_executor.ok:
+        result_message: str = resolve_message(code=result_update_country_executor.code)
+        current_page_executor: int = result_update_country_executor.data
+        await return_to_executor_page(
+            chat_id=chat_id,
+            bot=bot,
+            message=result_message,
+            limit_albums=LIMIT_ALBUMS,
+            logging_data=logging_data,
+            current_page_executor=current_page_executor,
+            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+            get_information_executor=get_information_executor,
+            uow=UnitOfWork,
+            album_position=0,
+            user_id=user_id,
+        )
+        return
+    if not result_update_country_executor.ok:
+        error_message: str = resolve_message(
+            code=result_update_country_executor.error.code
+        )
+        await get_inline_menu_music_library(
+            chat_id=chat_id,
+            bot=bot,
+            caption=user_messages.USER_PANEL_CAPTION,
+            message=error_message,
+        )
+
+
+@router.message(FSMUpdateNameExecutor.name)
+async def end_update_name_executor_message(message: Message):
     """Отравляет сообщение если были отправлены не те данные."""
 
     await message.answer(
