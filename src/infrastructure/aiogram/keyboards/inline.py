@@ -391,6 +391,7 @@ def show_executor_user_collections(
         user_id = executor.current_user_id
         total_pages = executor.total_pages
         current_page = executor.current_page
+        country = executor.country
         name: str = executor.name
 
         if not albums:
@@ -440,6 +441,16 @@ def show_executor_user_collections(
             )
         inline_kb.row(
             InlineKeyboardButton(
+                text=KeyboardResponse.UPDATE_NAME_EXECUTOR,
+                callback_data=UpdateCallbackDataFilters.UserExecutorName(
+                    country=country,
+                    excecutor_id=executor_id,
+                    user_id=user_id,
+                ).pack(),
+            )
+        )
+        inline_kb.row(
+            InlineKeyboardButton(
                 text=KeyboardResponse.UPDATE_PHOTO_EXECUTOR,
                 callback_data=UpdateCallbackDataFilters.UserExecutorPhotoFileId(
                     excecutor_id=executor_id,
@@ -458,7 +469,7 @@ def show_executor_user_collections(
                 ).pack(),
             )
         )
-        
+
         inline_kb.row(
             InlineKeyboardButton(
                 text=KeyboardResponse.UPDATE_EXECUTOR_GENRES,
