@@ -200,3 +200,19 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         executor.genres = genres
         await self.session.flush()
         return executor
+
+    async def update_executor_name(
+        self, executor_id: int, user_id: Optional[int], name: str
+    ) -> Optional[Executor]:
+        executor: Optional[Executor] = await self.session.scalar(
+            select(self.model).where(
+                self.model.user_id == user_id, self.model.id == executor_id
+            )
+        )
+        if not executor:
+            return None
+
+        executor.name = name
+        executor.name_lower = name.casefold()
+        await self.session.flush()
+        return executor
