@@ -248,4 +248,7 @@ class ShowExecutorPageService:
 
         if not result.ok:
             error_message: str = resolve_message(code=result.error.code)
-            await self.bot.send_message(text=error_message)
+            await self.bot.send_message(
+                text=error_message,
+                chat_id=chat_id,
+            )
