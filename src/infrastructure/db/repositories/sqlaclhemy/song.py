@@ -1,10 +1,10 @@
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from domain.entities.db.repositories.song import SongRepository
+from domain.entities.response import SongResponse
 from infrastructure.db.models.sqlaclhemy.song import Song
-
 
 
 class SQLAlchemySongRepository(SongRepository):
@@ -21,3 +21,30 @@ class SQLAlchemySongRepository(SongRepository):
         )
         await self.session.flush()
         return song
+
+    async def get_last_postion_song(self, album_id: int) -> Optional[int]:
+        position = await self.session.scalar(
+            select(func.max(self.model.position)).where(self.model.album_id == album_id)
+        )
+        return position
+
+    async def add_songs(
+        self,
+        songs: List[SongResponse],
+        album_id: int,
+        start_position: int = 1,
+    ) -> List[Song]:
+        songs_albums = []
+        for position, song in enumerate(songs, start=start_position):
+            songs_albums.append(
+                self.model(
+                    title=song.title,
+                    position=position,
+                    album_id=album_id,
+                    file_id=song.file_id,
+                    file_unique_id=song.file_unique_id,
+                )
+            )
+        self.session.add_all(songs_albums)
+        await self.session.flush()
+        return songs
