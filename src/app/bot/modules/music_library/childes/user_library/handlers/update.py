@@ -39,7 +39,7 @@ router: Router = Router(name=__name__)
 # обновления фото исполнителя
 
 
-class FSMUpdateExecutorPhotoFileId(StatesGroup):
+class FSMUserUpdateExecutorPhotoFileId(StatesGroup):
     """FSM для сценария обновления фотографии исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
@@ -69,14 +69,14 @@ async def start_update_photo_executor(
     await state.update_data(user_id=user_id)
     await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(music_library_executor=True)
-    await state.set_state(FSMUpdateExecutorPhotoFileId.photo)
+    await state.set_state(FSMUserUpdateExecutorPhotoFileId.photo)
     await call.message.answer(
-        text=user_messages.ENTER_THE_PHOTO,
+        text=user_messages.DROP_THE_PHOTO,
         reply_markup=get_reply_cancel_button(),
     )
 
 
-@router.message(FSMUpdateExecutorPhotoFileId.photo, F.photo)
+@router.message(FSMUserUpdateExecutorPhotoFileId.photo, F.photo)
 async def end_update_photo_executor(
     message: Message,
     state: FSMContext,
@@ -132,7 +132,7 @@ async def end_update_photo_executor(
         )
 
 
-@router.message(FSMUpdateExecutorPhotoFileId.photo)
+@router.message( FSMUserUpdateExecutorPhotoFileId.photo)
 async def end_update_photo_executor_message(message: Message):
     """Отравляет сообщение если были отправлены не те данные."""
 
@@ -144,7 +144,7 @@ async def end_update_photo_executor_message(message: Message):
 # обновление страны исполнителя
 
 
-class FSMUpdateCountryExecutor(StatesGroup):
+class FSMUserUpdateCountryExecutor(StatesGroup):
     """FSM для сценария обновления страны исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
@@ -174,7 +174,7 @@ async def start_update_country_executor(
     await state.update_data(executor_id=executor_id)
     await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(music_library_executor=True)
-    await state.set_state(FSMUpdateCountryExecutor.country)
+    await state.set_state(FSMUserUpdateCountryExecutor.country)
 
     await call.message.answer(
         text=user_messages.ENTER_THE_СOUNTRY_EXECUTOR,
@@ -182,7 +182,7 @@ async def start_update_country_executor(
     )
 
 
-@router.message(FSMUpdateCountryExecutor.country, F.text)
+@router.message(FSMUserUpdateCountryExecutor.country, F.text)
 async def end_update_country_executor(
     message: Message,
     state: FSMContext,
@@ -239,7 +239,7 @@ async def end_update_country_executor(
         )
 
 
-@router.message(FSMUpdateCountryExecutor.country)
+@router.message(FSMUserUpdateCountryExecutor.country)
 async def end_update_country_executor_message(message: Message):
     """Отравляет сообщение если были отправлены не те данные."""
 
@@ -251,7 +251,7 @@ async def end_update_country_executor_message(message: Message):
 # Обновление жанров исполнителя
 
 
-class FSMUpdateGenresExecutor(StatesGroup):
+class FSMUserUpdateGenresExecutor(StatesGroup):
     """FSM для сценария обновления жанров исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
@@ -281,14 +281,14 @@ async def start_update_executor_genres(
     await state.update_data(executor_id=executor_id)
     await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(music_library_executor=True)
-    await state.set_state(FSMUpdateGenresExecutor.genres)
+    await state.set_state(FSMUserUpdateGenresExecutor.genres)
     await call.message.answer(
         text=user_messages.ENTER_THE_GENRES,
         reply_markup=get_reply_cancel_button(),
     )
 
 
-@router.message(FSMUpdateGenresExecutor.genres, F.text)
+@router.message(FSMUserUpdateGenresExecutor.genres, F.text)
 async def end_update_genres_executor(
     message: Message,
     state: FSMContext,
@@ -344,7 +344,7 @@ async def end_update_genres_executor(
         )
 
 
-@router.message(FSMUpdateGenresExecutor.genres)
+@router.message(FSMUserUpdateGenresExecutor.genres)
 async def end_update_genres_executor_message(message: Message):
     """Отравляет сообщение если были отправлены не те данные."""
 
@@ -354,10 +354,11 @@ async def end_update_genres_executor_message(message: Message):
 
 
 # обновляет имя исполнителя
-class FSMUpdateNameExecutor(StatesGroup):
+class FSMUserUpdateNameExecutor(StatesGroup):
     """FSM для сценария для обновления имения исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    current_page_executor: State = State()
     user_id: State = State()
     executor_id: State = State()
     name: State = State()
@@ -372,26 +373,28 @@ async def start_update_name_executor(
     callback_data: UpdateCallbackDataFilters.UserExecutorName,
     state: FSMContext,
 ):
-    """Просит скинуть фотографию исполнителя."""
+    """Просит ввести имя исполнителя."""
 
     executor_id: int = callback_data.excecutor_id
     user_id: Optional[int] = callback_data.user_id
     country: str = callback_data.country
+    current_page_executor: int = callback_data.current_page_executor
 
     await call.message.edit_reply_markup(reply_markup=None)
 
     await state.update_data(executor_id=executor_id)
     await state.update_data(user_id=user_id)
     await state.update_data(country=country)
+    await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(music_library_executor=True)
-    await state.set_state(FSMUpdateNameExecutor.name)
+    await state.set_state(FSMUserUpdateNameExecutor.name)
     await call.message.answer(
         text=user_messages.ENTER_THE_EXECUTOR_NAME,
         reply_markup=get_reply_cancel_button(),
     )
 
 
-@router.message(FSMUpdateNameExecutor.name, F.text)
+@router.message(FSMUserUpdateNameExecutor.name, F.text)
 async def end_update_name_excutor(
     message: Message,
     state: FSMContext,
@@ -441,7 +444,7 @@ async def end_update_name_excutor(
         )
 
 
-@router.message(FSMUpdateNameExecutor.name)
+@router.message(FSMUserUpdateNameExecutor.name)
 async def end_update_name_executor_message(message: Message):
     """Отравляет сообщение если были отправлены не те данные."""
 
