@@ -216,7 +216,7 @@ async def final_add_collection_songs(
         )
 
 
-@router.message(FSMAddSongCollection.processing, F.text)
+@router.message(FSMAddSongCollection.processing)
 async def final_add_collection_song(
     message: Message,
     bot: Bot,
