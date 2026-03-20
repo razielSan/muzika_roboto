@@ -4,12 +4,12 @@ from typing import Optional, List, Union
 
 @dataclass
 class SongResponse:
-    id: int
     title: str
-    position: int
     file_id: str
     file_unique_id: str
-    album_id: int
+    id: Optional[int] = None
+    album_id: Optional[int] = None
+    position: Optional[int] = None
 
 
 @dataclass
@@ -38,7 +38,9 @@ class AlbumPageResponse:
 class ExecutorPageResponse:
     id: int
     current_user_id: Optional[int]  # user_id пользователя для скроллинга
-    is_global: Optional[bool]  # для определения глобальный или пользовательский исполнитель
+    is_global: Optional[
+        bool
+    ]  # для определения глобальный или пользовательский исполнитель
     name: str
     country: str
     photo_file_id: int
