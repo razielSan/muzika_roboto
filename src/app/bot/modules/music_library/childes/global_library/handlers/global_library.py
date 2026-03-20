@@ -52,11 +52,11 @@ async def global_libaray(call: CallbackQuery):
 
 @router.callback_query(
     StateFilter(None),
-    ScrollingCallbackDataFilters.AlbumsExecutorGlobalLibrary.filter(),
+    ScrollingCallbackDataFilters.AlbumsExecutorLibrary.filter(),
 )
 async def scrolling_albums_executor(
     call: CallbackQuery,
-    callback_data: ScrollingCallbackDataFilters.AlbumsExecutorGlobalLibrary,
+    callback_data: ScrollingCallbackDataFilters.AlbumsExecutorLibrary,
 ):
     """Пролистывает альбомы исполнителя."""
 
@@ -79,11 +79,11 @@ async def scrolling_albums_executor(
 
 
 @router.callback_query(
-    StateFilter(None), ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary.filter()
+    StateFilter(None), ScrollingCallbackDataFilters.ExecutorPageLibrary.filter()
 )
 async def scrolling_global_executors(
     call: CallbackQuery,
-    callback_data: ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary,
+    callback_data: ScrollingCallbackDataFilters.ExecutorPageLibrary,
 ):
     """Пролистывает исполнителей."""
 
