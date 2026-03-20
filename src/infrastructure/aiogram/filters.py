@@ -42,6 +42,11 @@ class AddCallbackDataFilters:
     class SongCollectionSongs(CallbackData, prefix="add_coll_s"):
         pass
 
+    class AddAlbumExecutor(CallbackData, prefix="add_a_exc"):
+        executor_id: int
+        user_id: int
+        current_page_executor: int
+
 
 class ScrollingCallbackDataFilters:
     class SongCollectionSongs(CallbackData, prefix="scr_s_coll_s"):
@@ -49,7 +54,7 @@ class ScrollingCallbackDataFilters:
         offset: int
 
     class DeleteMenuSongColletionSongs(CallbackData, prefix="scr_del_menu_coll_s"):
-        """Фильтря для пролистывания песен в меню удаления песен."""
+        """Фильтр для пролистывания песен в меню удаления песен."""
 
         position: int
         offset: int
@@ -62,14 +67,14 @@ class ScrollingCallbackDataFilters:
         current_page_executor: int
         album_id: int
 
-    class AlbumsExecutorGlobalLibrary(CallbackData, prefix="scr_al_ex_gl_lib"):
+    class AlbumsExecutorLibrary(CallbackData, prefix="scr_al_ex_gl_lib"):
         executor_id: int
         user_id: Optional[int]
         current_page_executor: int
         position: int
         offset: int
 
-    class ExecutorPageGlobalLibrary(CallbackData, prefix="scr_ex_p_gl_lib"):
+    class ExecutorPageLibrary(CallbackData, prefix="scr_ex_p_gl_lib"):
         executor_id: int
         user_id: Optional[int]
         current_page_executor: int
@@ -101,6 +106,7 @@ class UpdateCallbackDataFilters:
         country: str
         excecutor_id: int
         user_id: Optional[int]
+        current_page_executor: int
 
 
 class DeleteCallbackDataFilters:
