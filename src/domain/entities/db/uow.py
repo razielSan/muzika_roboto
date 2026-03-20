@@ -6,13 +6,15 @@ from domain.entities.db.repositories.genre import GenreRepository
 from domain.entities.db.repositories.user import UserRepository
 from domain.entities.db.repositories.song import SongRepository
 from domain.entities.db.repositories.user_executor import UserExecutorRepository
+from domain.entities.db.repositories.album import AlbumRepository
 
 
 class AbstractUnitOfWork(ABC):
-    executors: ExecutorRepository
     users: UserRepository
-    genres: GenreRepository
     collection_songs: CollectionSongsRepository
+    executors: ExecutorRepository
+    albums: AlbumRepository
+    genres: GenreRepository
     songs: SongRepository
     user_executors: UserExecutorRepository
 
