@@ -274,7 +274,7 @@ def show_executor_global_collections(
                 buttons.append(
                     InlineKeyboardButton(
                         text=KeyboardResponse.BACK_BUTTON,
-                        callback_data=ScrollingCallbackDataFilters.AlbumsExecutorGlobalLibrary(
+                        callback_data=ScrollingCallbackDataFilters.AlbumsExecutorLibrary(
                             executor_id=executor_id,
                             user_id=user_id,
                             current_page_executor=current_page,
@@ -287,7 +287,7 @@ def show_executor_global_collections(
                 buttons.append(
                     InlineKeyboardButton(
                         text=KeyboardResponse.FORWARD_BUTTON,
-                        callback_data=ScrollingCallbackDataFilters.AlbumsExecutorGlobalLibrary(
+                        callback_data=ScrollingCallbackDataFilters.AlbumsExecutorLibrary(
                             executor_id=executor_id,
                             user_id=user_id,
                             current_page_executor=current_page,
@@ -307,7 +307,7 @@ def show_executor_global_collections(
                 inline_kb.row(
                     InlineKeyboardButton(
                         text="⬅️",
-                        callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                        callback_data=ScrollingCallbackDataFilters.ExecutorPageLibrary(
                             executor_id=executor_id,
                             current_page_executor=back_button_page,
                             user_id=user_id,
@@ -319,7 +319,7 @@ def show_executor_global_collections(
                     inline_kb.add(
                         InlineKeyboardButton(
                             text=f"{page_data}",
-                            callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                            callback_data=ScrollingCallbackDataFilters.ExecutorPageLibrary(
                                 executor_id=executor_id,
                                 current_page_executor=page,
                                 user_id=user_id,
@@ -329,7 +329,7 @@ def show_executor_global_collections(
                 inline_kb.add(
                     InlineKeyboardButton(
                         text="➡️",
-                        callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                        callback_data=ScrollingCallbackDataFilters.ExecutorPageLibrary(
                             executor_id=executor_id,
                             current_page_executor=forward_button_page,
                             user_id=user_id,
@@ -401,16 +401,64 @@ def show_executor_user_collections(
                     callback_data="NOT_FOUND_ALBUMS",
                 )
             )
+
+        else:
+            for album in albums:
+                inline_kb.row(
+                    InlineKeyboardButton(
+                        text=f"({album.year}) {album.title}",
+                        callback_data=ShowAlbumExecutor(
+                            album_position=album_position,
+                            album_id=album.id,
+                            user_id=user_id,
+                            executor_id=executor_id,
+                            current_page_executor=current_page,
+                        ).pack(),
+                    )
+                )
+            buttons = []
+            has_prev = album_position > 0
+            has_next = album_position + limit_albums < count_albums
+            if has_prev:
+                buttons.append(
+                    InlineKeyboardButton(
+                        text=KeyboardResponse.BACK_BUTTON,
+                        callback_data=ScrollingCallbackDataFilters.AlbumsExecutorLibrary(
+                            executor_id=executor_id,
+                            user_id=user_id,
+                            current_page_executor=current_page,
+                            position=album_position,
+                            offset=-limit_albums,
+                        ).pack(),
+                    )
+                )
+            if has_next:
+                buttons.append(
+                    InlineKeyboardButton(
+                        text=KeyboardResponse.FORWARD_BUTTON,
+                        callback_data=ScrollingCallbackDataFilters.AlbumsExecutorLibrary(
+                            executor_id=executor_id,
+                            user_id=user_id,
+                            current_page_executor=current_page,
+                            position=album_position,
+                            offset=limit_albums,
+                        ).pack(),
+                    )
+                )
+            inline_kb.row(*buttons)
         pages = build_pages(current=current_page, total=total_pages)
+
+        # Пагинация исполнителей
 
         # для избежания выхода за границы
         back_button_page = max(1, current_page - 1)
         forward_button_page = min(total_pages, current_page + 1)
+
         if pages:  # если исполнителей больше одного
             inline_kb.row(
                 InlineKeyboardButton(
                     text="⬅️",
-                    callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                    callback_data=ScrollingCallbackDataFilters.ExecutorPageLibrary(
                         executor_id=executor_id,
                         current_page_executor=back_button_page,
                         user_id=user_id,
@@ -422,7 +470,7 @@ def show_executor_user_collections(
                 inline_kb.add(
                     InlineKeyboardButton(
                         text=f"{page_data}",
-                        callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                        callback_data=ScrollingCallbackDataFilters.ExecutorPageLibrary(
                             executor_id=executor_id,
                             current_page_executor=page,
                             user_id=user_id,
@@ -432,13 +480,26 @@ def show_executor_user_collections(
             inline_kb.add(
                 InlineKeyboardButton(
                     text="➡️",
-                    callback_data=ScrollingCallbackDataFilters.ExecutorPageGlobalLibrary(
+                    callback_data=ScrollingCallbackDataFilters.ExecutorPageLibrary(
                         executor_id=executor_id,
                         current_page_executor=forward_button_page,
                         user_id=user_id,
                     ).pack(),
                 )
             )
+
+        # Кнопки исполнителя
+
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.ADD_ALBUM,
+                callback_data=AddCallbackDataFilters.AddAlbumExecutor(
+                    current_page_executor=current_page,
+                    executor_id=executor_id,
+                    user_id=user_id,
+                ).pack(),
+            )
+        )
         inline_kb.row(
             InlineKeyboardButton(
                 text=KeyboardResponse.UPDATE_NAME_EXECUTOR,
@@ -446,9 +507,11 @@ def show_executor_user_collections(
                     country=country,
                     excecutor_id=executor_id,
                     user_id=user_id,
+                    current_page_executor=current_page,
                 ).pack(),
             )
         )
+
         inline_kb.row(
             InlineKeyboardButton(
                 text=KeyboardResponse.UPDATE_PHOTO_EXECUTOR,
