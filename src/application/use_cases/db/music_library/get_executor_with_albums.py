@@ -65,7 +65,7 @@ class GetExecutorWihtAlbums:
                     )
                     for album in executor.albums
                 ]
-
+            is_global: bool = True if not executor.user_id else False
             response_executor: ExecutorPageResponse = ExecutorPageResponse(
                 id=executor.id,
                 name=executor.name,
@@ -77,7 +77,7 @@ class GetExecutorWihtAlbums:
                 genres=genres,
                 albums=executor_albums,
                 total_pages=total_pages,
-                is_global=True if not executor.user_id else False,
+                is_global=is_global,
             )
 
         return ok(
