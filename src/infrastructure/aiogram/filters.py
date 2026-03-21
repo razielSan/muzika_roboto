@@ -60,7 +60,7 @@ class ScrollingCallbackDataFilters:
         position: int
         offset: int
 
-    class SongsAlbumGlobalLibrary(CallbackData, prefix="scr_s_al_gl_lib"):
+    class SongsAlbumLibrary(CallbackData, prefix="scr_s_al_gl_lib"):
         user_id: Optional[int]
         position: int
         offset: int
