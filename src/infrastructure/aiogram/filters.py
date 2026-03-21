@@ -28,6 +28,7 @@ class ShowAlbumExecutor(CallbackData, prefix="show_al_ex"):
     user_id: Optional[int]
     executor_id: int
     current_page_executor: int
+    is_global_executor: bool
 
 
 class SyncExecutor(CallbackData, prefix="sync_ex"):
@@ -65,6 +66,7 @@ class ScrollingCallbackDataFilters:
         offset: int
         executor_id: int
         current_page_executor: int
+        is_global_executor: bool
         album_id: int
 
     class AlbumsExecutorLibrary(CallbackData, prefix="scr_al_ex_gl_lib"):
