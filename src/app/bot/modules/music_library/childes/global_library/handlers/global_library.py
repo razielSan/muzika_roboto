@@ -135,11 +135,11 @@ async def show_album_executor(
 
 
 @router.callback_query(
-    StateFilter(None), ScrollingCallbackDataFilters.SongsAlbumGlobalLibrary.filter()
+    StateFilter(None), ScrollingCallbackDataFilters.SongsAlbumLibrary.filter()
 )
 async def scrolling_songs_album(
     call: CallbackQuery,
-    callback_data: ScrollingCallbackDataFilters.SongsAlbumGlobalLibrary,
+    callback_data: ScrollingCallbackDataFilters.SongsAlbumLibrary,
 ):
     """Пролистывает песни альбома."""
 
