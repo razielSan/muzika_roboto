@@ -39,7 +39,7 @@ async def global_libaray(call: CallbackQuery):
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork, logging_data=logging_data, call=call
+        uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         user_id=None,
@@ -67,7 +67,7 @@ async def scrolling_albums_executor(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork, logging_data=logging_data, call=call
+        uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         user_id=user_id,
@@ -93,7 +93,7 @@ async def scrolling_global_executors(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork, logging_data=logging_data, call=call
+        uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         user_id=user_id,
@@ -116,10 +116,11 @@ async def show_album_executor(
     current_page_executor = callback_data.current_page_executor
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
+    is_global_executor: bool = callback_data.is_global_executor
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowAlbumPageService(
-        uow=UnitOfWork, logging_data=logging_data, call=call
+        uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         user_id=user_id,
         get_information_album=get_information_album,
@@ -129,6 +130,7 @@ async def show_album_executor(
         song_position=0,
         current_page_executor=current_page_executor,
         album_position=album_position,
+        is_global_executor=is_global_executor
     )
 
 
@@ -146,11 +148,12 @@ async def scrolling_songs_album(
     album_id: int = callback_data.album_id
     position = callback_data.position + callback_data.offset
     user_id = callback_data.user_id
+    is_global_executor: bool = callback_data.is_global_executor
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowAlbumPageService(
-        uow=UnitOfWork, logging_data=logging_data, call=call
+        uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         user_id=user_id,
         get_information_album=get_information_album,
@@ -159,6 +162,7 @@ async def scrolling_songs_album(
         limit_songs=LIMIT_SONGS,
         song_position=position,
         current_page_executor=current_page_executor,
+        is_global_executor=is_global_executor
     )
 
 
@@ -175,7 +179,7 @@ async def play_songs_album(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowSongService(
-        uow=UnitOfWork,
+        uow=UnitOfWork(),
         logging_data=logging_data,
         call=call,
         bot=bot,
