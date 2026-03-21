@@ -28,7 +28,7 @@ async def return_to_executor_page(
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    await ShowExecutorPageService(uow=uow, bot=bot, logging_data=logging_data).execute(
+    await ShowExecutorPageService(uow=uow(), bot=bot, logging_data=logging_data).execute(
         chat_id=chat_id,
         current_page=current_page_executor,
         limit_albums=limit_albums,
