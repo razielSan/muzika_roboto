@@ -25,6 +25,7 @@ class GetAlbumWithSongs:
         album_id: int,
         album_position=0,
         current_page_executor=1,
+        is_global_executor=True,
     ) -> Result:
         async with self.uow as uow:
             if user_id:  # пользовательская библиотека
@@ -65,5 +66,6 @@ class GetAlbumWithSongs:
                 title=album.title,
                 current_page_executor=current_page_executor,
                 album_position=album_position,
+                is_global_executor=is_global_executor,
             )
         return ok(data=response_album, code=SuccessCode.GET_ALBUMS_SUCCESS.name)
