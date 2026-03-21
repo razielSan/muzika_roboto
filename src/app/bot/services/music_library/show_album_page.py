@@ -92,7 +92,6 @@ class ShowAlbumPageService:
                     ),
                 )
             if not is_global_executor:  # если пользовательский альбом
-                print("user", is_global_executor)
                 await self.call.message.edit_media(
                     media=InputMediaPhoto(caption=info_album, media=photo_file_id),
                     reply_markup=show_album_user_collections(
