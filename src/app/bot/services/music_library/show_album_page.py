@@ -2,11 +2,15 @@ from typing import Union, Callable
 
 from aiogram.types import InputMediaPhoto, CallbackQuery
 
+from app.bot.settings import settings as bot_settings
 from application.use_cases.db.music_library.get_album_with_songs import (
     GetAlbumWithSongs,
 )
 from domain.entities.db.uow import AbstractUnitOfWork
-from infrastructure.aiogram.keyboards.inline import show_album_collections
+from infrastructure.aiogram.keyboards.inline import (
+    show_album_collections,
+    show_album_user_collections,
+)
 from infrastructure.aiogram.messages import resolve_message
 from core.response.response_data import Result, LoggingData
 
@@ -32,6 +36,7 @@ class ShowAlbumPageService:
         song_position=0,
         album_position: int = 0,
         current_page_executor=1,
+        is_global_executor=True,
     ) -> Result:
         """
         Application service для сценария показа альбома с песнями.
@@ -46,13 +51,14 @@ class ShowAlbumPageService:
         """
 
         response_album = await GetAlbumWithSongs(
-            uow=self.uow(), logging_data=self.logging_data
+            uow=self.uow, logging_data=self.logging_data
         ).execute(
             user_id=user_id,
             executor_id=executor_id,
             album_id=album_id,
             current_page_executor=current_page_executor,
             album_position=album_position,
+            is_global_executor=is_global_executor,
         )
         if response_album.ok:
             if response_album.empty:
@@ -67,16 +73,36 @@ class ShowAlbumPageService:
                 year=album.year,
                 number_of_songs=len(album.songs),
             )
-            await self.call.message.edit_media(
-                media=InputMediaPhoto(caption=info_album, media=album.photo_file_id),
-                reply_markup=show_album_collections(
-                    songs=album.songs,
-                    album=album,
-                    song_position=song_position,
-                    limit_songs=limit_songs,
-                    user_id=user_id,
-                ),
+
+            photo_file_id = (
+                album.photo_file_id
+                if album.photo_file_id
+                else bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID
             )
+
+            if is_global_executor:  # если альбом глобальной библиотеки
+                await self.call.message.edit_media(
+                    media=InputMediaPhoto(caption=info_album, media=photo_file_id),
+                    reply_markup=show_album_collections(
+                        songs=album.songs,
+                        album=album,
+                        song_position=song_position,
+                        limit_songs=limit_songs,
+                        user_id=user_id,
+                    ),
+                )
+            if not is_global_executor:  # если пользовательский альбом
+                print("user", is_global_executor)
+                await self.call.message.edit_media(
+                    media=InputMediaPhoto(caption=info_album, media=photo_file_id),
+                    reply_markup=show_album_user_collections(
+                        songs=album.songs,
+                        album=album,
+                        song_position=song_position,
+                        limit_songs=limit_songs,
+                        user_id=user_id,
+                    ),
+                )
 
         if not response_album.ok:
             error_message = resolve_message(code=response_album.error.code)
