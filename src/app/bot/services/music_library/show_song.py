@@ -39,7 +39,7 @@ class ShowSongService:
         """
 
         response_song = await GetSongAlbum(
-            uow=self.uow(), logging_data=self.logging_data
+            uow=self.uow, logging_data=self.logging_data
         ).execute(album_id=album_id, song_id=song_id)
         if response_song.ok:
             if response_song.empty:
