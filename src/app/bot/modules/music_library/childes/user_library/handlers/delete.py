@@ -77,7 +77,7 @@ async def confirm_delete_executor(
         await call.answer(text=msg)
 
         await ShowExecutorPageCallbackService(
-            uow=UnitOfWork, logging_data=logging_data, call=call
+            uow=UnitOfWork(), logging_data=logging_data, call=call
         ).execute(
             get_information_executor=get_information_executor,
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
