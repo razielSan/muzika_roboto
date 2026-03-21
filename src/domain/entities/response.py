@@ -32,6 +32,7 @@ class AlbumPageResponse:
     current_page_executor: int
     album_position: int
     songs: List[SongResponse]
+    is_global_executor: bool
 
 
 @dataclass
