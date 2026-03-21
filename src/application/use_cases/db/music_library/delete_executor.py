@@ -26,7 +26,6 @@ class DeleteExecutor:
                 user_id=user_id,
                 executor_id=executor_id,
             )
-            executor = []
             if not executor:
                 return ok(data=[], code=NotFoundCode.EXECUTOR_NOT_FOUND.name)
 
