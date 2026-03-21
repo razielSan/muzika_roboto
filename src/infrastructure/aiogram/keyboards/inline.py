@@ -616,7 +616,7 @@ def show_album_collections(
             buttons.append(
                 InlineKeyboardButton(
                     text=KeyboardResponse.BACK_BUTTON,
-                    callback_data=ScrollingCallbackDataFilters.SongsAlbumGlobalLibrary(
+                    callback_data=ScrollingCallbackDataFilters.SongsAlbumLibrary(
                         position=song_position,
                         offset=-limit_songs,
                         executor_id=executor_id,
@@ -631,7 +631,7 @@ def show_album_collections(
             buttons.append(
                 InlineKeyboardButton(
                     text=KeyboardResponse.FORWARD_BUTTON,
-                    callback_data=ScrollingCallbackDataFilters.SongsAlbumGlobalLibrary(
+                    callback_data=ScrollingCallbackDataFilters.SongsAlbumLibrary(
                         position=song_position,
                         offset=limit_songs,
                         executor_id=executor_id,
@@ -708,7 +708,7 @@ def show_album_user_collections(
             buttons.append(
                 InlineKeyboardButton(
                     text=KeyboardResponse.BACK_BUTTON,
-                    callback_data=ScrollingCallbackDataFilters.SongsAlbumGlobalLibrary(
+                    callback_data=ScrollingCallbackDataFilters.SongsAlbumLibrary(
                         position=song_position,
                         offset=-limit_songs,
                         executor_id=executor_id,
@@ -723,7 +723,7 @@ def show_album_user_collections(
             buttons.append(
                 InlineKeyboardButton(
                     text=KeyboardResponse.FORWARD_BUTTON,
-                    callback_data=ScrollingCallbackDataFilters.SongsAlbumGlobalLibrary(
+                    callback_data=ScrollingCallbackDataFilters.SongsAlbumLibrary(
                         position=song_position,
                         offset=limit_songs,
                         executor_id=executor_id,
