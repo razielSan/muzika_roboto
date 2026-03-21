@@ -6,7 +6,9 @@ from app.bot.modules.music_library.childes.user_library.settings import settings
 from app.bot.modules.music_library.utils.music_library import (
     callback_update_menu_inline_music_library,
 )
-from app.bot.services.music_library.show_executor_page import ShowExecutorPageCallbackService
+from app.bot.services.music_library.show_executor_page import (
+    ShowExecutorPageCallbackService,
+)
 from app.bot.settings import settings as bot_settings
 from application.use_cases.db.music_library.desync_executor import DesyncExecutorLibrary
 from infrastructure.aiogram.messages import LIMIT_ALBUMS
@@ -28,7 +30,7 @@ async def user_library(
     user_id = user.id
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork,
+        uow=UnitOfWork(),
         logging_data=logging_data,
         call=call,
     ).execute(
@@ -62,15 +64,14 @@ async def desync_executor(
             not_found_message = resolve_message(code=result_desync_executor.code)
             await call.answer(text=not_found_message)
             await callback_update_menu_inline_music_library(
-                call=call,
-                caption=user_messages.USER_PANEL_CAPTION
+                call=call, caption=user_messages.USER_PANEL_CAPTION
             )
             return
 
         success_message = resolve_message(code=result_desync_executor.code)
         await call.answer(text=success_message)
         await ShowExecutorPageCallbackService(
-            uow=UnitOfWork,
+            uow=UnitOfWork(),
             logging_data=logging_data,
             call=call,
         ).execute(
