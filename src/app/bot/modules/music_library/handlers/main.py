@@ -112,7 +112,7 @@ async def music_library_cancel_handler(
         current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
         user_id: int = data.get("user_id")
         await ShowExecutorPageService(
-            uow=UnitOfWork, logging_data=logging_data, bot=bot
+            uow=UnitOfWork(), logging_data=logging_data, bot=bot
         ).execute(
             chat_id=chat_id,
             current_page=current_page_executor,
@@ -194,7 +194,7 @@ async def get_executor_page_panel(
     current_page_executor = callback_data.current_page
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork,
+        uow=UnitOfWork(),
         logging_data=logging_data,
         call=call,
     ).execute(
