@@ -54,7 +54,7 @@ class ShowExecutorPageCallbackService:
         Содержит логику взаимодействия с Telegram UI.
         """
         result: Result = await GetExecutorWihtAlbums(
-            uow=self.uow(), logging_data=self.logging_data
+            uow=self.uow, logging_data=self.logging_data
         ).execute(
             user_id=user_id,
             current_page=current_page,
@@ -175,7 +175,7 @@ class ShowExecutorPageService:
         Содержит логику взаимодействия с Telegram UI.
         """
         result: Result = await GetExecutorWihtAlbums(
-            uow=self.uow(), logging_data=self.logging_data
+            uow=self.uow, logging_data=self.logging_data
         ).execute(
             user_id=user_id,
             current_page=current_page,
