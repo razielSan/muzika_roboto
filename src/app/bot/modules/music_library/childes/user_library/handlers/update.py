@@ -1,7 +1,7 @@
 from typing import Optional, Dict, List
 
 from aiogram import Router, F, Bot
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message
 from aiogram.filters.state import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -12,7 +12,6 @@ from app.bot.modules.music_library.utils.music_library import (
 )
 from app.bot.settings import settings as bot_settings
 from app.bot.helpers.executor import return_to_executor_page
-from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
 from application.use_cases.db.music_library.update.update_photo_executor import (
     UpdatePhotoExecutor,
 )
