@@ -20,6 +20,7 @@ from infrastructure.aiogram.filters import DeleteCallbackDataFilters
 from infrastructure.db.utils.editing import get_information_executor
 from infrastructure.aiogram.keyboards.inline import (
     get_confirmation_delete_executor_button,
+    get_confirmation_delete_album_buttons,
 )
 from infrastructure.db.uow import UnitOfWork
 from core.logging.api import get_loggers
@@ -39,18 +40,19 @@ async def delete_user_executor(
 
     user_id: int = callback_data.user_id
     executor_id: int = callback_data.executor_id
-    name: str = callback_data.name
     current_page_executor: int = callback_data.current_page_executor
+    album_position: int = callback_data.album_position
 
     await call.message.edit_media(
         InputMediaPhoto(
             media=bot_settings.DELETE_IMAGE_FILE_ID,
-            caption=user_messages.CAPTION_DELETE_EXECUTOR.format(name=name),
+            caption=user_messages.CAPTION_DELETE_EXECUTOR,
         ),
         reply_markup=get_confirmation_delete_executor_button(
             executor_id=executor_id,
             user_id=user_id,
             current_page_executor=current_page_executor,
+            album_position=album_position,
         ),
     )
 
@@ -62,7 +64,7 @@ async def confirm_delete_executor(
     call: CallbackQuery,
     callback_data: DeleteCallbackDataFilters.ConfirmDeleteExecutor,
 ):
-    """Удаляет или отменяет удаление исполнителя."""
+    """Удаляет исполнителя."""
 
     executor_id: Optional[int] = callback_data.executor_id
     user_id: Optional[int] = callback_data.user_id
@@ -94,3 +96,30 @@ async def confirm_delete_executor(
             call=call,
             caption=user_messages.USER_PANEL_CAPTION,
         )
+
+
+@router.callback_query(StateFilter(None), DeleteCallbackDataFilters.Album.filter())
+async def start_delete_album(
+    call: CallbackQuery, callback_data: DeleteCallbackDataFilters.Album
+):
+    executor_id: int = callback_data.executor_id
+    user_id: Optional[int] = callback_data.user_id
+    current_page_executor: int = callback_data.current_page_executor
+    is_global_executor: bool = callback_data.is_global_executor
+    album_id: int = callback_data.album_id
+    album_position: int = callback_data.album_position
+
+    await call.message.edit_media(
+        InputMediaPhoto(
+            media=bot_settings.DELETE_IMAGE_FILE_ID,
+            caption=user_messages.CAPTION_DELETE_ALBUM,
+        ),
+        reply_markup=get_confirmation_delete_album_buttons(
+            executor_id=executor_id,
+            user_id=user_id,
+            current_page_executor=current_page_executor,
+            is_global_executor=is_global_executor,
+            album_id=album_id,
+            album_position=album_position,
+        ),
+    )
