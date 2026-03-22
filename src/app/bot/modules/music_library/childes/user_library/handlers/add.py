@@ -2,14 +2,13 @@ from dataclasses import dataclass
 from typing import Optional, List, Dict
 
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message
 from aiogram.filters.state import StateFilter
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 from app.bot.modules.music_library.settings import settings as music_library_settings
 from app.bot.settings import settings as bot_settings
-from app.bot.services.music_library.show_executor_page import ShowExecutorPageService
 from app.bot.helpers.executor import return_to_executor_page
 from application.use_cases.db.music_library.add_album import AddAlbumExecutor
 from domain.entities.response import SongResponse
@@ -230,7 +229,7 @@ async def end_add_album(
 
     data: Dict = await state.get_data()
     add_album_data: UserAddAlbumProtocol = UserAddAlbumProtocol(**data)
-    logging_data = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
     chat_id: int = message.chat.id
 
     result_add_album = await AddAlbumExecutor(
