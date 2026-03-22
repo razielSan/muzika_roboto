@@ -15,6 +15,7 @@ from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
     ShowExecutorPageService,
 )
+from app.bot.services.music_library.show_album_page import ShowAlbumPageService
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
@@ -28,11 +29,22 @@ from domain.entities.response import (
 )
 from domain.entities.db.models.user import User as UserDomain
 from infrastructure.aiogram.messages import user_messages
-from infrastructure.aiogram.filters import BackMenuUserPanel, BackExecutorPage
-from infrastructure.aiogram.messages import LIMIT_COLLECTION_SONGS, LIMIT_ALBUMS
+from infrastructure.aiogram.filters import (
+    BackMenuUserPanel,
+    BackExecutorPage,
+    BackAlbumPage,
+)
+from infrastructure.aiogram.messages import (
+    LIMIT_COLLECTION_SONGS,
+    LIMIT_ALBUMS,
+    LIMIT_SONGS,
+)
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.fsm.keys import FSMFlags
-from infrastructure.db.utils.editing import get_information_executor
+from infrastructure.db.utils.editing import (
+    get_information_executor,
+    get_information_album,
+)
 from infrastructure.aiogram.response import KeyboardResponse
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
@@ -110,7 +122,6 @@ async def music_library_cancel_handler(
             reply_markup=ReplyKeyboardRemove(),
         )
         current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
-        user_id: int = data.get("user_id")
         await ShowExecutorPageService(
             uow=UnitOfWork(), logging_data=logging_data, bot=bot
         ).execute(
@@ -120,7 +131,7 @@ async def music_library_cancel_handler(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             limit_albums=LIMIT_ALBUMS,
             album_position=0,
-            user_id=user_id,
+            user_id=user.id,
         )
         return
 
@@ -204,4 +215,36 @@ async def get_executor_page_panel(
         limit_albums=LIMIT_ALBUMS,
         album_position=album_position,
         current_page=current_page_executor,
+    )
+
+
+@router.callback_query(BackAlbumPage.filter())
+async def get_album_page(
+    call: CallbackQuery,
+    callback_data: BackAlbumPage,
+):
+    """Сценария для показа исполнителя с альбомами при нажатии кнопки возврата."""
+
+    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    user_id = callback_data.user_id
+    album_position = callback_data.album_position
+    current_page_executor = callback_data.current_page_executor
+    album_id = callback_data.album_id
+    is_global_executor = callback_data.is_global_executor
+    executor_id: int = callback_data.executor_id
+
+    await ShowAlbumPageService(
+        uow=UnitOfWork(),
+        logging_data=logging_data,
+        call=call,
+    ).execute(
+        user_id=user_id,
+        get_information_album=get_information_album,
+        album_position=album_position,
+        current_page_executor=current_page_executor,
+        album_id=album_id,
+        song_position=0,
+        is_global_executor=is_global_executor,
+        limit_songs=LIMIT_SONGS,
+        executor_id=executor_id,
     )
