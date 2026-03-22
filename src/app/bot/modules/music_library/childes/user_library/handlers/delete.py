@@ -7,17 +7,22 @@ from aiogram.filters.state import StateFilter
 
 from app.bot.settings import settings as bot_settings
 from app.bot.modules.music_library.childes.user_library.settings import settings
-from app.bot.services.music_library.show_executor_page import (
-    ShowExecutorPageCallbackService,
-)
+from app.bot.helpers.executor import return_to_executor_page_callback
 from app.bot.modules.music_library.utils.music_library import (
     callback_update_menu_inline_music_library,
 )
 from application.use_cases.db.music_library.delete_executor import DeleteExecutor
+from application.use_cases.db.music_library.delete_album import DeleteAlbum
 from infrastructure.aiogram.filters import DeleteCallbackDataFilters
-from infrastructure.aiogram.messages import user_messages, LIMIT_ALBUMS, resolve_message
+from infrastructure.aiogram.messages import (
+    user_messages,
+    LIMIT_ALBUMS,
+    resolve_message,
+)
 from infrastructure.aiogram.filters import DeleteCallbackDataFilters
-from infrastructure.db.utils.editing import get_information_executor
+from infrastructure.db.utils.editing import (
+    get_information_executor,
+)
 from infrastructure.aiogram.keyboards.inline import (
     get_confirmation_delete_executor_button,
     get_confirmation_delete_album_buttons,
@@ -29,12 +34,13 @@ from core.response.response_data import Result, LoggingData
 router: Router = Router(name=__name__)
 
 
+# удаление исполнителя
 @router.callback_query(
-    StateFilter(None), DeleteCallbackDataFilters.UserExecutor.filter()
+    StateFilter(None), DeleteCallbackDataFilters.ConfirmDeleteExecutor.filter()
 )
 async def delete_user_executor(
     call: CallbackQuery,
-    callback_data: DeleteCallbackDataFilters.UserExecutor,
+    callback_data: DeleteCallbackDataFilters.ConfirmDeleteExecutor,
 ):
     """Просит подтвердить удаление исполнителя."""
 
@@ -58,11 +64,11 @@ async def delete_user_executor(
 
 
 @router.callback_query(
-    StateFilter(None), DeleteCallbackDataFilters.ConfirmDeleteExecutor.filter()
+    StateFilter(None), DeleteCallbackDataFilters.CompleteDeleteExecutor.filter()
 )
 async def confirm_delete_executor(
     call: CallbackQuery,
-    callback_data: DeleteCallbackDataFilters.ConfirmDeleteExecutor,
+    callback_data: DeleteCallbackDataFilters.CompleteDeleteExecutor,
 ):
     """Удаляет исполнителя."""
 
@@ -74,20 +80,21 @@ async def confirm_delete_executor(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(user_id=user_id, executor_id=executor_id)
     if result_delete_executor.ok:
-        msg: str = resolve_message(code=result_delete_executor.code)
+        result_message: str = resolve_message(code=result_delete_executor.code)
 
-        await call.answer(text=msg)
-
-        await ShowExecutorPageCallbackService(
-            uow=UnitOfWork(), logging_data=logging_data, call=call
-        ).execute(
-            get_information_executor=get_information_executor,
-            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+        await return_to_executor_page_callback(
             user_id=user_id,
+            uow=UnitOfWork,
+            call=call,
+            message=result_message,
+            logging_data=logging_data,
+            current_page_executor=1,
+            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             limit_albums=LIMIT_ALBUMS,
             album_position=0,
-            current_page=1,
+            get_information_executor=get_information_executor,
         )
+
     if not result_delete_executor.ok:
         error_message: str = resolve_message(code=result_delete_executor.error.code)
 
@@ -98,10 +105,17 @@ async def confirm_delete_executor(
         )
 
 
-@router.callback_query(StateFilter(None), DeleteCallbackDataFilters.Album.filter())
+# удаление альбома
+
+
+@router.callback_query(
+    StateFilter(None), DeleteCallbackDataFilters.ConfirmDeleteAlbum.filter()
+)
 async def start_delete_album(
-    call: CallbackQuery, callback_data: DeleteCallbackDataFilters.Album
+    call: CallbackQuery, callback_data: DeleteCallbackDataFilters.ConfirmDeleteAlbum
 ):
+    """Просит подтвердить удаления альбома."""
+
     executor_id: int = callback_data.executor_id
     user_id: Optional[int] = callback_data.user_id
     current_page_executor: int = callback_data.current_page_executor
@@ -123,3 +137,46 @@ async def start_delete_album(
             album_position=album_position,
         ),
     )
+
+
+@router.callback_query(
+    StateFilter(None), DeleteCallbackDataFilters.CompleteDeleteAlbum.filter()
+)
+async def end_delete_album(
+    call: CallbackQuery, callback_data: DeleteCallbackDataFilters.CompleteDeleteAlbum
+):
+    """удаляет альбом."""
+
+    executor_id: int = callback_data.executor_id
+    user_id: Optional[int] = callback_data.user_id
+    current_page_executor: int = callback_data.current_page_executor
+    album_id: int = callback_data.album_id
+    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+
+    result_delete_album: Result = await DeleteAlbum(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(executor_id=executor_id, album_id=album_id)
+    if result_delete_album.ok:
+        result_message: str = resolve_message(code=result_delete_album.code)
+
+        await return_to_executor_page_callback(
+            user_id=user_id,
+            uow=UnitOfWork,
+            call=call,
+            message=result_message,
+            logging_data=logging_data,
+            current_page_executor=current_page_executor,
+            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+            limit_albums=LIMIT_ALBUMS,
+            album_position=0,
+            get_information_executor=get_information_executor,
+        )
+
+    if not result_delete_album.ok:
+        error_message: str = resolve_message(code=result_delete_album.error.code)
+
+        await call.answer(text=error_message)
+        await callback_update_menu_inline_music_library(
+            call=call,
+            caption=user_messages.USER_PANEL_CAPTION,
+        )
