@@ -31,3 +31,11 @@ class AlbumRepository(ABC):
         title: str,
     ) -> Optional[AlbumDomain]:
         pass
+
+    @abstractmethod
+    async def delete_album(
+        self,
+        executor_id: int,
+        album_id: int,
+    ) -> bool:
+        pass
