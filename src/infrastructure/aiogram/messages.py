@@ -32,6 +32,7 @@ SUCCESS = {
     SuccessCode.UPDATE_PHOTO_SUCCESS.name: "✅ Фото успешно изменено",
     SuccessCode.UPDATE_EXECUTOR_COUNTRY_SUCCESS.name: "✅ Страна успешно изменена",
     SuccessCode.UPDATE_GENRES_SUCCESS.name: "✅ Жанры успешно изменены",
+    SuccessCode.UPDATE_NAME_SUCCESS.name: "✅ Имя успешно изменено",
     SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name: "✅ Название "
     "песни успешно изменено\n\n✅ Новое название - {title}",
     SuccessCode.DELETE_SONGS_SUCCESS.name: "✅ Песни успешно удалены",
@@ -57,7 +58,8 @@ def resolve_message(code: str):
 
 class UserMessages:
     CONFIRMATION_TEXT: str = "✅ Подтверждаю"
-    CAPTION_DELETE_EXECUTOR: str = "❗️ Будет удален исполнитель\n\n❗️ {name}"
+    CAPTION_DELETE_EXECUTOR: str = "❗️ Вы действительно хотите удалить исполнителя ?"
+    CAPTION_DELETE_ALBUM: str = "❗️ Вы действительно хотите удалить альбом ?"
     CLICK_ONE_OF_THE_BUTTONS_ABOVE: str = "👆🏾 Нажмите одну из кнопок выше"
     DROP_THE_SONG: str = "❗️ Скидывайте песни"
     DROP_THE_PHOTO: str = "❗️ Скидывайте фотографию"
