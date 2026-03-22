@@ -8,7 +8,7 @@ from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
 )
 from app.bot.services.music_library.show_song import ShowSongService
-from app.bot.services.music_library.show_album_page import ShowAlbumPageService
+from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
 from application.use_cases.db.music_library.sync_executor import SyncExecutorLibrary
 from infrastructure.aiogram.filters import (
     ScrollingCallbackDataFilters,
@@ -119,7 +119,7 @@ async def show_album_executor(
     is_global_executor: bool = callback_data.is_global_executor
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
-    await ShowAlbumPageService(
+    await ShowAlbumPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         user_id=user_id,
@@ -152,7 +152,7 @@ async def scrolling_songs_album(
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
-    await ShowAlbumPageService(
+    await ShowAlbumPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         user_id=user_id,
