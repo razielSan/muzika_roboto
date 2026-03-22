@@ -47,6 +47,7 @@ class FSMUserUpdateExecutorPhotoFileId(StatesGroup):
     executor_id: State = State()
     current_page_executor: State = State()
     photo: State = State()
+    album_position: State = State()
 
 
 @router.callback_query(
@@ -62,12 +63,14 @@ async def start_update_photo_executor(
     executor_id: int = callback_data.excecutor_id
     user_id: Optional[int] = callback_data.user_id
     current_page_executor: int = callback_data.current_page_executor
+    album_position: int = callback_data.album_position
 
     await call.message.edit_reply_markup(reply_markup=None)
 
     await state.update_data(executor_id=executor_id)
     await state.update_data(user_id=user_id)
     await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(album_position=album_position)
     await state.update_data(music_library_executor=True)
     await state.set_state(FSMUserUpdateExecutorPhotoFileId.photo)
     await call.message.answer(
@@ -92,6 +95,7 @@ async def end_update_photo_executor(
     executor_id: int = update_photo_executor_data.get("executor_id")
     user_id: Optional[int] = update_photo_executor_data.get("user_id")
     current_page_executor: int = update_photo_executor_data.get("current_page_executor")
+    album_position: int = update_photo_executor_data.get("album_position")
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
@@ -117,7 +121,7 @@ async def end_update_photo_executor(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
-            album_position=0,
+            album_position=album_position,
             user_id=user_id,
         )
         return
@@ -132,7 +136,7 @@ async def end_update_photo_executor(
         )
 
 
-@router.message( FSMUserUpdateExecutorPhotoFileId.photo)
+@router.message(FSMUserUpdateExecutorPhotoFileId.photo)
 async def end_update_photo_executor_message(message: Message):
     """Отравляет сообщение если были отправлены не те данные."""
 
@@ -152,6 +156,7 @@ class FSMUserUpdateCountryExecutor(StatesGroup):
     executor_id: State = State()
     current_page_executor: State = State()
     country: State = State()
+    album_position: State = State()
 
 
 @router.callback_query(
@@ -169,10 +174,12 @@ async def start_update_country_executor(
     user_id: Optional[int] = callback_data.user_id
     executor_id: int = callback_data.excecutor_id
     current_page_executor: int = callback_data.current_page_executor
+    album_position: int = callback_data.album_position
 
     await state.update_data(user_id=user_id)
     await state.update_data(executor_id=executor_id)
     await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(album_position=album_position)
     await state.update_data(music_library_executor=True)
     await state.set_state(FSMUserUpdateCountryExecutor.country)
 
@@ -192,6 +199,7 @@ async def end_update_country_executor(
 
     update_country_executor_data: Dict = await state.get_data()
     executor_id: int = update_country_executor_data.get("executor_id")
+    album_position: int = update_country_executor_data.get("album_position")
     user_id: Optional[int] = update_country_executor_data.get("user_id")
     current_page_executor: int = update_country_executor_data.get(
         "current_page_executor"
@@ -222,7 +230,7 @@ async def end_update_country_executor(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
-            album_position=0,
+            album_position=album_position,
             user_id=user_id,
         )
         return
@@ -257,6 +265,7 @@ class FSMUserUpdateGenresExecutor(StatesGroup):
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
     user_id: State = State()
     executor_id: State = State()
+    album_position: State = State()
     current_page_executor: State = State()
     genres: State = State()
 
@@ -276,10 +285,12 @@ async def start_update_executor_genres(
     user_id: Optional[int] = callback_data.user_id
     executor_id: int = callback_data.excecutor_id
     current_page_executor: int = callback_data.current_page_executor
+    album_position: int = callback_data.album_position
 
     await state.update_data(user_id=user_id)
     await state.update_data(executor_id=executor_id)
     await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(album_position=album_position)
     await state.update_data(music_library_executor=True)
     await state.set_state(FSMUserUpdateGenresExecutor.genres)
     await call.message.answer(
@@ -298,6 +309,7 @@ async def end_update_genres_executor(
 
     update_genres_executor_data: Dict = await state.get_data()
     executor_id: int = update_genres_executor_data.get("executor_id")
+    album_position: int = update_genres_executor_data.get('album_position')
     user_id: Optional[int] = update_genres_executor_data.get("user_id")
     current_page_executor: int = update_genres_executor_data.get(
         "current_page_executor"
@@ -328,7 +340,7 @@ async def end_update_genres_executor(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
-            album_position=0,
+            album_position=album_position,
             user_id=user_id,
         )
         return
@@ -359,6 +371,7 @@ class FSMUserUpdateNameExecutor(StatesGroup):
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
     current_page_executor: State = State()
+    album_position: State = State()
     user_id: State = State()
     executor_id: State = State()
     name: State = State()
@@ -379,6 +392,7 @@ async def start_update_name_executor(
     user_id: Optional[int] = callback_data.user_id
     country: str = callback_data.country
     current_page_executor: int = callback_data.current_page_executor
+    album_position: int = callback_data.album_position
 
     await call.message.edit_reply_markup(reply_markup=None)
 
@@ -386,6 +400,7 @@ async def start_update_name_executor(
     await state.update_data(user_id=user_id)
     await state.update_data(country=country)
     await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(album_position=album_position)
     await state.update_data(music_library_executor=True)
     await state.set_state(FSMUserUpdateNameExecutor.name)
     await call.message.answer(
@@ -408,6 +423,8 @@ async def end_update_name_excutor(
     user_id: Optional[int] = update_name_executor_data.get("user_id")
     country: str = update_name_executor_data.get("country")
     chat_id: int = message.chat.id
+    album_position: int = update_name_executor_data.get("album_position")
+    print(album_position, "okkkkkk")
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
@@ -428,7 +445,7 @@ async def end_update_name_excutor(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
-            album_position=0,
+            album_position=album_position,
             user_id=user_id,
         )
         return
