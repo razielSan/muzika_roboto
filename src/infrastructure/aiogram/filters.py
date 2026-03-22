@@ -13,6 +13,15 @@ class BackExecutorPage(CallbackData, prefix="back_exc_p"):
     current_page: int
 
 
+class BackAlbumPage(CallbackData, prefix="back_a_p"):
+    user_id: Optional[int]
+    album_id: int
+    album_position: int
+    current_page_executor: int
+    is_global_executor: bool
+    executor_id: int
+
+
 class PlaySongsAlbums(CallbackData, prefix="play_s_coll_s"):
     song_id: int
     album_id: int
@@ -93,22 +102,26 @@ class UpdateCallbackDataFilters:
         excecutor_id: int
         user_id: Optional[int]
         current_page_executor: int
+        album_position: int
 
     class UserExecutorCountry(CallbackData, prefix="upd_u_exc_c"):
         excecutor_id: int
         user_id: Optional[int]
         current_page_executor: int
+        album_position: int
 
     class UserExecutorGenres(CallbackData, prefix="upd_u_exc_g"):
         excecutor_id: int
         user_id: Optional[int]
         current_page_executor: int
+        album_position: int
 
     class UserExecutorName(CallbackData, prefix="upd_u_exc_n"):
         country: str
         excecutor_id: int
         user_id: Optional[int]
         current_page_executor: int
+        album_position: int
 
 
 class DeleteCallbackDataFilters:
@@ -136,10 +149,18 @@ class DeleteCallbackDataFilters:
     class UserExecutor(CallbackData, prefix="del_u_exc"):
         user_id: Optional[int]
         executor_id: int
-        name: str
         current_page_executor: int
+        album_position: int
 
     class ConfirmDeleteExecutor(CallbackData, prefix="del_con_exc"):
         user_id: Optional[int]
-        executor_id: Optional[int]  # для сценария отмены удаления
+        executor_id: int
         current_page_executor: int
+
+    class Album(CallbackData, prefix="del_a"):
+        executor_id: int
+        album_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+        is_global_executor: bool
+        album_position: int
