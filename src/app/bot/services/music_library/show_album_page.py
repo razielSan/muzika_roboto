@@ -15,7 +15,7 @@ from infrastructure.aiogram.messages import resolve_message
 from core.response.response_data import Result, LoggingData
 
 
-class ShowAlbumPageService:
+class ShowAlbumPageCallbackService:
     def __init__(
         self,
         uow: AbstractUnitOfWork,
