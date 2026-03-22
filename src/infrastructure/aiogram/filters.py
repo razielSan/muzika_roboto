@@ -146,21 +146,27 @@ class DeleteCallbackDataFilters:
     class SongCollectionSongs(CallbackData, prefix="del_s_coll_s"):
         pass
 
-    class UserExecutor(CallbackData, prefix="del_u_exc"):
+    class ConfirmDeleteExecutor(CallbackData, prefix="del_con_exc"):
         user_id: Optional[int]
         executor_id: int
         current_page_executor: int
         album_position: int
 
-    class ConfirmDeleteExecutor(CallbackData, prefix="del_con_exc"):
+    class CompleteDeleteExecutor(CallbackData, prefix="del_com_exc"):
         user_id: Optional[int]
         executor_id: int
         current_page_executor: int
 
-    class Album(CallbackData, prefix="del_a"):
+    class ConfirmDeleteAlbum(CallbackData, prefix="del_con_del_a"):
         executor_id: int
         album_id: int
         user_id: Optional[int]
         current_page_executor: int
         is_global_executor: bool
         album_position: int
+
+    class CompleteDeleteAlbum(CallbackData, prefix="del_com_del_a"):
+        user_id: Optional[int]
+        executor_id: int
+        current_page_executor: int
+        album_id: int
