@@ -604,7 +604,7 @@ def show_executor_user_collections(
                     excecutor_id=executor_id,
                     user_id=user_id,
                     current_page_executor=current_page,
-                    album_position=album_position
+                    album_position=album_position,
                 ).pack(),
             )
         )
@@ -616,7 +616,7 @@ def show_executor_user_collections(
                     excecutor_id=executor_id,
                     user_id=user_id,
                     current_page_executor=current_page,
-                    album_position=album_position
+                    album_position=album_position,
                 ).pack(),
             )
         )
@@ -627,7 +627,7 @@ def show_executor_user_collections(
                     excecutor_id=executor_id,
                     user_id=user_id,
                     current_page_executor=current_page,
-                    album_position=album_position
+                    album_position=album_position,
                 ).pack(),
             )
         )
@@ -639,7 +639,7 @@ def show_executor_user_collections(
                     excecutor_id=executor_id,
                     user_id=user_id,
                     current_page_executor=current_page,
-                    album_position=album_position
+                    album_position=album_position,
                 ).pack(),
             )
         )
@@ -647,7 +647,7 @@ def show_executor_user_collections(
         inline_kb.row(
             InlineKeyboardButton(
                 text=KeyboardResponse.DELETE_EXECUTOR,
-                callback_data=DeleteCallbackDataFilters.UserExecutor(
+                callback_data=DeleteCallbackDataFilters.ConfirmDeleteExecutor(
                     user_id=user_id,
                     executor_id=executor_id,
                     current_page_executor=current_page,
@@ -743,7 +743,7 @@ def show_album_user_collections(
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.DELETE_ALBUM,
-            callback_data=DeleteCallbackDataFilters.Album(
+            callback_data=DeleteCallbackDataFilters.ConfirmDeleteAlbum(
                 executor_id=executor_id,
                 user_id=user_id,
                 current_page_executor=current_page_executor,
@@ -786,7 +786,7 @@ def get_confirmation_delete_executor_button(
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.YES.value,
-            callback_data=DeleteCallbackDataFilters.ConfirmDeleteExecutor(
+            callback_data=DeleteCallbackDataFilters.CompleteDeleteExecutor(
                 executor_id=executor_id,
                 user_id=user_id,
                 current_page_executor=current_page_executor,
@@ -816,12 +816,13 @@ def get_confirmation_delete_album_buttons(
 ):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     inline_kb.row(
-        InlineKeyboardButton(
+        InlineKeyboardButton(fff
             text=KeyboardResponse.YES.value,
-            callback_data=DeleteCallbackDataFilters.ConfirmDeleteExecutor(
+            callback_data=DeleteCallbackDataFilters.CompleteDeleteAlbum(
                 executor_id=executor_id,
                 user_id=user_id,
                 current_page_executor=current_page_executor,
+                album_id=album_id,
             ).pack(),
         )
     )
