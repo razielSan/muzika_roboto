@@ -15,7 +15,7 @@ from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
     ShowExecutorPageService,
 )
-from app.bot.services.music_library.show_album_page import ShowAlbumPageService
+from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
@@ -197,7 +197,7 @@ async def get_executor_page_panel(
     call: CallbackQuery,
     callback_data: BackExecutorPage,
 ):
-    """Сценария для показа исполнителя с альбомами при нажатии кнопки возврата."""
+    """Сценария для показа исполнителя с альбомами при нажатии инлайн-кнопки возврата."""
 
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     user_id = callback_data.user_id
@@ -223,7 +223,7 @@ async def get_album_page(
     call: CallbackQuery,
     callback_data: BackAlbumPage,
 ):
-    """Сценария для показа исполнителя с альбомами при нажатии кнопки возврата."""
+    """Сценария для альбома с песнями при нажатии инлайн-кнопки возврата."""
 
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     user_id = callback_data.user_id
@@ -233,7 +233,7 @@ async def get_album_page(
     is_global_executor = callback_data.is_global_executor
     executor_id: int = callback_data.executor_id
 
-    await ShowAlbumPageService(
+    await ShowAlbumPageCallbackService(
         uow=UnitOfWork(),
         logging_data=logging_data,
         call=call,
