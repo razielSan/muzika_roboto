@@ -46,5 +46,5 @@ class UpdateNameExecutor:
 
         return ok(
             data=curremt_page_executor,
-            code=SuccessCode.UPDATE_EXECUTOR_COUNTRY_SUCCESS.name,
+            code=SuccessCode.UPDATE_NAME_SUCCESS.name,
         )
