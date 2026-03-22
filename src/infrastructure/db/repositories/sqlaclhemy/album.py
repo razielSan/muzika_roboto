@@ -77,3 +77,16 @@ class SQLAlchemyAlbumRepository(AlbumRepository):
             ),
         )
         return album
+
+    async def delete_album(self, executor_id: int, album_id: int) -> bool:
+        album = await self.session.scalar(
+            select(self.model).where(
+                self.model.id == album_id, self.model.executor_id == executor_id
+            )
+        )
+        if not album:
+            return False
+
+        await self.session.delete(album)
+        await self.session.flush()
+        return True
