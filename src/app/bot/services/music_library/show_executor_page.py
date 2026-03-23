@@ -13,7 +13,7 @@ from application.use_cases.db.music_library.get_executor_with_albums import (
 )
 
 from domain.entities.db.uow import AbstractUnitOfWork
-from domain.entities.response import ExecutorPageResponse
+from domain.entities.response import ExecutorPageResponse, LibraryMode
 from infrastructure.aiogram.keyboards.inline import (
     show_executor_global_collections,
     show_executor_user_collections,
@@ -68,7 +68,11 @@ class ShowExecutorPageCallbackService:
                     genres=executor.genres,
                     number_of_albums=len(executor.albums),
                 )
-                if user_id:  # пользовательская библиотека
+                mode: str = (
+                    LibraryMode.USER.name if user_id else LibraryMode.GLOBAL.name
+                )
+
+                if mode == LibraryMode.USER.name:  # пользовательская библиотека
                     if executor.is_global:  # глобальный исполнитель
                         try:
                             await self.call.message.edit_media(
@@ -110,7 +114,7 @@ class ShowExecutorPageCallbackService:
                             )
                         return
 
-                else:  # глобальная библиотека
+                if mode == LibraryMode.GLOBAL.name:  # глобальная библиотека
                     try:
                         await self.call.message.edit_media(
                             media=InputMediaPhoto(
