@@ -4,7 +4,7 @@ from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
 ERRORS = {
     ErorrCode.UNKNOWN_ERROR.name: "❌ Произошла неизвестная ошибка",
     ErorrCode.USER_ALREADY_EXISTS.name: "⚠ Пользователь уже существует",
-    ErorrCode.EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель уже существует",
+    ErorrCode.EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель с таким именем и страной уже существует",
     ErorrCode.USER_EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель присутствует в библиотеке",
     ErorrCode.ALBUM_ALREADY_EXISTS.name: "⚠ Альбом уже существует",
 }
