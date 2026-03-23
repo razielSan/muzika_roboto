@@ -16,6 +16,8 @@ from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageService,
 )
 from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
+from app.bot.helpers.executor import return_to_executor_page
+from app.bot.helpers.album import return_to_album_page
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
@@ -83,8 +85,10 @@ async def music_library_cancel_handler(
         return
 
     data: Dict = await state.get_data()
+
     collection_songs: Optional[bool] = data.get(FSMFlags.COLLECTION_SONGS)
     music_library_executor: Optional[bool] = data.get(FSMFlags.MUSIC_LIBRARY_EXECUTOR)
+    music_library_album: Optional[bool] = data.get(FSMFlags.MUSIC_LIBRARY_ALBUM)
 
     chat_id: int = message.chat.id
 
@@ -116,22 +120,46 @@ async def music_library_cancel_handler(
             )
             return
 
-    if music_library_executor:  # возращает на страницу исполлнителя
-        await message.answer(
-            text=user_messages.USER_CANCEL_MESSAGE,
-            reply_markup=ReplyKeyboardRemove(),
-        )
+    if music_library_executor:  # возращает на страницу исполнителя
         current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
-        await ShowExecutorPageService(
-            uow=UnitOfWork(), logging_data=logging_data, bot=bot
-        ).execute(
+        await return_to_executor_page(
             chat_id=chat_id,
-            current_page=current_page_executor,
+            current_page_executor=current_page_executor,
             get_information_executor=get_information_executor,
-            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-            limit_albums=LIMIT_ALBUMS,
+            bot=bot,
+            uow=UnitOfWork,
+            logging_data=logging_data,
             album_position=0,
+            limit_albums=LIMIT_ALBUMS,
+            executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+            message=user_messages.USER_CANCEL_MESSAGE,
             user_id=user.id,
+        )
+        return
+
+    if music_library_album:  # возращает на страницу альббома
+        current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
+        album_id: int = data.get(FSMFlags.ALBUM_ID)
+        executor_id: int = data.get(FSMFlags.EXECUTOR_ID)
+        is_global_executor: bool = data.get(FSMFlags.IS_GLOBAL_EXECUTOR)
+        album_position: int = data.get(FSMFlags.ALBUM_POSITION)
+
+        await return_to_album_page(
+            bot=bot,
+            chat_id=chat_id,
+            message=user_messages.USER_CANCEL_MESSAGE,
+            user_id=user.id,
+            album_default_photo_file_i=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+            logging_data=logging_data,
+            uow=UnitOfWork,
+            current_page_executor=current_page_executor,
+            get_information_album=get_information_album,
+            song_position=0,
+            limit_songs=LIMIT_SONGS,
+            album_id=album_id,
+            executor_id=executor_id,
+            is_global_executor=is_global_executor,
+            album_position=album_position,
         )
         return
 
@@ -247,4 +275,5 @@ async def get_album_page(
         is_global_executor=is_global_executor,
         limit_songs=LIMIT_SONGS,
         executor_id=executor_id,
+        album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID
     )
