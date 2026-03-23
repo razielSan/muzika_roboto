@@ -130,7 +130,8 @@ async def show_album_executor(
         song_position=0,
         current_page_executor=current_page_executor,
         album_position=album_position,
-        is_global_executor=is_global_executor
+        is_global_executor=is_global_executor,
+        album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID
     )
 
 
@@ -162,7 +163,8 @@ async def scrolling_songs_album(
         limit_songs=LIMIT_SONGS,
         song_position=position,
         current_page_executor=current_page_executor,
-        is_global_executor=is_global_executor
+        is_global_executor=is_global_executor,
+        album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID
     )
 
 
