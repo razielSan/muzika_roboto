@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional, List, Union
 
 
@@ -66,3 +67,8 @@ class UserCollectionSongsResponse:
     collection_songs: Union[List[CollectionSongsResponse], List]
     collection_songs_photo_file_id: Optional[str] = None
     collection_songs_photo_file_unique_id: Optional[str] = None
+
+
+class LibraryMode(Enum):
+    GLOBAL: str = "global"
+    USER: str = "user"
