@@ -4,7 +4,7 @@ from domain.entities.db.uow import AbstractUnitOfWork
 from domain.errors.error_code import ErorrCode, SuccessCode, NotFoundCode
 from domain.entities.db.models.executor import Executor as ExecutorDomain
 from core.error_handlers.decorator import safe_async_execution
-from core.error_handlers.helpers import ok
+from core.error_handlers.helpers import ok, fail
 from core.response.response_data import Result, LoggingData
 
 
@@ -23,10 +23,25 @@ class UpdateCountryExecutor:
         country: str,
     ) -> Result:
         async with self.uow as uow:
+            executor = await self.uow.executors.get_executor(
+                user_id=user_id,
+                executor_id=executor_id,
+            )
+            executor_exists: ExecutorDomain = await self.uow.executors.get_executor_by_name_lower_and_country_from_global_and_user(
+                user_id=user_id, country=country, name_lower=executor.name_lower
+            )
+            if (
+                executor_exists
+            ):  # если исполнитель с таким именем и страной уже существует
+                return fail(
+                    code=ErorrCode.EXECUTOR_ALREADY_EXISTS.name,
+                    message=ErorrCode.EXECUTOR_ALREADY_EXISTS.value,
+                )
+
             executor: Optional[
                 ExecutorDomain
             ] = await uow.executors.update_executor_country(
-                executoro_id=executor_id,
+                executor_id=executor_id,
                 user_id=user_id,
                 country=country,
             )
