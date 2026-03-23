@@ -65,6 +65,7 @@ class GetExecutorWihtAlbums:
                     )
                     for album in executor.albums
                 ]
+            executor_albums.sort(key=lambda x: x.year)  # сортируем альбомы по году
             is_global: bool = True if not executor.user_id else False
             response_executor: ExecutorPageResponse = ExecutorPageResponse(
                 id=executor.id,
