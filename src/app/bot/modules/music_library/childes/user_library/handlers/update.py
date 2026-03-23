@@ -1,4 +1,5 @@
 from typing import Optional, Dict, List
+from dataclasses import dataclass
 
 from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery, Message
@@ -7,11 +8,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from app.bot.modules.music_library.settings import settings as music_library_settings
+from app.bot.services.music_library.show_album_page import ShowAlbumPageService
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
 from app.bot.settings import settings as bot_settings
 from app.bot.helpers.executor import return_to_executor_page
+from app.bot.helpers.album import return_to_album_page
 from application.use_cases.db.music_library.update.update_photo_executor import (
     UpdatePhotoExecutor,
 )
@@ -24,10 +27,21 @@ from application.use_cases.db.music_library.update.update_genre_executor import 
 from application.use_cases.db.music_library.update.update_name_executor import (
     UpdateNameExecutor,
 )
+from application.use_cases.db.music_library.update.update_photo_album import (
+    UpdatePhotoAlbum,
+)
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
-from infrastructure.aiogram.messages import user_messages, LIMIT_ALBUMS, resolve_message
+from infrastructure.aiogram.messages import (
+    user_messages,
+    LIMIT_ALBUMS,
+    resolve_message,
+    LIMIT_SONGS,
+)
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
-from infrastructure.db.utils.editing import get_information_executor
+from infrastructure.db.utils.editing import (
+    get_information_executor,
+    get_information_album,
+)
 from infrastructure.db.uow import UnitOfWork
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
@@ -209,7 +223,6 @@ async def end_update_country_executor(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
 
-    await state.clear()
     result_update_country_executor: Result = await UpdateCountryExecutor(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(
@@ -218,6 +231,7 @@ async def end_update_country_executor(
         country=country,
     )
     if result_update_country_executor.ok:
+        await state.clear()
         result_message: str = resolve_message(code=result_update_country_executor.code)
         await return_to_executor_page(
             chat_id=chat_id,
@@ -238,11 +252,8 @@ async def end_update_country_executor(
         error_message: str = resolve_message(
             code=result_update_country_executor.error.code
         )
-        await get_inline_menu_music_library(
-            chat_id=chat_id,
-            bot=bot,
-            caption=user_messages.USER_PANEL_CAPTION,
-            message=error_message,
+        await message.answer(
+            text=f"{error_message}\n\n{user_messages.ENTER_THE_СOUNTRY_EXECUTOR}"
         )
 
 
@@ -256,8 +267,6 @@ async def end_update_country_executor_message(message: Message):
 
 
 # Обновление жанров исполнителя
-
-
 class FSMUserUpdateGenresExecutor(StatesGroup):
     """FSM для сценария обновления жанров исполнителя."""
 
@@ -308,7 +317,7 @@ async def end_update_genres_executor(
 
     update_genres_executor_data: Dict = await state.get_data()
     executor_id: int = update_genres_executor_data.get("executor_id")
-    album_position: int = update_genres_executor_data.get('album_position')
+    album_position: int = update_genres_executor_data.get("album_position")
     user_id: Optional[int] = update_genres_executor_data.get("user_id")
     current_page_executor: int = update_genres_executor_data.get(
         "current_page_executor"
@@ -423,17 +432,16 @@ async def end_update_name_excutor(
     country: str = update_name_executor_data.get("country")
     chat_id: int = message.chat.id
     album_position: int = update_name_executor_data.get("album_position")
-    print(album_position, "okkkkkk")
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
-    await state.clear()
-    result_update_country_executor: Result = await UpdateNameExecutor(
+    result_update_name_executor: Result = await UpdateNameExecutor(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(user_id=user_id, executor_id=executor_id, name=name, country=country)
-    if result_update_country_executor.ok:
-        result_message: str = resolve_message(code=result_update_country_executor.code)
-        current_page_executor: int = result_update_country_executor.data
+    if result_update_name_executor.ok:
+        await state.clear()
+        result_message: str = resolve_message(code=result_update_name_executor.code)
+        current_page_executor: int = result_update_name_executor.data
         await return_to_executor_page(
             chat_id=chat_id,
             bot=bot,
@@ -448,15 +456,12 @@ async def end_update_name_excutor(
             user_id=user_id,
         )
         return
-    if not result_update_country_executor.ok:
+    if not result_update_name_executor.ok:
         error_message: str = resolve_message(
-            code=result_update_country_executor.error.code
+            code=result_update_name_executor.error.code
         )
-        await get_inline_menu_music_library(
-            chat_id=chat_id,
-            bot=bot,
-            caption=user_messages.USER_PANEL_CAPTION,
-            message=error_message,
+        await message.answer(
+            text=f"{error_message}\n\n{user_messages.ENTER_THE_EXECUTOR_NAME}"
         )
 
 
@@ -466,4 +471,135 @@ async def end_update_name_executor_message(message: Message):
 
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+
+
+# Обновление фото альбома
+
+
+class FSMUpdatePhotoAlbum(StatesGroup):
+    """FSM для сценария обновления фото альбома."""
+
+    current_page_executor: State = State()
+    music_library_album: State = State()
+    executor_id: State = State()
+    user_id: State = State()
+    photo_file_id: State = State()
+    photo_file_unique_id: State = State()
+    album_id: State = State()
+    is_global_executor: State = State()
+    album_position: State = State()
+    photo: State = State()
+
+
+@dataclass
+class UpdatePhotoAlbumProtocol:
+    current_page_executor: int = None
+    music_library_album: bool = None
+    executor_id: int = None
+    user_id: Optional[int] = None
+    photo_file_id: Optional[str] = None
+    photo_file_unique_id: Optional[str] = None
+    album_id: int = None
+    is_global_executor: bool = None
+    album_position: int = None
+    photo: None = None
+
+
+@router.callback_query(StateFilter(None), UpdateCallbackDataFilters.AlbumPhoto.filter())
+async def start_update_photo_album(
+    call: CallbackQuery,
+    callback_data: UpdateCallbackDataFilters.AlbumPhoto,
+    state: FSMContext,
+):
+    """Просит скинуть фотография для обновления."""
+
+    current_page_executor: int = callback_data.current_page_executor
+    executor_id: int = callback_data.executor_id
+    user_id: Optional[int] = callback_data.user_id
+    album_id: int = callback_data.album_id
+    album_position: int = callback_data.album_position
+    is_global_executor: bool = callback_data.is_global_executor
+
+    await state.update_data(current_page_executor=current_page_executor)
+    await state.update_data(executor_id=executor_id)
+    await state.update_data(user_id=user_id)
+    await state.update_data(album_id=album_id)
+    await state.update_data(album_position=album_position)
+    await state.update_data(is_global_executor=is_global_executor)
+    await state.update_data(music_library_album=True)
+    await state.set_state(FSMUpdatePhotoAlbum.photo)
+
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    await call.message.answer(
+        text=user_messages.DROP_THE_PHOTO,
+        reply_markup=get_reply_cancel_button(),
+    )
+
+
+@router.message(FSMUpdatePhotoAlbum.photo, F.photo)
+async def end_update_photo_album(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+):
+    """Обновляет фото альбома."""
+
+    data: Dict = await state.update_data()
+    update_photo_data: UpdatePhotoAlbumProtocol = UpdatePhotoAlbumProtocol(**data)
+
+    chat_id: int = message.chat.id
+    photo_file_id: str = message.photo[-1].file_id
+    photo_file_unique_id: str = message.photo[-1].file_unique_id
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
+
+    result = await UpdatePhotoAlbum(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(
+        album_id=update_photo_data.album_id,
+        executor_id=update_photo_data.executor_id,
+        photo_file_id=photo_file_id,
+        photo_file_unique_id=photo_file_unique_id,
+    )
+    if result.ok:
+        await state.clear()
+        result_message: str = resolve_message(result.code)
+
+        await return_to_album_page(
+            chat_id=chat_id,
+            bot=bot,
+            current_page_executor=update_photo_data.current_page_executor,
+            message=result_message,
+            logging_data=logging_data,
+            uow=UnitOfWork,
+            album_default_photo_file_i=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+            get_information_album=get_information_album,
+            limit_songs=LIMIT_SONGS,
+            song_position=0,
+            album_position=update_photo_data.album_position,
+            executor_id=update_photo_data.executor_id,
+            user_id=update_photo_data.user_id,
+            album_id=update_photo_data.album_id,
+            is_global_executor=update_photo_data.is_global_executor,
+        )
+
+    if not result.ok:
+        error_message: str = resolve_message(code=result.error.code)
+        await get_inline_menu_music_library(
+            chat_id=chat_id,
+            bot=bot,
+            caption=user_messages.USER_PANEL_CAPTION,
+            message=error_message,
+        )
+
+
+@router.message(FSMUpdatePhotoAlbum.photo)
+async def end_update_photo_album_message(message: Message):
+    """Отправляет сообщение если были введены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="фото")
     )
