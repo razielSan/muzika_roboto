@@ -742,6 +742,20 @@ def show_album_user_collections(
 
     inline_kb.row(
         InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_PHOTO_ALBUM,
+            callback_data=UpdateCallbackDataFilters.AlbumPhoto(
+                executor_id=executor_id,
+                album_id=album_id,
+                user_id=user_id,
+                current_page_executor=current_page_executor,
+                is_global_executor=is_global_executor,
+                album_position=album_position,
+            ).pack(),
+        )
+    )
+
+    inline_kb.row(
+        InlineKeyboardButton(
             text=KeyboardResponse.DELETE_ALBUM,
             callback_data=DeleteCallbackDataFilters.ConfirmDeleteAlbum(
                 executor_id=executor_id,
@@ -816,7 +830,7 @@ def get_confirmation_delete_album_buttons(
 ):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     inline_kb.row(
-        InlineKeyboardButton(fff
+        InlineKeyboardButton(
             text=KeyboardResponse.YES.value,
             callback_data=DeleteCallbackDataFilters.CompleteDeleteAlbum(
                 executor_id=executor_id,
@@ -826,6 +840,7 @@ def get_confirmation_delete_album_buttons(
             ).pack(),
         )
     )
+
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.NO.value,
