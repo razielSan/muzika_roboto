@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Optional
 
 from domain.entities.db.uow import AbstractUnitOfWork
+from domain.entities.db.models.executor import Executor as DomainExecutor
 from domain.errors.error_code import ErorrCode, SuccessCode
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok, fail
@@ -34,15 +35,19 @@ class CreateExecutor:
                 titles=genres_executor
             )
             name_lower: str = name.casefold()
-            executor = await uow.executors.get_executor_by_name_lower_and_country(
-                user_id=user_id, name_lower=name_lower, country=country
+            executor_exists: Optional[
+                DomainExecutor
+            ] = await uow.executors.get_executor_by_name_lower_and_country_from_global_and_user(
+                user_id=user_id,
+                name_lower=name_lower,
+                country=country,
             )
-            if executor:
+            if executor_exists:
                 return fail(
                     code=ErorrCode.EXECUTOR_ALREADY_EXISTS.name,
                     message=ErorrCode.EXECUTOR_ALREADY_EXISTS.value,
                 )
-            executor = await uow.executors.create_executor(
+            await uow.executors.create_executor(
                 user_id=user_id,
                 name=name,
                 country=country,
