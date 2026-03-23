@@ -1,7 +1,7 @@
 from typing import List, Optional, Sequence, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload
 
 from infrastructure.db.models.sqlaclhemy.user_genre_executor import Genre, Executor
@@ -56,6 +56,22 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
                 self.model.country == country,
                 user_id_condition,
             )
+        )
+        return executor
+
+    async def get_executor_by_name_lower_and_country_from_global_and_user(
+        self,
+        user_id: int,
+        name_lower: str,
+        country: str,
+    ) -> Optional[Executor]:
+        executor = await self.session.scalar(
+            select(self.model)
+            .where(
+                self.model.name_lower == name_lower,
+                self.model.country == country,
+            )
+            .where(or_(self.model.user_id.is_(None), self.model.user_id == user_id))
         )
         return executor
 
@@ -149,14 +165,14 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
 
     async def update_executor_photo_file_id(
         self,
-        executoro_id: int,
+        executor_id: int,
         user_id: Optional[int],
         photo_file_id: str,
         photo_file_unique_id: str,
     ) -> Optional[Executor]:
         executor: Optional[Executor] = await self.session.scalar(
             select(self.model).where(
-                self.model.user_id == user_id, self.model.id == executoro_id
+                self.model.user_id == user_id, self.model.id == executor_id
             )
         )
         if not executor:
@@ -169,13 +185,13 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
 
     async def update_executor_country(
         self,
-        executoro_id: int,
+        executor_id: int,
         user_id: Optional[int],
         country: str,
     ) -> Optional[Executor]:
         executor: Optional[Executor] = await self.session.scalar(
             select(self.model).where(
-                self.model.user_id == user_id, self.model.id == executoro_id
+                self.model.user_id == user_id, self.model.id == executor_id
             )
         )
         if not executor:
