@@ -33,6 +33,16 @@ class AlbumRepository(ABC):
         pass
 
     @abstractmethod
+    async def update_photo_file_id(
+        self,
+        executor_id: int,
+        album_id: int,
+        photo_file_id: str,
+        photo_file_unique_id: id,
+    ) -> Optional[AlbumDomain]:
+        pass
+
+    @abstractmethod
     async def delete_album(
         self,
         executor_id: int,
