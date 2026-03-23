@@ -58,6 +58,15 @@ class ExecutorRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_executor_by_name_lower_and_country_from_global_and_user(
+        self,
+        user_id: int,
+        name_lower: str,
+        country: str,
+    ) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
     async def delete_executor(
         self,
         user_id: Optional[int],
@@ -68,7 +77,7 @@ class ExecutorRepository(ABC):
     @abstractmethod
     async def update_executor_photo_file_id(
         self,
-        executoro_id: int,
+        executor_id: int,
         user_id: Optional[int],
         photo_file_id: str,
         photo_file_unique_id: str,
@@ -78,7 +87,7 @@ class ExecutorRepository(ABC):
     @abstractmethod
     async def update_executor_country(
         self,
-        executoro_id: int,
+        executor_id: int,
         user_id: Optional[int],
         country: str,
     ) -> Optional[DomainExecutor]:
