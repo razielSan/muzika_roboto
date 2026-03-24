@@ -38,7 +38,19 @@ class AlbumRepository(ABC):
         executor_id: int,
         album_id: int,
         photo_file_id: str,
-        photo_file_unique_id: id,
+        photo_file_unique_id: str,
+    ) -> Optional[AlbumDomain]:
+        pass
+
+    @abstractmethod
+    async def update_year(
+        self, executor_id: int, album_id: int, year: int
+    ) -> Optional[AlbumDomain]:
+        pass
+
+    @abstractmethod
+    async def update_title(
+        self, executor_id: int, album_id: int, title: str
     ) -> Optional[AlbumDomain]:
         pass
 
