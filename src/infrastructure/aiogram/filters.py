@@ -131,6 +131,22 @@ class UpdateCallbackDataFilters:
         is_global_executor: bool
         album_position: int
 
+    class AlbumYear(CallbackData, prefix="upd_a_y"):
+        executor_id: int
+        album_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+        is_global_executor: bool
+        album_position: int
+
+    class AlbumTitle(CallbackData, prefix="upd_a_t"):
+        executor_id: int
+        album_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+        is_global_executor: bool
+        album_position: int
+
 
 class DeleteCallbackDataFilters:
     class ButtonsDeleteSongColletionSongs(CallbackData, prefix="del_b_del_s_coll_s"):
