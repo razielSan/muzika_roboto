@@ -3,6 +3,7 @@ from typing import Optional, List
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.errors.error_code import ErorrCode, SuccessCode, NotFoundCode
 from domain.entities.db.models.executor import Executor as ExecutorDomain
+from domain.entities.db.models.genre import Genre as GenreDomain
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok
 from core.response.response_data import Result, LoggingData
@@ -23,7 +24,9 @@ class UpdateGenreExecutor:
         genres: List[str],
     ) -> Result:
         async with self.uow as uow:
-            update_genres = await uow.genres.get_or_create_genres(titles=genres)
+            update_genres: List[GenreDomain] = await uow.genres.get_or_create_genres(
+                titles=genres
+            )
             executor: Optional[
                 ExecutorDomain
             ] = await uow.executors.update_executor_genres(
