@@ -27,7 +27,7 @@ router: Router = Router(name=__name__)
 # Добавление альбома
 
 
-class FSMUserAddAlbum(StatesGroup):
+class FSMAddAlbumML(StatesGroup):
     """FSM для сценария добавления альбома."""
 
     current_page_executor: State = State()
@@ -82,7 +82,7 @@ async def start_add_album(
     await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(music_library_executor=True)
     await state.update_data(songs=[])
-    await state.set_state(FSMUserAddAlbum.title)
+    await state.set_state(FSMAddAlbumML.title)
 
     await call.message.answer(
         text=user_messages.ENTER_THE_ALBUM_TITLE,
@@ -90,17 +90,17 @@ async def start_add_album(
     )
 
 
-@router.message(FSMUserAddAlbum.title, F.text)
+@router.message(FSMAddAlbumML.title, F.text)
 async def add_title(message: Message, state: FSMContext):
     """Просит ввести год выхода альбома."""
 
     title: str = message.text.strip()
     await state.update_data(title=title)
-    await state.set_state(FSMUserAddAlbum.year)
+    await state.set_state(FSMAddAlbumML.year)
     await message.answer(text=user_messages.ENTER_THE_ALBUM_YEAR)
 
 
-@router.message(FSMUserAddAlbum.title)
+@router.message(FSMAddAlbumML.title)
 async def add_title_message(message: Message):
     """Отправляет сообщение если были введены данные не в том формате."""
 
@@ -109,7 +109,7 @@ async def add_title_message(message: Message):
     )
 
 
-@router.message(FSMUserAddAlbum.year, F.text)
+@router.message(FSMAddAlbumML.year, F.text)
 async def add_year(message: Message, state: FSMContext):
     "Просит скинуть фото альбома."
 
@@ -122,14 +122,14 @@ async def add_year(message: Message, state: FSMContext):
         return
     year: int = result_year.data
     await state.update_data(year=year)
-    await state.set_state(FSMUserAddAlbum.photo)
+    await state.set_state(FSMAddAlbumML.photo)
     await message.answer(
         text=user_messages.ENTER_THE_PHOTO_DEFAULT,
         reply_markup=get_reply_cancel_button(),
     )
 
 
-@router.message(FSMUserAddAlbum.year)
+@router.message(FSMAddAlbumML.year)
 async def add_year_message(message: Message):
     """Отправляет сообщение если были введены данные не в том формате."""
 
@@ -138,9 +138,11 @@ async def add_year_message(message: Message):
     )
 
 
-@router.message(FSMUserAddAlbum.photo, F.photo)
-@router.message(FSMUserAddAlbum.photo, F.text)
+@router.message(FSMAddAlbumML.photo, F.photo)
+@router.message(FSMAddAlbumML.photo, F.text)
 async def add_photo(message: Message, state: FSMContext):
+    """Добавляет фото в FSM."""
+
     if message.text:
         photo_file_id = None
         photo_file_unique_id = None
@@ -150,7 +152,7 @@ async def add_photo(message: Message, state: FSMContext):
 
     await state.update_data(photo_file_id=photo_file_id)
     await state.update_data(photo_file_unique_id=photo_file_unique_id)
-    await state.set_state(FSMUserAddAlbum.songs)
+    await state.set_state(FSMAddAlbumML.songs)
 
     await message.answer(
         text=user_messages.DROP_THE_SONG,
@@ -160,8 +162,8 @@ async def add_photo(message: Message, state: FSMContext):
     )
 
 
-@router.message(FSMUserAddAlbum.songs, F.audio)
-@router.message(FSMUserAddAlbum.songs, F.voice)
+@router.message(FSMAddAlbumML.songs, F.audio)
+@router.message(FSMAddAlbumML.songs, F.voice)
 async def add_songs(message: Message, state: FSMContext):
     """Добавляет в FSM сброшенные песни."""
 
@@ -190,7 +192,7 @@ async def add_songs(message: Message, state: FSMContext):
     await message.answer(text=user_messages.THE_SONG_IS_SAVED.format(title=title))
 
 
-@router.message(FSMUserAddAlbum.songs, F.text == user_messages.CONFIRMATION_TEXT)
+@router.message(FSMAddAlbumML.songs, F.text == user_messages.CONFIRMATION_TEXT)
 async def confirm_add_songs(message: Message, state: FSMContext):
     """Просит подтвердить добавление песен."""
 
@@ -204,13 +206,13 @@ async def confirm_add_songs(message: Message, state: FSMContext):
         return
 
     count: int = len(songs)
-    await state.set_state(FSMUserAddAlbum.processing)
+    await state.set_state(FSMAddAlbumML.processing)
     await message.answer(
         text=user_messages.SONGS_WILL_BE_ADDED_IN_QUANTITY.format(count=count),
     )
 
 
-@router.message(FSMUserAddAlbum.songs)
+@router.message(FSMAddAlbumML.songs)
 async def add_songs_message(message: Message):
     """Отправляет сообщение если были введены данные не в том формате."""
 
@@ -219,7 +221,7 @@ async def add_songs_message(message: Message):
     )
 
 
-@router.message(FSMUserAddAlbum.processing, F.text == user_messages.CONFIRMATION_TEXT)
+@router.message(FSMAddAlbumML.processing, F.text == user_messages.CONFIRMATION_TEXT)
 async def end_add_album(
     message: Message,
     state: FSMContext,
@@ -229,7 +231,9 @@ async def end_add_album(
 
     data: Dict = await state.get_data()
     add_album_data: UserAddAlbumProtocol = UserAddAlbumProtocol(**data)
-    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
     chat_id: int = message.chat.id
 
     result_add_album = await AddAlbumExecutor(
@@ -262,14 +266,14 @@ async def end_add_album(
         return
     if not result_add_album.ok:
         await state.update_data(songs=[])
-        await state.set_state(FSMUserAddAlbum.title)
+        await state.set_state(FSMAddAlbumML.title)
         error_message: str = resolve_message(code=result_add_album.error.code)
         await message.answer(
             text=f"{error_message}\n\n{user_messages.ENTER_THE_ALBUM_TITLE}"
         )
 
 
-@router.message(FSMUserAddAlbum.processing)
+@router.message(FSMAddAlbumML.processing)
 async def end_add_album_message(message: Message):
     """Отправляет сообщение если были введены данные не в том формате."""
 
