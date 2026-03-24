@@ -30,9 +30,11 @@ SUCCESS = {
     SuccessCode.GET_EXECUTORS_SUCCESS: "✅ Исполнители успешно получены",
     SuccessCode.GET_ALBUMS_SUCCESS.name: "✅ Альбомы успешно получены",
     SuccessCode.UPDATE_PHOTO_SUCCESS.name: "✅ Фото успешно изменено",
-    SuccessCode.UPDATE_EXECUTOR_COUNTRY_SUCCESS.name: "✅ Страна успешно изменена",
+    SuccessCode.UPDATE_EXECUTOR_COUNTRY_SUCCESS.name: "✅ Страна исполнителя успешно изменена",
     SuccessCode.UPDATE_GENRES_SUCCESS.name: "✅ Жанры успешно изменены",
     SuccessCode.UPDATE_NAME_SUCCESS.name: "✅ Имя успешно изменено",
+    SuccessCode.UPDATE_ALBUM_YEAR_SUCCESS.name: "✅ Год выхода альбома успешно изменен",
+    SuccessCode.UPDATE_ALBUM_TITLE_SUCCESS.name: "✅ Заголовок альбома успешно изменен",
     SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name: "✅ Название "
     "песни успешно изменено\n\n✅ Новое название - {title}",
     SuccessCode.DELETE_SONGS_SUCCESS.name: "✅ Песни успешно удалены",
@@ -94,7 +96,7 @@ class UserMessages:
     THERE_ARE_NO_SONGS: str = "🤷🏻‍♀️ У вас нет песен в сборнике"
     THE_SONG_HAS_ALREADY_BEEN_ADDED: str = "🤷🏻‍♀️ Песня {title} уже была добавленна"
     THE_SONG_IS_SAVED: str = "🎼 Песня {title} была сохранена"
-    THE_DATA_MUST_BE_IN_THE_FORMAT: str = "🖊 Данные должны быть в формате\n\n{format}"
+    THE_DATA_MUST_BE_IN_THE_FORMAT: str = "⚠ Данные должны быть в формате\n\n{format}"
     USER_CANCEL_MESSAGE: str = "❌ Все запросы отменены"
     USER_PANEL_CAPTION: str = "🤔 Что же мне сегодня послушать ?"
 
