@@ -83,7 +83,7 @@ class SQLAlchemyAlbumRepository(AlbumRepository):
         executor_id: int,
         album_id: int,
         photo_file_id: str,
-        photo_file_unique_id: id,
+        photo_file_unique_id: str,
     ) -> Optional[Album]:
         album: Optional[Album] = await self.session.scalar(
             select(self.model).where(
@@ -95,6 +95,36 @@ class SQLAlchemyAlbumRepository(AlbumRepository):
             return None
         album.photo_file_id = photo_file_id
         album.photo_file_unique_id = photo_file_unique_id
+        await self.session.flush()
+        return album
+
+    async def update_year(
+        self, executor_id: int, album_id: int, year: int
+    ) -> Optional[Album]:
+        album: Optional[Album] = await self.session.scalar(
+            select(self.model).where(
+                self.model.id == album_id,
+                self.model.executor_id == executor_id,
+            )
+        )
+        if not album:
+            return None
+        album.year = year
+        await self.session.flush()
+        return album
+
+    async def update_title(
+        self, executor_id: int, album_id: int, title: str
+    ) -> Optional[Album]:
+        album: Optional[Album] = await self.session.scalar(
+            select(self.model).where(
+                self.model.id == album_id,
+                self.model.executor_id == executor_id,
+            )
+        )
+        if not album:
+            return None
+        album.title = title
         await self.session.flush()
         return album
 
