@@ -27,13 +27,17 @@ class UpdateNameExecutor:
             curremt_page_executor: int = 1
 
             name_lower: str = name.casefold()
-            executor_exists = await uow.executors.get_executor_by_name_lower_and_country_from_global_and_user(
+            executor_exists: Optional[
+                ExecutorDomain
+            ] = await uow.executors.get_executor_by_name_lower_and_country_from_global_and_user(
                 user_id=user_id,
                 name_lower=name_lower,
                 country=country,
             )
 
-            if executor_exists:  # если исполнитель с таким именем и страной уже существует
+            if (
+                executor_exists
+            ):  # если исполнитель с таким именем и страной уже существует
                 return fail(
                     code=ErorrCode.EXECUTOR_ALREADY_EXISTS.name,
                     message=ErorrCode.EXECUTOR_ALREADY_EXISTS.value,
