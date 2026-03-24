@@ -756,6 +756,34 @@ def show_album_user_collections(
 
     inline_kb.row(
         InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_TITLE_ALBUM,
+            callback_data=UpdateCallbackDataFilters.AlbumTitle(
+                executor_id=executor_id,
+                album_id=album_id,
+                user_id=user_id,
+                current_page_executor=current_page_executor,
+                is_global_executor=is_global_executor,
+                album_position=album_position,
+            ).pack(),
+        )
+    )
+
+    inline_kb.row(
+        InlineKeyboardButton(
+            text=KeyboardResponse.UPDATE_YEAR_ALBUM,
+            callback_data=UpdateCallbackDataFilters.AlbumYear(
+                executor_id=executor_id,
+                album_id=album_id,
+                user_id=user_id,
+                current_page_executor=current_page_executor,
+                is_global_executor=is_global_executor,
+                album_position=album_position,
+            ).pack(),
+        )
+    )
+
+    inline_kb.row(
+        InlineKeyboardButton(
             text=KeyboardResponse.DELETE_ALBUM,
             callback_data=DeleteCallbackDataFilters.ConfirmDeleteAlbum(
                 executor_id=executor_id,
