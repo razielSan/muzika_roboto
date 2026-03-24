@@ -24,7 +24,9 @@ class UpdatePhotoExecutor:
         photo_file_unique_id: str,
     ) -> Result:
         async with self.uow as uow:
-            executor = await uow.executors.update_executor_photo_file_id(
+            executor: Optional[
+                ExecutorDomain
+            ] = await uow.executors.update_executor_photo_file_id(
                 executor_id=executor_id,
                 user_id=user_id,
                 photo_file_id=photo_file_id,
