@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List
 
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
@@ -21,7 +21,7 @@ from core.logging.api import get_loggers
 router: Router = Router(name=__name__)
 
 
-class FSMAddUserExecutor(StatesGroup):
+class FSMAddExecutorML(StatesGroup):
     """FSM для сценаря добавления исполнителя пользователем"""
 
     name: State = State()
@@ -39,20 +39,20 @@ async def add_user_executor(call: CallbackQuery, state: FSMContext):
         text=user_messages.ENTER_THE_EXECUTOR_NAME,
         reply_markup=get_reply_cancel_button(),
     )
-    await state.set_state(FSMAddUserExecutor.name)
+    await state.set_state(FSMAddExecutorML.name)
 
 
-@router.message(FSMAddUserExecutor.name, F.text)
+@router.message(FSMAddExecutorML.name, F.text)
 async def add_name(message: Message, state: FSMContext):
     """Просит ввести страну исполнителя."""
     name = message.text.strip()
     await state.update_data(name=name)
-    await state.set_state(FSMAddUserExecutor.country)
+    await state.set_state(FSMAddExecutorML.country)
 
     await message.answer(text=user_messages.ENTER_THE_СOUNTRY_EXECUTOR)
 
 
-@router.message(FSMAddUserExecutor.name, F)
+@router.message(FSMAddExecutorML.name, F)
 async def add_name_message(message: Message):
     """Отправляет сообщение при вводе данных не в том формате."""
 
@@ -61,16 +61,18 @@ async def add_name_message(message: Message):
     )
 
 
-@router.message(FSMAddUserExecutor.country, F.text)
+@router.message(FSMAddExecutorML.country, F.text)
 async def add_country(message: Message, state: FSMContext):
+    """Добавляет страну."""
+
     country = message.text.strip()
 
     await state.update_data(country=country)
-    await state.set_state(FSMAddUserExecutor.genres)
+    await state.set_state(FSMAddExecutorML.genres)
     await message.answer(text=user_messages.ENTER_THE_GENRES)
 
 
-@router.message(FSMAddUserExecutor.country, F)
+@router.message(FSMAddExecutorML.country, F)
 async def add_country_message(message: Message):
     """Отправляет сообщение при вводе данных не в том формате."""
 
@@ -79,25 +81,27 @@ async def add_country_message(message: Message):
     )
 
 
-@router.message(FSMAddUserExecutor.genres, F.text)
+@router.message(FSMAddExecutorML.genres, F.text)
 async def add_genres(message: Message, state: FSMContext):
     """Просит скинуть фотографию."""
 
     genres = message.text.split(".")
     genres = [genre.strip() for genre in genres]
     await state.update_data(genres=genres)
-    await state.set_state(FSMAddUserExecutor.photo)
+    await state.set_state(FSMAddExecutorML.photo)
     await message.answer(text=user_messages.ENTER_THE_PHOTO_DEFAULT)
 
 
-@router.message(FSMAddUserExecutor.photo, F.text)
-@router.message(FSMAddUserExecutor.photo, F.photo)
+@router.message(FSMAddExecutorML.photo, F.text)
+@router.message(FSMAddExecutorML.photo, F.photo)
 async def add_photo(
     message: Message,
     state: FSMContext,
     bot,
     user,
 ):
+    """Создает исполнителя."""
+
     if message.photo:
         photo_file_id = message.photo[-1].file_id
         photo_file_unique_id = message.photo[-1].file_unique_id
@@ -135,14 +139,14 @@ async def add_photo(
         )
 
     if not result_create_executor.ok:
-        await state.set_state(FSMAddUserExecutor.name)
+        await state.set_state(FSMAddExecutorML.name)
         error_message = resolve_message((result_create_executor.error.code))
         await message.answer(
             text=f"{error_message}\n\n{user_messages.ENTER_THE_EXECUTOR_NAME}"
         )
 
 
-@router.message(FSMAddUserExecutor.photo)
+@router.message(FSMAddExecutorML.photo)
 async def add_photo_message(message: Message):
     """Отправляет сообщение при вводе данных не в том формате."""
 
