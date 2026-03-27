@@ -28,13 +28,13 @@ class GetAlbumWithSongs:
         is_global_executor=True,
     ) -> Result:
         async with self.uow as uow:
-            if user_id:  # пользовательская библиотека
+            if user_id:  # пользовательская библиотека(берем исполнителя по execitor_id)
                 executor: ExecutorDomain = (
                     await uow.executors.get_executor_by_user_library(
                         executor_id=executor_id
                     )
                 )
-            if not user_id:  # глобальная
+            if not user_id:  # глобальная(user_id всегда None)
                 executor: ExecutorDomain = await uow.executors.get_executor(
                     user_id=None,
                     executor_id=executor_id,

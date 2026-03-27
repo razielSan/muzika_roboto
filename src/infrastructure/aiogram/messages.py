@@ -44,7 +44,7 @@ SUCCESS = {
     SuccessCode.DELETE_ALBUM_SUCCES.name: "✅ Альбом успешно удален из библиотеки",
 }
 
-LIMIT_COLLECTION_SONGS: int = 3
+LIMIT_COLLECTION_SONGS: int = 5
 LIMIT_ALBUMS: int = 5
 LIMIT_SONGS: int = 5
 
@@ -60,6 +60,8 @@ def resolve_message(code: str):
 
 
 class UserMessages:
+    BACK_ALBUM_PAGE: str = "✅ Возвращение на страницу альбома"
+    BACK_EXECUTOR_PAGE: str = "✅ Возвращение на страницу исполнителя"
     CONFIRMATION_TEXT: str = "✅ Подтверждаю"
     CAPTION_DELETE_EXECUTOR: str = "❗️ Вы действительно хотите удалить исполнителя ?"
     CAPTION_DELETE_ALBUM: str = "❗️ Вы действительно хотите удалить альбом ?"

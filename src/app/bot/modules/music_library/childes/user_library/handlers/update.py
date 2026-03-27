@@ -36,6 +36,9 @@ from application.use_cases.db.music_library.update.update_year_album import (
 from application.use_cases.db.music_library.update.update_title_album import (
     UpdateAlumbTitle,
 )
+from application.use_cases.db.music_library.update.update_song_title import (
+    UpdateSongTitle,
+)
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
@@ -500,8 +503,6 @@ class FSMUpdatePhotoAlbumML(StatesGroup):
     music_library_album: State = State()
     executor_id: State = State()
     user_id: State = State()
-    photo_file_id: State = State()
-    photo_file_unique_id: State = State()
     album_id: State = State()
     is_global_executor: State = State()
     album_position: State = State()
@@ -509,17 +510,15 @@ class FSMUpdatePhotoAlbumML(StatesGroup):
 
 
 @dataclass
-class UpdatePhotoAlbumProtocol:
-    current_page_executor: int = None
-    music_library_album: bool = None
-    executor_id: int = None
-    user_id: Optional[int] = None
-    photo_file_id: Optional[str] = None
-    photo_file_unique_id: Optional[str] = None
-    album_id: int = None
-    is_global_executor: bool = None
-    album_position: int = None
-    photo: None = None
+class UpdatePhotoAlbumData:
+    current_page_executor: int
+    music_library_album: bool
+    executor_id: int
+    user_id: Optional[int]
+    album_id: int
+    is_global_executor: bool
+    album_position: int
+    photo: None
 
 
 @router.callback_query(StateFilter(None), UpdateCallbackDataFilters.AlbumPhoto.filter())
@@ -536,18 +535,22 @@ async def start_update_photo_album(
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
-
-    await state.update_data(current_page_executor=current_page_executor)
-    await state.update_data(executor_id=executor_id)
-    await state.update_data(user_id=user_id)
-    await state.update_data(album_id=album_id)
-    await state.update_data(album_position=album_position)
-    await state.update_data(is_global_executor=is_global_executor)
-    await state.update_data(music_library_album=True)
-    await state.set_state(FSMUpdatePhotoAlbumML.photo)
+    await state.update_data(
+        UpdatePhotoAlbumData(
+            current_page_executor=current_page_executor,
+            music_library_album=True,
+            executor_id=executor_id,
+            user_id=user_id,
+            album_id=album_id,
+            is_global_executor=is_global_executor,
+            album_position=album_position,
+            photo=None,
+        ).__dict__
+    )
 
     await call.message.edit_reply_markup(reply_markup=None)
 
+    await state.set_state(FSMUpdatePhotoAlbumML.photo)
     await call.message.answer(
         text=user_messages.DROP_THE_PHOTO,
         reply_markup=get_reply_cancel_button(),
@@ -563,7 +566,7 @@ async def end_update_photo_album(
     """Обновляет фото альбома."""
 
     data: Dict = await state.update_data()
-    update_photo_data: UpdatePhotoAlbumProtocol = UpdatePhotoAlbumProtocol(**data)
+    state_data: UpdatePhotoAlbumData = UpdatePhotoAlbumData(**data)
 
     chat_id: int = message.chat.id
     photo_file_id: str = message.photo[-1].file_id
@@ -575,8 +578,8 @@ async def end_update_photo_album(
     result = await UpdatePhotoAlbum(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(
-        album_id=update_photo_data.album_id,
-        executor_id=update_photo_data.executor_id,
+        album_id=state_data.album_id,
+        executor_id=state_data.executor_id,
         photo_file_id=photo_file_id,
         photo_file_unique_id=photo_file_unique_id,
     )
@@ -587,19 +590,19 @@ async def end_update_photo_album(
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
-            current_page_executor=update_photo_data.current_page_executor,
+            current_page_executor=state_data.current_page_executor,
             message=result_message,
             logging_data=logging_data,
             uow=UnitOfWork,
-            album_default_photo_file_i=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+            album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
             get_information_album=get_information_album,
             limit_songs=LIMIT_SONGS,
             song_position=0,
-            album_position=update_photo_data.album_position,
-            executor_id=update_photo_data.executor_id,
-            user_id=update_photo_data.user_id,
-            album_id=update_photo_data.album_id,
-            is_global_executor=update_photo_data.is_global_executor,
+            album_position=state_data.album_position,
+            executor_id=state_data.executor_id,
+            user_id=state_data.user_id,
+            album_id=state_data.album_id,
+            is_global_executor=state_data.is_global_executor,
         )
 
     if not result.ok:
@@ -630,8 +633,6 @@ class FSMUpdateAlbumYearML(StatesGroup):
     music_library_album: State = State()
     executor_id: State = State()
     user_id: State = State()
-    photo_file_id: State = State()
-    photo_file_unique_id: State = State()
     album_id: State = State()
     is_global_executor: State = State()
     album_position: State = State()
@@ -639,17 +640,15 @@ class FSMUpdateAlbumYearML(StatesGroup):
 
 
 @dataclass
-class UpdateAlbumYearProtocol:
-    current_page_executor: int = None
-    music_library_album: bool = None
-    executor_id: int = None
-    user_id: Optional[int] = None
-    photo_file_id: Optional[str] = None
-    photo_file_unique_id: Optional[str] = None
-    album_id: int = None
-    is_global_executor: bool = None
-    album_position: int = None
-    year: None = None
+class UpdateAlbumYearData:
+    current_page_executor: int
+    music_library_album: bool
+    executor_id: int
+    user_id: Optional[int]
+    album_id: int
+    is_global_executor: bool
+    album_position: int
+    year: None
 
 
 @router.callback_query(StateFilter(None), UpdateCallbackDataFilters.AlbumYear.filter())
@@ -667,13 +666,18 @@ async def start_update_year_album(
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
 
-    await state.update_data(current_page_executor=current_page_executor)
-    await state.update_data(executor_id=executor_id)
-    await state.update_data(user_id=user_id)
-    await state.update_data(album_id=album_id)
-    await state.update_data(album_position=album_position)
-    await state.update_data(is_global_executor=is_global_executor)
-    await state.update_data(music_library_album=True)
+    await state.update_data(
+        UpdateAlbumYearData(
+            current_page_executor=current_page_executor,
+            music_library_album=True,
+            executor_id=executor_id,
+            user_id=user_id,
+            album_id=album_id,
+            is_global_executor=is_global_executor,
+            album_position=album_position,
+            year=None,
+        ).__dict__
+    )
     await state.set_state(FSMUpdateAlbumYearML.year)
 
     await call.message.edit_reply_markup(reply_markup=None)
@@ -700,7 +704,7 @@ async def end_update_year_album(
         return
     year: int = result_year.data
     data: Dict = await state.get_data()
-    update_year_data: UpdateAlbumYearProtocol = UpdateAlbumYearProtocol(**data)
+    state_data: UpdateAlbumYearData = UpdateAlbumYearData(**data)
     chat_id: int = message.chat.id
 
     logging_data: LoggingData = get_loggers(
@@ -710,8 +714,8 @@ async def end_update_year_album(
     result: Result = await UpdateAlumbYear(
         logging_data=logging_data, uow=UnitOfWork()
     ).execute(
-        executor_id=update_year_data.executor_id,
-        album_id=update_year_data.album_id,
+        executor_id=state_data.executor_id,
+        album_id=state_data.album_id,
         year=year,
     )
     await state.clear()
@@ -723,16 +727,16 @@ async def end_update_year_album(
             message=result_message,
             uow=UnitOfWork,
             logging_data=logging_data,
-            current_page_executor=update_year_data.current_page_executor,
-            album_default_photo_file_i=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+            current_page_executor=state_data.current_page_executor,
+            album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
             limit_songs=LIMIT_SONGS,
             get_information_album=get_information_album,
-            album_id=update_year_data.album_id,
-            executor_id=update_year_data.executor_id,
-            user_id=update_year_data.user_id,
-            album_position=update_year_data.album_position,
+            album_id=state_data.album_id,
+            executor_id=state_data.executor_id,
+            user_id=state_data.user_id,
+            album_position=state_data.album_position,
             song_position=0,
-            is_global_executor=update_year_data.is_global_executor,
+            is_global_executor=state_data.is_global_executor,
         )
         return
     if not result.ok:
@@ -763,8 +767,6 @@ class FSMUpdateAlbumTitleML(StatesGroup):
     music_library_album: State = State()
     executor_id: State = State()
     user_id: State = State()
-    photo_file_id: State = State()
-    photo_file_unique_id: State = State()
     album_id: State = State()
     is_global_executor: State = State()
     album_position: State = State()
@@ -772,17 +774,15 @@ class FSMUpdateAlbumTitleML(StatesGroup):
 
 
 @dataclass
-class UpdateAlbumTitleProtocol:
-    current_page_executor: int = None
-    music_library_album: bool = None
-    executor_id: int = None
-    user_id: Optional[int] = None
-    photo_file_id: Optional[str] = None
-    photo_file_unique_id: Optional[str] = None
-    album_id: int = None
-    is_global_executor: bool = None
-    album_position: int = None
-    title: None = None
+class UpdateAlbumTitleData:
+    current_page_executor: int
+    music_library_album: bool
+    executor_id: int
+    user_id: Optional[int]
+    album_id: int
+    is_global_executor: bool
+    album_position: int
+    title: None
 
 
 @router.callback_query(StateFilter(None), UpdateCallbackDataFilters.AlbumTitle.filter())
@@ -800,13 +800,18 @@ async def start_update_title_album(
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
 
-    await state.update_data(current_page_executor=current_page_executor)
-    await state.update_data(executor_id=executor_id)
-    await state.update_data(user_id=user_id)
-    await state.update_data(album_id=album_id)
-    await state.update_data(album_position=album_position)
-    await state.update_data(is_global_executor=is_global_executor)
-    await state.update_data(music_library_album=True)
+    await state.update_data(
+        UpdateAlbumTitleData(
+            current_page_executor=current_page_executor,
+            music_library_album=True,
+            executor_id=executor_id,
+            user_id=user_id,
+            album_id=album_id,
+            is_global_executor=is_global_executor,
+            album_position=album_position,
+            title=None,
+        ).__dict__
+    )
     await state.set_state(FSMUpdateAlbumTitleML.title)
 
     await call.message.edit_reply_markup(reply_markup=None)
@@ -827,7 +832,7 @@ async def end_update_title_album(
 
     title: str = message.text.strip()
     data: Dict = await state.get_data()
-    update_year_data: UpdateAlbumYearProtocol = UpdateAlbumYearProtocol(**data)
+    state_data: UpdateAlbumTitleData = UpdateAlbumTitleData(**data)
     chat_id: int = message.chat.id
 
     logging_data: LoggingData = get_loggers(
@@ -837,8 +842,8 @@ async def end_update_title_album(
     result: Result = await UpdateAlumbTitle(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(
-        album_id=update_year_data.album_id,
-        executor_id=update_year_data.executor_id,
+        album_id=state_data.album_id,
+        executor_id=state_data.executor_id,
         title=title,
     )
     if result.ok:
@@ -850,16 +855,16 @@ async def end_update_title_album(
             message=result_message,
             uow=UnitOfWork,
             logging_data=logging_data,
-            current_page_executor=update_year_data.current_page_executor,
-            album_default_photo_file_i=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+            current_page_executor=state_data.current_page_executor,
+            album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
             limit_songs=LIMIT_SONGS,
             get_information_album=get_information_album,
-            album_id=update_year_data.album_id,
-            executor_id=update_year_data.executor_id,
-            user_id=update_year_data.user_id,
-            album_position=update_year_data.album_position,
+            album_id=state_data.album_id,
+            executor_id=state_data.executor_id,
+            user_id=state_data.user_id,
+            album_position=state_data.album_position,
             song_position=0,
-            is_global_executor=update_year_data.is_global_executor,
+            is_global_executor=state_data.is_global_executor,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
@@ -876,3 +881,175 @@ async def end_update_title_album_message(message: Message):
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
     await message.answer(text=user_messages.ENTER_THE_ALBUM_TITLE)
+
+
+# обновления имени песеи
+class FSMUpdateTitleSong(StatesGroup):
+    """FSM для сценария обновления имени песнм."""
+
+    current_page_executor: State = State()
+    music_library_album: State = State()
+    executor_id: State = State()
+    user_id: State = State()
+    album_id: State = State()
+    is_global_executor: State = State()
+    album_position: State = State()
+    title: State = State()
+    position: State = State()
+
+
+@dataclass
+class UpdateTitleSongData:
+    current_page_executor: int
+    music_library_album: bool
+    executor_id: int
+    user_id: Optional[int]
+    album_id: int
+    is_global_executor: bool
+    album_position: int
+    position: int
+    title: None
+
+
+@router.callback_query(StateFilter(None), UpdateCallbackDataFilters.SongTitle.filter())
+async def start_update_song_title(
+    call: CallbackQuery, callback_data: FSMUpdateTitleSong, state: FSMContext
+):
+    """Просит ввести позицию песни."""
+
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    current_page_executor: int = callback_data.current_page_executor
+    executor_id: int = callback_data.executor_id
+    user_id: Optional[int] = callback_data.user_id
+    album_id: int = callback_data.album_id
+    album_position: int = callback_data.album_position
+    is_global_executor: bool = callback_data.is_global_executor
+
+    await state.update_data(
+        UpdateTitleSongData(
+            current_page_executor=current_page_executor,
+            music_library_album=True,
+            executor_id=executor_id,
+            user_id=user_id,
+            album_id=album_id,
+            album_position=album_position,
+            is_global_executor=is_global_executor,
+            position=0,
+            title=None,
+        ).__dict__
+    )
+    await state.set_state(FSMUpdateTitleSong.position)
+
+    await call.message.answer(
+        text=user_messages.ENTER_THE_SONG_POSITION,
+        reply_markup=get_reply_cancel_button(),
+    )
+
+
+@router.message(FSMUpdateTitleSong.position, F.text)
+async def add_position_song(message: Message, state: FSMContext):
+    """
+    Просит ввести имя песни.
+
+    Добавляет позицию песни в FSM.
+    """
+
+    result_position: Result = check_number_is_positivity(number=message.text.strip())
+    if not result_position.ok:
+        error_message: str = result_position.error.message
+        await message.answer(
+            text=f"{error_message}\n\n{user_messages.ENTER_THE_SONG_POSITION}"
+        )
+        return
+    position: int = result_position.data
+    await state.update_data(position=position)
+    await state.set_state(FSMUpdateTitleSong.title)
+    await message.answer(text=user_messages.ENTER_THE_SONG_NAME)
+
+
+@router.message(FSMUpdateTitleSong.position)
+async def add_position_song_message(message: Message):
+    """Отправляет сообщение при вводе не тех данных."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+    await message.answer(text=user_messages.ENTER_THE_SONG_POSITION)
+
+
+@router.message(FSMUpdateTitleSong.title, F.text)
+async def end_update_song_title(
+    message: Message,
+    state: FSMContext,
+    bot: Bot,
+):
+    """Обновляет имя песни."""
+
+    data: Dict = await state.get_data()
+    state_data: UpdateTitleSongData = UpdateTitleSongData(
+        **data
+    )
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
+    chat_id: int = message.chat.id
+    title: str = message.text.strip()
+
+    result: Result = await UpdateSongTitle(
+        uow=UnitOfWork(),
+        logging_data=logging_data,
+    ).execute(
+        album_id=state_data.album_id,
+        position=state_data.position,
+        title=title,
+    )
+    if result.ok:
+        if result.empty:
+            await state.set_state(FSMUpdateTitleSong.position)
+
+            not_found_message: str = resolve_message(code=result.code)
+            await message.answer(
+                text=not_found_message.format(position=state_data.position)
+            )
+            await message.answer(text=user_messages.ENTER_THE_SONG_POSITION)
+            return
+
+        await state.clear()
+        result_message: str = resolve_message(code=result.code)
+        result_message: str = result_message.format(title=title)
+        await return_to_album_page(
+            chat_id=chat_id,
+            bot=bot,
+            message=result_message,
+            uow=UnitOfWork,
+            logging_data=logging_data,
+            current_page_executor=state_data.current_page_executor,
+            album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+            limit_songs=LIMIT_SONGS,
+            get_information_album=get_information_album,
+            album_id=state_data.album_id,
+            executor_id=state_data.executor_id,
+            user_id=state_data.user_id,
+            album_position=state_data.album_position,
+            song_position=0,
+            is_global_executor=state_data.is_global_executor,
+        )
+    if not result.ok:
+        error_message: str = resolve_message(code=result.error.code)
+        await get_inline_menu_music_library(
+            chat_id=chat_id,
+            bot=bot,
+            caption=user_messages.USER_PANEL_CAPTION,
+            message=error_message,
+        )
+
+
+@router.message(FSMUpdateTitleSong.title)
+async def end_update_song_title_message(message: Message):
+    """Отправляет сообщение при вводе не тех данных."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+    await message.answer(text=user_messages.ENTER_THE_SONG_NAME)

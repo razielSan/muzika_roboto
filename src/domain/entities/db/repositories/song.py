@@ -22,3 +22,20 @@ class SongRepository(ABC):
         start_position: int = 1,
     ) -> List[SongDomain]:
         pass
+
+    @abstractmethod
+    async def update_title_song(
+        self,
+        position: int,
+        album_id: int,
+        title: str,
+    ) -> Optional[SongDomain]:
+        pass
+
+    @abstractmethod
+    async def delete_songs(
+        self,
+        album_id: int,
+        songs_ids: List[int],
+    ) -> True:
+        pass

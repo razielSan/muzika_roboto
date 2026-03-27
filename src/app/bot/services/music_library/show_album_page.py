@@ -9,8 +9,8 @@ from application.use_cases.db.music_library.get_album_with_songs import (
 )
 from domain.entities.db.uow import AbstractUnitOfWork
 from infrastructure.aiogram.keyboards.inline import (
-    show_album_collections,
-    show_album_user_collections,
+    show_album_global,
+    show_album_user,
 )
 from infrastructure.aiogram.messages import resolve_message
 from core.response.response_data import Result, LoggingData
@@ -70,7 +70,7 @@ class ShowAlbumPageCallbackService:
 
             album = response_album.data
 
-            info_album = get_information_album(
+            info_album: str = get_information_album(
                 title=album.title,
                 year=album.year,
                 number_of_songs=len(album.songs),
@@ -85,7 +85,7 @@ class ShowAlbumPageCallbackService:
             if is_global_executor:  # если альбом глобальной библиотеки
                 await self.call.message.edit_media(
                     media=InputMediaPhoto(caption=info_album, media=photo_file_id),
-                    reply_markup=show_album_collections(
+                    reply_markup=show_album_global(
                         songs=album.songs,
                         album=album,
                         song_position=song_position,
@@ -96,7 +96,7 @@ class ShowAlbumPageCallbackService:
             if not is_global_executor:  # если пользовательский альбом
                 await self.call.message.edit_media(
                     media=InputMediaPhoto(caption=info_album, media=photo_file_id),
-                    reply_markup=show_album_user_collections(
+                    reply_markup=show_album_user(
                         songs=album.songs,
                         album=album,
                         song_position=song_position,
@@ -182,7 +182,7 @@ class ShowAlbumPageService:
                     caption=info_album,
                     photo=photo_file_id,
                     chat_id=chat_id,
-                    reply_markup=show_album_collections(
+                    reply_markup=show_album_global(
                         songs=album.songs,
                         album=album,
                         song_position=song_position,
@@ -196,7 +196,7 @@ class ShowAlbumPageService:
                     caption=info_album,
                     photo=photo_file_id,
                     chat_id=chat_id,
-                    reply_markup=show_album_user_collections(
+                    reply_markup=show_album_user(
                         songs=album.songs,
                         album=album,
                         song_position=song_position,

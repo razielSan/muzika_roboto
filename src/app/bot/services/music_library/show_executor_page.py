@@ -15,8 +15,8 @@ from application.use_cases.db.music_library.get_executor_with_albums import (
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.entities.response import ExecutorPageResponse, LibraryMode
 from infrastructure.aiogram.keyboards.inline import (
-    show_executor_global_collections,
-    show_executor_user_collections,
+    show_executor_user,
+    show_executor_global,
 )
 from infrastructure.aiogram.messages import resolve_message, user_messages
 from core.response.response_data import Result, LoggingData
@@ -62,7 +62,7 @@ class ShowExecutorPageCallbackService:
         if result.ok:
             if not result.empty:
                 executor: ExecutorPageResponse = result.data
-                info_executor = get_information_executor(
+                info_executor: str = get_information_executor(
                     name=executor.name,
                     country=executor.country,
                     genres=executor.genres,
@@ -79,10 +79,10 @@ class ShowExecutorPageCallbackService:
                                 media=InputMediaPhoto(
                                     caption=info_executor, media=executor.photo_file_id
                                 ),
-                                reply_markup=show_executor_global_collections(
-                                    executor=executor,
+                                reply_markup=show_executor_global(
                                     limit_albums=limit_albums,
                                     album_position=album_position,
+                                    executor=executor,
                                     is_sync_executor=False,
                                 ),
                             )
@@ -102,10 +102,10 @@ class ShowExecutorPageCallbackService:
                                 media=InputMediaPhoto(
                                     caption=info_executor, media=photo_file_id
                                 ),
-                                reply_markup=show_executor_user_collections(
-                                    limit_albums=limit_albums,
+                                reply_markup=show_executor_user(
                                     executor=executor,
                                     album_position=album_position,
+                                    limit_albums=limit_albums,
                                 ),
                             )
                         except TelegramBadRequest:
@@ -120,10 +120,10 @@ class ShowExecutorPageCallbackService:
                             media=InputMediaPhoto(
                                 caption=info_executor, media=executor.photo_file_id
                             ),
-                            reply_markup=show_executor_global_collections(
-                                executor=executor,
+                            reply_markup=show_executor_global(
                                 limit_albums=limit_albums,
                                 album_position=album_position,
+                                executor=executor,
                                 is_sync_executor=True,
                             ),
                         )
@@ -199,7 +199,7 @@ class ShowExecutorPageService:
                             chat_id=chat_id,
                             caption=info_executor,
                             photo=executor.photo_file_id,
-                            reply_markup=show_executor_global_collections(
+                            reply_markup=show_executor_global(
                                 executor=executor,
                                 limit_albums=limit_albums,
                                 album_position=album_position,
@@ -218,7 +218,7 @@ class ShowExecutorPageService:
                             chat_id=chat_id,
                             caption=info_executor,
                             photo=photo_file_id,
-                            reply_markup=show_executor_user_collections(
+                            reply_markup=show_executor_user(
                                 limit_albums=limit_albums,
                                 executor=executor,
                                 album_position=album_position,
@@ -231,7 +231,7 @@ class ShowExecutorPageService:
                         caption=info_executor,
                         chat_id=chat_id,
                         photo=executor.photo_file_id,
-                        reply_markup=show_executor_global_collections(
+                        reply_markup=show_executor_global(
                             executor=executor,
                             limit_albums=limit_albums,
                             album_position=album_position,

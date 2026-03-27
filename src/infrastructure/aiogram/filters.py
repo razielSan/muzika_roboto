@@ -57,6 +57,14 @@ class AddCallbackDataFilters:
         user_id: int
         current_page_executor: int
 
+    class AddSongsAlbum(CallbackData, prefix="add_s_a"):
+        executor_id: int
+        album_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+        is_global_executor: bool
+        album_position: int
+
 
 class ScrollingCallbackDataFilters:
     class SongCollectionSongs(CallbackData, prefix="scr_s_coll_s"):
@@ -64,7 +72,13 @@ class ScrollingCallbackDataFilters:
         offset: int
 
     class DeleteMenuSongColletionSongs(CallbackData, prefix="scr_del_menu_coll_s"):
-        """Фильтр для пролистывания песен в меню удаления песен."""
+        """Фильтр для пролистывания песен в меню удаления песен сборника."""
+
+        position: int
+        offset: int
+
+    class DeleteMenuSongAlbum(CallbackData, prefix="scr_del_menu_a"):
+        """Фильтр для пролистывания песен в меню удаления песен альбома."""
 
         position: int
         offset: int
@@ -147,8 +161,18 @@ class UpdateCallbackDataFilters:
         is_global_executor: bool
         album_position: int
 
+    class SongTitle(CallbackData, prefix="upd_s_t"):
+        executor_id: int
+        album_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+        is_global_executor: bool
+        album_position: int
+
 
 class DeleteCallbackDataFilters:
+
+    # удаление песен из сборника
     class ButtonsDeleteSongColletionSongs(CallbackData, prefix="del_b_del_s_coll_s"):
         """Фильтр для размечивания песен как на готовые к удалению."""
 
@@ -170,6 +194,32 @@ class DeleteCallbackDataFilters:
     class SongCollectionSongs(CallbackData, prefix="del_s_coll_s"):
         pass
 
+    # удаление песен из альбома
+    class SongsAlbum(CallbackData, prefix="del_s_a"):
+        executor_id: int
+        album_id: int
+        user_id: Optional[int]
+        current_page_executor: int
+        is_global_executor: bool
+        album_position: int
+
+    class ButtonsDeleteSongAlbum(CallbackData, prefix="del_b_s_a"):
+        """Фильтр для размечивания песен как на готовые к удалению в альбоме."""
+
+        song_id: int
+        position: int
+
+    class ConfirmDeleteSongAlbum(CallbackData, prefix="del_con_s_a"):
+        """Подтверждение на удаление песен в альбоме."""
+
+        pass
+
+    class CompleteDeleteSongAlbum(CallbackData, prefix="del_com_s_a"):
+        """Завершение удаление песен из альбома."""
+
+        pass
+
+    # удаление исполнителя
     class ConfirmDeleteExecutor(CallbackData, prefix="del_con_exc"):
         user_id: Optional[int]
         executor_id: int
@@ -181,6 +231,7 @@ class DeleteCallbackDataFilters:
         executor_id: int
         current_page_executor: int
 
+    # удаление альбома
     class ConfirmDeleteAlbum(CallbackData, prefix="del_con_del_a"):
         executor_id: int
         album_id: int

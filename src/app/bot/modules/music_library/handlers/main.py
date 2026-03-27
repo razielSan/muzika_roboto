@@ -13,11 +13,12 @@ from app.bot.modules.music_library.services.collection_songs import (
 )
 from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
-    ShowExecutorPageService,
 )
-from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
-from app.bot.helpers.executor import return_to_executor_page
-from app.bot.helpers.album import return_to_album_page
+from app.bot.helpers.executor import (
+    return_to_executor_page,
+    return_to_executor_page_callback,
+)
+from app.bot.helpers.album import return_to_album_page, return_to_album_page_callback
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
@@ -97,11 +98,6 @@ async def music_library_cancel_handler(
     await state.clear()
     if collection_songs:  # Возвращаемся к сборнику песен пользователя
 
-        await message.answer(
-            text=user_messages.USER_CANCEL_MESSAGE,
-            reply_markup=ReplyKeyboardRemove(),
-        )
-
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
             uow=UnitOfWork(),
@@ -149,7 +145,7 @@ async def music_library_cancel_handler(
             chat_id=chat_id,
             message=user_messages.USER_CANCEL_MESSAGE,
             user_id=user.id,
-            album_default_photo_file_i=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+            album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
             logging_data=logging_data,
             uow=UnitOfWork,
             current_page_executor=current_page_executor,
@@ -224,56 +220,58 @@ async def callback_music_library_cancel_handler(
 async def get_executor_page_panel(
     call: CallbackQuery,
     callback_data: BackExecutorPage,
+    state: FSMContext,
 ):
     """Сценария для показа исполнителя с альбомами при нажатии инлайн-кнопки возврата."""
 
-    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-    user_id = callback_data.user_id
-    album_position = callback_data.album_position
-    current_page_executor = callback_data.current_page
+    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    user_id: Optional[int] = callback_data.user_id
+    album_position: int = callback_data.album_position
+    current_page_executor: int = callback_data.current_page
 
-    await ShowExecutorPageCallbackService(
-        uow=UnitOfWork(),
-        logging_data=logging_data,
+    await state.clear()
+    await return_to_executor_page_callback(
         call=call,
-    ).execute(
+        logging_data=logging_data,
         user_id=user_id,
+        uow=UnitOfWork,
         get_information_executor=get_information_executor,
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         limit_albums=LIMIT_ALBUMS,
         album_position=album_position,
-        current_page=current_page_executor,
+        current_page_executor=current_page_executor,
+        message=user_messages.BACK_EXECUTOR_PAGE,
     )
 
 
 @router.callback_query(BackAlbumPage.filter())
 async def get_album_page(
-    call: CallbackQuery,
-    callback_data: BackAlbumPage,
+    call: CallbackQuery, callback_data: BackAlbumPage, state: FSMContext
 ):
     """Сценария для альбома с песнями при нажатии инлайн-кнопки возврата."""
 
-    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-    user_id = callback_data.user_id
-    album_position = callback_data.album_position
-    current_page_executor = callback_data.current_page_executor
-    album_id = callback_data.album_id
-    is_global_executor = callback_data.is_global_executor
+    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    user_id: Optional[int] = callback_data.user_id
+    album_position: int = callback_data.album_position
+    current_page_executor: int = callback_data.current_page_executor
+    album_id: int = callback_data.album_id
+    is_global_executor: bool = callback_data.is_global_executor
     executor_id: int = callback_data.executor_id
 
-    await ShowAlbumPageCallbackService(
-        uow=UnitOfWork(),
-        logging_data=logging_data,
+    await state.clear()
+    await return_to_album_page_callback(
         call=call,
-    ).execute(
+        uow=UnitOfWork,
+        logging_data=logging_data,
         user_id=user_id,
-        get_information_album=get_information_album,
+        album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
         album_position=album_position,
-        current_page_executor=current_page_executor,
         album_id=album_id,
+        current_page_executor=current_page_executor,
+        get_information_album=get_information_album,
+        executor_id=executor_id,
         song_position=0,
         is_global_executor=is_global_executor,
+        message=user_messages.BACK_ALBUM_PAGE,
         limit_songs=LIMIT_SONGS,
-        executor_id=executor_id,
-        album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID
     )

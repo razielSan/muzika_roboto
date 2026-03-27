@@ -2,13 +2,13 @@ from typing import Optional
 
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.errors.error_code import ErorrCode, SuccessCode, NotFoundCode
-from domain.entities.db.models.executor import Executor as ExecutorDomain
+from domain.entities.db.models.song import Song as SongDomain
 from core.error_handlers.decorator import safe_async_execution
-from core.error_handlers.helpers import ok
+from core.error_handlers.helpers import ok, fail
 from core.response.response_data import Result, LoggingData
 
 
-class DeleteAlbum:
+class UpdateSongTitle:
     def __init__(self, uow: AbstractUnitOfWork, logging_data: LoggingData):
         self.uow: AbstractUnitOfWork = uow
         self.logging_data: LoggingData = logging_data
@@ -19,17 +19,23 @@ class DeleteAlbum:
     async def execute(
         self,
         album_id: int,
-        executor_id: int,
+        position: int,
+        title: str,
     ) -> Result:
         async with self.uow as uow:
-            album: ExecutorDomain = await uow.albums.delete_album(
+            song: Optional[SongDomain] = await uow.songs.update_title_song(
+                position=position,
                 album_id=album_id,
-                executor_id=executor_id,
+                title=title,
             )
-            if not album:
-                return ok(data=[], code=NotFoundCode.ALBUM_NOT_FOUND.name)
+            if not song:
+                return ok(
+                    code=NotFoundCode.SONG_POSITION_NOT_FOUND.name,
+                    empty=True,
+                    data=[],
+                )
 
         return ok(
-            data=SuccessCode.DELETE_ALBUM_SUCCES.value,
-            code=SuccessCode.DELETE_ALBUM_SUCCES.name,
+            data=SuccessCode.UPDATE_SONG_TITLE_SUCCESS,
+            code=SuccessCode.UPDATE_SONG_TITLE_SUCCESS,
         )

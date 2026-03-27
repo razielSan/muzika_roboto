@@ -112,7 +112,7 @@ async def callback_show_user_collection(
 
     """
     if message:
-        await call.message.answer(text=message)
+        await call.answer(text=message)
 
     # Выставляем обложку сборника песен
     photo_file_id: str = music_library_settings.COLLECTION_SONGS_PHOTO_FILE_ID

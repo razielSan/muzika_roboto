@@ -1,6 +1,6 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 
 from domain.entities.db.repositories.song import SongRepository
 from domain.entities.response import SongResponse
@@ -48,3 +48,35 @@ class SQLAlchemySongRepository(SongRepository):
         self.session.add_all(songs_albums)
         await self.session.flush()
         return songs
+
+    async def update_title_song(
+        self,
+        position: int,
+        album_id: int,
+        title: str,
+    ) -> Optional[Song]:
+        song: Optional[Song] = await self.session.scalar(
+            select(self.model).where(
+                self.model.position == position,
+                self.model.album_id == album_id,
+            )
+        )
+        if not song:
+            return None
+        song.title = title
+        await self.session.flush()
+        return song
+
+    async def delete_songs(
+        self,
+        album_id: int,
+        songs_ids: List[int],
+    ) -> True:
+        await self.session.execute(
+            delete(self.model).where(
+                self.model.album_id == album_id, self.model.id.in_(songs_ids)
+            )
+        )
+
+        await self.session.flush()
+        return True

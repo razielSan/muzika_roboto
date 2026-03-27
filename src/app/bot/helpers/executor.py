@@ -46,7 +46,6 @@ async def return_to_executor_page(
 
 async def return_to_executor_page_callback(
     call: CallbackQuery,
-    message: str,
     uow: AbstractUnitOfWork,
     logging_data: LoggingData,
     current_page_executor: int,
@@ -55,9 +54,10 @@ async def return_to_executor_page_callback(
     album_position: int,
     get_information_executor: Callable,
     user_id: Optional[int],
+    message: Optional[str] = None,
 ):
-
-    await call.answer(text=message)
+    if message:
+        await call.answer(text=message)
     await ShowExecutorPageCallbackService(
         uow=uow(), logging_data=logging_data, call=call
     ).execute(

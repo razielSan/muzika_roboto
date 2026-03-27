@@ -72,3 +72,19 @@ class UserCollectionSongsResponse:
 class LibraryMode(Enum):
     GLOBAL: str = "global"
     USER: str = "user"
+
+
+@dataclass
+class Page:
+    items: List
+    position: int
+    total: int
+    limit: int
+
+    @property
+    def has_next(self):
+        return self.position + self.limit < self.total
+
+    @property
+    def has_prev(self):
+        return self.position > 0

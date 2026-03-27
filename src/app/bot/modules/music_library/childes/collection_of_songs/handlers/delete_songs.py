@@ -44,7 +44,7 @@ from core.response.response_data import LoggingData, Result
 router: Router = Router(name=__name__)
 
 
-# Удаление песен альбома
+# Удаление песен сборника
 class FSMDeleteSongsCollectionSongs(StatesGroup):
     """FSM для сценария удаления песен из сборника."""
 

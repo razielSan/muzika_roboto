@@ -32,6 +32,7 @@ class UpdateTitleSongCollectionSongs:
                     code=NotFoundCode.SONG_POSITION_NOT_FOUND.name,
                 )
 
-            return ok(
-                data=result_update, code=SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name
-            )
+        return ok(
+            data=SuccessCode.UPDATE_SONG_TITLE_SUCCESS.value,
+            code=SuccessCode.UPDATE_SONG_TITLE_SUCCESS.name,
+        )
