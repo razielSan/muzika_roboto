@@ -1,46 +1,51 @@
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.types import CallbackQuery
 from aiogram.filters.state import StateFilter
 
-from app.bot.modules.music_library.childes.user_library.settings import settings
+from app.bot.modules.music_library.settings import settings as music_library_settings
+from app.bot.settings import settings as bot_settings
 from app.bot.modules.music_library.utils.music_library import (
     callback_update_menu_inline_music_library,
 )
 from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
 )
-from app.bot.settings import settings as bot_settings
+from application.use_cases.db.music_library.sync_executor import SyncExecutorLibrary
 from application.use_cases.db.music_library.desync_executor import DesyncExecutorLibrary
-from infrastructure.aiogram.messages import LIMIT_ALBUMS
-from infrastructure.aiogram.filters import DesyncExecutor
+from infrastructure.aiogram.filters import SyncExecutor, DesyncExecutor
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.db.utils.editing import get_information_executor
-from infrastructure.aiogram.messages import resolve_message, user_messages
+from infrastructure.aiogram.messages import resolve_message, user_messages, LIMIT_ALBUMS
 from core.logging.api import get_loggers
+from core.response.response_data import LoggingData
 
-router = Router(name=__name__)
+
+router: Router = Router(name=__name__)
 
 
-@router.callback_query(StateFilter(None), F.data == settings.MENU_CALLBACK_DATA)
-async def user_library(
+@router.callback_query(StateFilter(None), SyncExecutor.filter())
+async def sync_executor(
     call: CallbackQuery,
+    callback_data: SyncExecutor,
     user,
 ):
-    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     user_id = user.id
-
-    await ShowExecutorPageCallbackService(
-        uow=UnitOfWork(),
-        logging_data=logging_data,
-        call=call,
-    ).execute(
-        get_information_executor=get_information_executor,
-        user_id=user_id,
-        limit_albums=LIMIT_ALBUMS,
-        current_page=1,
-        album_position=0,
-        executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+    executor_id = callback_data.executor_id
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
+
+    result_sync = await SyncExecutorLibrary(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(executor_id=executor_id, user_id=user_id)
+
+    if result_sync.ok:
+        success_message = resolve_message(code=result_sync.code)
+        await call.answer(text=success_message)
+
+    if not result_sync.ok:
+        error_message = resolve_message(code=result_sync.error.code)
+        await call.answer(text=error_message)
 
 
 @router.callback_query(StateFilter(None), DesyncExecutor.filter())
@@ -51,7 +56,7 @@ async def desync_executor(
 ):
     user_id = user.id
     executor_id = callback_data.executor_id
-    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    logging_data = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
 
     result_desync_executor = await DesyncExecutorLibrary(
         uow=UnitOfWork(), logging_data=logging_data

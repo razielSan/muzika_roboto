@@ -31,6 +31,14 @@ class PlaySongsCollectionSongs(CallbackData, prefix="play_s_coll_s"):
     song_id: int
 
 
+class StartUserLibrary(CallbackData, prefix="start_u_l"):
+    pass
+
+
+class StartGlobalLibrary(CallbackData, prefix="start_g_l"):
+    pass
+
+
 class ShowAlbumExecutor(CallbackData, prefix="show_al_ex"):
     album_position: int
     album_id: int

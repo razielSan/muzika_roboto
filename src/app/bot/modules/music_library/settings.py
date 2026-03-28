@@ -6,7 +6,7 @@ class ModuleSettings(BaseModel):
     MENU_REPLY_TEXT: str = "music_library"
     MENU_CALLBACK_TEXT: str = "music_library"
     MENU_CALLBACK_DATA: str = "music_library"
-    SHOW_IN_MAIN_MENU: bool = True
+    SHOW_IN_MAIN_MENU: bool = False
     NAME_FOR_LOG_FOLDER: str = "music_library"
     NAME_FOR_TEMP_FOLDER: str = "music_library"
     ROOT_PACKAGE: str = "app.bot.modules.music_library"

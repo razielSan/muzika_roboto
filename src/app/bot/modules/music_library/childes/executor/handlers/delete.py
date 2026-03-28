@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from app.bot.settings import settings as bot_settings
-from app.bot.modules.music_library.childes.user_library.settings import settings
+from app.bot.modules.music_library.settings import settings as music_library_settings
 from app.bot.helpers.executor import return_to_executor_page_callback
 from app.bot.helpers.album import return_to_album_page_callback
 from app.bot.modules.music_library.utils.music_library import (
@@ -89,7 +89,7 @@ async def confirm_delete_executor(
 
     executor_id: Optional[int] = callback_data.executor_id
     user_id: Optional[int] = callback_data.user_id
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
 
     result_delete_executor: Result = await DeleteExecutor(
         uow=UnitOfWork(), logging_data=logging_data
@@ -166,7 +166,7 @@ async def end_delete_album(
     user_id: Optional[int] = callback_data.user_id
     current_page_executor: int = callback_data.current_page_executor
     album_id: int = callback_data.album_id
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
 
     result_delete_album: Result = await DeleteAlbum(
         uow=UnitOfWork(), logging_data=logging_data
@@ -249,7 +249,7 @@ async def start_delete_songs_collection_songs(
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
 
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
 
     result: Result = await GetAlbumWithSongs(
         uow=UnitOfWork(), logging_data=logging_data
@@ -468,7 +468,7 @@ async def end_delete_songs_album(
 
     data: Dict = await state.get_data()
     delete_state_data: DeleteSongsAlbumData = DeleteSongsAlbumData(**data)
-    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
 
     result: Result = await DeleteSongsAlbum(
         uow=UnitOfWork(), logging_data=logging_data
