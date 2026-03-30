@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from infrastructure.db.models.sqlaclhemy import Genre
 from domain.entities.db.repositories.genre import GenreRepository
@@ -31,3 +32,15 @@ class SQLAlchemyGenreRepository(GenreRepository):
                 genres.append(genre)
         await self.session.flush()
         return genres
+
+    async def get_genre(self, title: str) -> Optional[Genre]:
+        genre = await self.session.scalar(
+            select(self.model)
+            .where(self.model.title == title)
+            .options(
+                selectinload(
+                    self.model.executors,
+                )
+            )
+        )
+        return genre

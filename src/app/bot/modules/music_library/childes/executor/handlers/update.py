@@ -8,7 +8,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from app.bot.modules.music_library.settings import settings as music_library_settings
-from app.bot.services.music_library.show_album_page import ShowAlbumPageService
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )

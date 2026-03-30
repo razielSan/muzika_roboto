@@ -73,9 +73,7 @@ def build_executor_base(
                     ).pack(),
                 )
             )
-        # buttons = []
-        # has_prev = album_position > 0
-        # has_next = album_position + limit_albums < count_albums
+
         page = Page(
             items=[],
             position=album_position,

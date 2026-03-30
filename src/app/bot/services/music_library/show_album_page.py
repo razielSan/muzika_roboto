@@ -3,8 +3,7 @@ from typing import Union, Callable
 from aiogram import Bot
 from aiogram.types import InputMediaPhoto, CallbackQuery
 
-from app.bot.settings import settings as bot_settings
-from application.use_cases.db.music_library.get_album_with_songs import (
+from application.use_cases.db.music_library.get.get_album_with_songs import (
     GetAlbumWithSongs,
 )
 from domain.entities.db.uow import AbstractUnitOfWork

@@ -8,7 +8,7 @@ from app.bot.modules.music_library.utils.music_library import (
     callback_update_menu_inline_music_library,
     get_inline_menu_music_library,
 )
-from application.use_cases.db.music_library.get_executor_with_albums import (
+from application.use_cases.db.music_library.get.get_executor_with_albums import (
     GetExecutorWihtAlbums,
 )
 
@@ -68,11 +68,8 @@ class ShowExecutorPageCallbackService:
                     genres=executor.genres,
                     number_of_albums=len(executor.albums),
                 )
-                mode: str = (
-                    LibraryMode.USER.name if user_id else LibraryMode.GLOBAL.name
-                )
 
-                if mode == LibraryMode.USER.name:  # пользовательская библиотека
+                if user_id:  # пользовательская библиотека
                     if executor.is_global:  # глобальный исполнитель
                         try:
                             await self.call.message.edit_media(
@@ -114,7 +111,7 @@ class ShowExecutorPageCallbackService:
                             )
                         return
 
-                if mode == LibraryMode.GLOBAL.name:  # глобальная библиотека
+                if not user_id:  # глобальная библиотека
                     try:
                         await self.call.message.edit_media(
                             media=InputMediaPhoto(

@@ -17,7 +17,7 @@ from infrastructure.db.uow import UnitOfWork
 from infrastructure.db.utils.editing import get_information_executor
 from infrastructure.aiogram.messages import resolve_message, user_messages, LIMIT_ALBUMS
 from core.logging.api import get_loggers
-from core.response.response_data import LoggingData
+from core.response.response_data import LoggingData, Result
 
 
 router: Router = Router(name=__name__)
@@ -29,22 +29,24 @@ async def sync_executor(
     callback_data: SyncExecutor,
     user,
 ):
-    user_id = user.id
-    executor_id = callback_data.executor_id
+    """Добавляет исполнителя в библиотеку пользователя."""
+
+    user_id: int = user.id
+    executor_id: int = callback_data.executor_id
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
 
-    result_sync = await SyncExecutorLibrary(
+    result_sync: Result = await SyncExecutorLibrary(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(executor_id=executor_id, user_id=user_id)
 
     if result_sync.ok:
-        success_message = resolve_message(code=result_sync.code)
+        success_message: str = resolve_message(code=result_sync.code)
         await call.answer(text=success_message)
 
     if not result_sync.ok:
-        error_message = resolve_message(code=result_sync.error.code)
+        error_message: str = resolve_message(code=result_sync.error.code)
         await call.answer(text=error_message)
 
 
@@ -54,11 +56,15 @@ async def desync_executor(
     callback_data: DesyncExecutor,
     user,
 ):
-    user_id = user.id
-    executor_id = callback_data.executor_id
-    logging_data = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    """Удаляет исполнителя из библиотеки пользователя."""
 
-    result_desync_executor = await DesyncExecutorLibrary(
+    user_id: int = user.id
+    executor_id: int = callback_data.executor_id
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
+
+    result_desync_executor: Result = await DesyncExecutorLibrary(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(executor_id=executor_id, user_id=user_id)
 
@@ -66,14 +72,14 @@ async def desync_executor(
         if (
             result_desync_executor.empty
         ):  # если после десинхронизации в библиотеке нет исполнителей
-            not_found_message = resolve_message(code=result_desync_executor.code)
+            not_found_message: str = resolve_message(code=result_desync_executor.code)
             await call.answer(text=not_found_message)
             await callback_update_menu_inline_music_library(
                 call=call, caption=user_messages.USER_PANEL_CAPTION
             )
             return
 
-        success_message = resolve_message(code=result_desync_executor.code)
+        success_message: str = resolve_message(code=result_desync_executor.code)
         await call.answer(text=success_message)
         await ShowExecutorPageCallbackService(
             uow=UnitOfWork(),
@@ -89,5 +95,5 @@ async def desync_executor(
         )
         return
     else:
-        error_message = resolve_message(code=result_desync_executor.error.code)
+        error_message: str = resolve_message(code=result_desync_executor.error.code)
         await call.answer(text=error_message)

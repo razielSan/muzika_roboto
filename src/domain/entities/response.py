@@ -37,6 +37,14 @@ class AlbumPageResponse:
 
 
 @dataclass
+class ExecutorSearchResponse:
+    id: int
+    name: str
+    country: str
+    name_lower: str
+
+
+@dataclass
 class ExecutorPageResponse:
     id: int
     current_user_id: Optional[int]  # user_id пользователя для скроллинга
@@ -69,9 +77,11 @@ class UserCollectionSongsResponse:
     collection_songs_photo_file_unique_id: Optional[str] = None
 
 
-class LibraryMode(Enum):
-    GLOBAL: str = "global"
-    USER: str = "user"
+@dataclass
+class LibraryMode:
+    GLOBAL: bool = None
+    USER: bool = None
+    ADMIN: bool = None
 
 
 @dataclass

@@ -33,6 +33,8 @@ class KeyboardResponse(Enum):
     UPDATE_COUNTRY_EXECUTOR: str = "📆 Обновить Страну Исполнителя"
     USER_CANCEL_BUTTON: str = "🚫 Отмена"
     SYNC_EXECUTOR: str = "👯‍♂️ Добавить В Библиотеку"
+    SEARCH_BY_NAME: str = "🔎 Искать По Имени"
+    SEARCH_BY_GENRES: str = "🔎 Искать По Жанрам"
     DESYNC_EXECUTOR: str = "🗑 Убрать Из Библиотеки"
 
 

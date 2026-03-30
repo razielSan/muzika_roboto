@@ -27,9 +27,16 @@ from app.bot.filters.admin_filters import (
 )
 from app.bot.modules.admin.utils.admin import callback_update_admin_panel_media_photo
 from app.bot.view_model import ExecutorResponse, AlbumResponse
+from app.bot.services.music_library.show_executor_page import (
+    ShowExecutorPageCallbackService,
+)
+from domain.entities.response import LibraryMode
 from infrastructure.aiogram.legacy_response import ServerDatabaseResponse
+from infrastructure.db.uow import UnitOfWork
+from infrastructure.db.utils.editing import get_information_executor
 from infrastructure.aiogram.messages import LIMIT_SONGS, LIMIT_ALBUMS
-from core.response.response_data import Result
+from core.response.response_data import Result, LoggingData
+from core.logging.api import get_loggers
 
 
 router: Router = Router(name=__name__)
@@ -38,6 +45,8 @@ router: Router = Router(name=__name__)
 @router.callback_query(StateFilter(None), F.data == settings.MENU_CALLBACK_DATA)
 async def base_music(call: CallbackQuery) -> None:
     """Возвращает первого исполнителя из базового музыкального хранилища."""
+
+    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_executor: Result = await base_music_service.show_executor(
         get_info_executor=get_info_executor,

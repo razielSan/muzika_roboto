@@ -38,6 +38,45 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         await self.session.flush()
         return executor
 
+    async def get_executor_by_name_lower(
+        self,
+        user_id: Union[None, int],
+        name_lower: str,
+    ) -> Optional[Executor]:
+
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
+        executor = await self.session.scalar(
+            select(self.model).where(
+                self.model.name_lower == name_lower,
+                user_id_condition,
+            )
+        )
+        return executor
+
+    async def get_executors_by_name_lower_filter_like(
+        self,
+        user_id: Union[None, int],
+        name_lower: str,
+    ) -> Optional[Executor]:
+
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
+        stmt = await self.session.scalars(
+            select(self.model).where(
+                self.model.name_lower.like(f"{name_lower}%"),
+                user_id_condition,
+            )
+        )
+        executors = stmt.all()
+        return executors
+
     async def get_executor_by_name_lower_and_country(
         self,
         user_id: Union[None, int],
@@ -88,6 +127,7 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
             select(self.model)
             .order_by(self.model.name_lower)
             .where(self.model.user_id.is_(user_id))
+            .order_by(self.model.name_lower)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
@@ -139,29 +179,6 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
             select(self.model).where(self.model.id == executor_id)
         )
         return executor
-
-    async def delete_executor(self, user_id: Optional[int], executor_id: int) -> bool:
-        # для предотвращения ошибки при сравнивании None
-        if user_id is None:
-            user_id_condition: bool = self.model.user_id.is_(None)
-        else:
-            user_id_condition: bool = self.model.user_id == user_id
-
-        executor = await self.session.scalar(
-            select(self.model)
-            .where(user_id_condition, self.model.id == executor_id)
-            .options(selectinload(self.model.genres))
-            .options(selectinload(self.model.library_users))
-        )
-
-        if not executor:
-            return None
-
-        executor.genres = []
-        executor.library_users = []
-        await self.session.delete(executor)
-        await self.session.flush()
-        return True
 
     async def update_executor_photo_file_id(
         self,
@@ -232,3 +249,26 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         executor.name_lower = name.casefold()
         await self.session.flush()
         return executor
+
+    async def delete_executor(self, user_id: Optional[int], executor_id: int) -> bool:
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
+
+        executor = await self.session.scalar(
+            select(self.model)
+            .where(user_id_condition, self.model.id == executor_id)
+            .options(selectinload(self.model.genres))
+            .options(selectinload(self.model.library_users))
+        )
+
+        if not executor:
+            return None
+
+        executor.genres = []
+        executor.library_users = []
+        await self.session.delete(executor)
+        await self.session.flush()
+        return True

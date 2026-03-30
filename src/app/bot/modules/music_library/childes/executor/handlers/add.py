@@ -38,8 +38,6 @@ from core.logging.api import get_loggers
 router: Router = Router(name=__name__)
 
 # Добавление альбома
-
-
 class FSMAddAlbumML(StatesGroup):
     """FSM для сценария добавления альбома."""
 
@@ -58,19 +56,19 @@ class FSMAddAlbumML(StatesGroup):
 
 
 @dataclass
-class UserAddAlbumProtocol:
-    current_page_executor: int = None
-    music_library_executor: bool = None
-    song_counter: Optional[int] = None
-    executor_id: int = None
-    user_id: Optional[int] = None
-    title: str = None
-    year: int = None
-    photo_file_id: Optional[str] = None
-    photo_file_unique_id: Optional[str] = None
-    songs: List[SongResponse] = None
-    photo: None = None
-    processing: None = None
+class AddAlbumData:
+    current_page_executor: int
+    music_library_executor: bool
+    song_counter: Optional[int]
+    executor_id: int
+    user_id: Optional[int]
+    title: str
+    year: int
+    photo_file_id: Optional[str]
+    photo_file_unique_id: Optional[str]
+    songs: List[SongResponse]
+    photo: None
+    processing: None
 
 
 @router.callback_query(
@@ -89,12 +87,23 @@ async def start_add_album(
     user_id: int = callback_data.user_id
     current_page_executor: int = callback_data.current_page_executor
 
-    await state.update_data(executor_id=executor_id)
-    await state.update_data(user_id=user_id)
-    await state.update_data(song_counter=0)
-    await state.update_data(current_page_executor=current_page_executor)
-    await state.update_data(music_library_executor=True)
-    await state.update_data(songs=[])
+    await state.update_data(
+        AddAlbumData(
+            executor_id=executor_id,
+            user_id=user_id,
+            song_counter=0,
+            current_page_executor=current_page_executor,
+            music_library_executor=True,
+            songs=[],
+            title="",
+            year="",
+            photo_file_id="",
+            photo_file_unique_id="",
+            photo=None,
+            processing=None,
+        ).__dict__
+    )
+
     await state.set_state(FSMAddAlbumML.title)
 
     await call.message.answer(
@@ -181,14 +190,14 @@ async def add_songs(message: Message, state: FSMContext):
     """Добавляет в FSM сброшенные песни."""
 
     data: Dict = await state.get_data()
-    add_album_data: UserAddAlbumProtocol = UserAddAlbumProtocol(**data)
+    state_data: AddAlbumData = AddAlbumData(**data)
     if message.audio:
         title: str = message.audio.file_name
         file_id: str = message.audio.file_id
         file_unique_id: str = message.audio.file_unique_id
 
     if message.voice:
-        song_counter: int = add_album_data.song_counter + 1
+        song_counter: int = state_data.song_counter + 1
         title: str = f"Unknown title {song_counter}"
         file_id: str = message.voice.file_id
         file_unique_id: str = message.voice.file_unique_id
@@ -200,7 +209,7 @@ async def add_songs(message: Message, state: FSMContext):
         file_id=file_id,
         file_unique_id=file_unique_id,
     )
-    songs: List[SongResponse] = add_album_data.songs
+    songs: List[SongResponse] = state_data.songs
     songs.append(song)
     await message.answer(text=user_messages.THE_SONG_IS_SAVED.format(title=title))
 
@@ -210,8 +219,8 @@ async def confirm_add_songs(message: Message, state: FSMContext):
     """Просит подтвердить добавление песен."""
 
     data: Dict = await state.get_data()
-    add_album_data: UserAddAlbumProtocol = UserAddAlbumProtocol(**data)
-    songs: List[SongResponse] = add_album_data.songs
+    state_data: AddAlbumData = AddAlbumData(**data)
+    songs: List[SongResponse] = state_data.songs
     if not songs:  # Если песен не было сброшено
         await message.answer(
             text=f"{user_messages.NO_SONGS_WERE_DROPPED}\n\n{user_messages.DROP_THE_SONG}"
@@ -243,7 +252,7 @@ async def end_add_album(
     """Создает альбом."""
 
     data: Dict = await state.get_data()
-    add_album_data: UserAddAlbumProtocol = UserAddAlbumProtocol(**data)
+    state_data: AddAlbumData = AddAlbumData(**data)
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
@@ -252,12 +261,12 @@ async def end_add_album(
     result_add_album = await AddAlbumExecutor(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(
-        executor_id=add_album_data.executor_id,
-        title=add_album_data.title,
-        year=add_album_data.year,
-        songs=add_album_data.songs,
-        photo_file_id=add_album_data.photo_file_id,
-        photo_file_unique_id=add_album_data.photo_file_unique_id,
+        executor_id=state_data.executor_id,
+        title=state_data.title,
+        year=state_data.year,
+        songs=state_data.songs,
+        photo_file_id=state_data.photo_file_id,
+        photo_file_unique_id=state_data.photo_file_unique_id,
     )
     if result_add_album.ok:
         await state.clear()
@@ -270,9 +279,9 @@ async def end_add_album(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             message=result_message,
             album_position=0,
-            user_id=add_album_data.user_id,
+            user_id=state_data.user_id,
             limit_albums=LIMIT_ALBUMS,
-            current_page_executor=add_album_data.current_page_executor,
+            current_page_executor=state_data.current_page_executor,
             get_information_executor=get_information_executor,
         )
 
@@ -305,8 +314,6 @@ class FSMAddSongsAlbumML(StatesGroup):
     music_library_album: State = State()
     executor_id: State = State()
     user_id: State = State()
-    photo_file_id: State = State()
-    photo_file_unique_id: State = State()
     album_id: State = State()
     is_global_executor: State = State()
     album_position: State = State()
@@ -316,17 +323,17 @@ class FSMAddSongsAlbumML(StatesGroup):
 
 
 @dataclass
-class FSMAddSongsAlbumMLProtocol:
-    current_page_executor: int = None
-    music_library_album: bool = None
-    executor_id: int = None
-    user_id: Optional[int] = None
-    album_id: int = None
-    is_global_executor: bool = None
-    album_position: int = None
-    song_counter: int = None
-    songs: List[SongResponse] = None
-    processing: None = None
+class AddSongsAlbumMLData:
+    current_page_executor: int
+    music_library_album: bool
+    executor_id: int
+    user_id: Optional[int]
+    album_id: int
+    is_global_executor: bool
+    album_position: int
+    song_counter: int
+    songs: List[SongResponse]
+    processing: None
 
 
 @router.callback_query(StateFilter(None), AddCallbackDataFilters.AddSongsAlbum.filter())
@@ -346,19 +353,23 @@ async def start_add_songs_album(
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
 
-    await state.update_data(current_page_executor=current_page_executor)
-    await state.update_data(executor_id=executor_id)
-    await state.update_data(user_id=user_id)
-    await state.update_data(album_id=album_id)
-    await state.update_data(album_position=album_position)
-    await state.update_data(is_global_executor=is_global_executor)
-    await state.update_data(songs=[])
-    await state.update_data(song_counter=0)
-    await state.update_data(music_library_album=True)
+    await state.update_data(
+        AddSongsAlbumMLData(
+            current_page_executor=current_page_executor,
+            executor_id=executor_id,
+            user_id=user_id,
+            album_id=album_id,
+            is_global_executor=is_global_executor,
+            songs=[],
+            song_counter=0,
+            music_library_album=True,
+            album_position=album_position,
+            processing=None,
+        ).__dict__
+    )
+
     await state.set_state(FSMAddSongsAlbumML.songs)
 
-    data = await state.get_state()
-    print(data, 11)
     await call.message.answer(
         text=user_messages.DROP_THE_SONG,
         reply_markup=get_reply_cancel_button(
@@ -373,15 +384,14 @@ async def add_songs_album(message: Message, state: State):
     """Добавляет в FSM сброшенные песни."""
 
     data: Dict = await state.get_data()
-    print(data.get("album_id"), 11111)
-    add_album_data: FSMAddSongsAlbumMLProtocol = FSMAddSongsAlbumMLProtocol(**data)
+    state_data: AddSongsAlbumMLData = AddSongsAlbumMLData(**data)
     if message.audio:
         title: str = message.audio.file_name
         file_id: str = message.audio.file_id
         file_unique_id: str = message.audio.file_unique_id
 
     if message.voice:
-        song_counter: int = add_album_data.song_counter + 1
+        song_counter: int = state_data.song_counter + 1
         title: str = f"Unknown title {song_counter}"
         file_id: str = message.voice.file_id
         file_unique_id: str = message.voice.file_unique_id
@@ -393,7 +403,7 @@ async def add_songs_album(message: Message, state: State):
         file_id=file_id,
         file_unique_id=file_unique_id,
     )
-    songs: List[SongResponse] = add_album_data.songs
+    songs: List[SongResponse] = state_data.songs
     songs.append(song)
     await message.answer(text=user_messages.THE_SONG_IS_SAVED.format(title=title))
 
@@ -403,8 +413,8 @@ async def confirm_add_songs_album(message: Message, state: FSMContext):
     """Просит подтвердить добавление песен."""
 
     data: Dict = await state.get_data()
-    add_songs_album: FSMAddSongsAlbumMLProtocol = FSMAddSongsAlbumMLProtocol(**data)
-    songs: List[SongResponse] = add_songs_album.songs
+    state_data: AddSongsAlbumMLData = AddSongsAlbumMLData(**data)
+    songs: List[SongResponse] = state_data.songs
     if not songs:  # Если песен не было сброшено
         await message.answer(
             text=f"{user_messages.NO_SONGS_WERE_DROPPED}\n\n{user_messages.DROP_THE_SONG}"
@@ -426,7 +436,7 @@ async def add_songs_album_message(message: Message):
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="аудио")
     )
 
-    await message.answer(text=user_messages.DROP_THE_PHOTO)
+    await message.answer(text=user_messages.DROP_THE_SONG)
 
 
 @router.message(
@@ -438,9 +448,7 @@ async def end_songs_album(
     bot: Bot,
 ):
     data: Dict = await state.get_data()
-    add_songs_album_data: FSMAddSongsAlbumMLProtocol = FSMAddSongsAlbumMLProtocol(
-        **data
-    )
+    state_data: AddSongsAlbumMLData = AddSongsAlbumMLData(**data)
     chat_id: int = message.chat.id
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
@@ -449,9 +457,9 @@ async def end_songs_album(
     result: Result = await AddSongsAlbum(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(
-        executor_id=add_songs_album_data.executor_id,
-        album_id=add_songs_album_data.album_id,
-        songs=add_songs_album_data.songs,
+        executor_id=state_data.executor_id,
+        album_id=state_data.album_id,
+        songs=state_data.songs,
     )
 
     await state.clear()
@@ -463,16 +471,16 @@ async def end_songs_album(
             message=result_message,
             logging_data=logging_data,
             uow=UnitOfWork,
-            current_page_executor=add_songs_album_data.current_page_executor,
+            current_page_executor=state_data.current_page_executor,
             album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
             limit_songs=LIMIT_SONGS,
             get_information_album=get_information_album,
-            album_id=add_songs_album_data.album_id,
-            executor_id=add_songs_album_data.executor_id,
+            album_id=state_data.album_id,
+            executor_id=state_data.executor_id,
             song_position=0,
-            is_global_executor=add_songs_album_data.is_global_executor,
-            album_position=add_songs_album_data.album_position,
-            user_id=add_songs_album_data.user_id
+            is_global_executor=state_data.is_global_executor,
+            album_position=state_data.album_position,
+            user_id=state_data.user_id,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
@@ -483,3 +491,15 @@ async def end_songs_album(
             caption=user_messages.USER_PANEL_CAPTION,
             message=error_message,
         )
+
+
+@router.message(FSMAddSongsAlbumML.processing)
+async def end_songs_album_message(message: Message):
+    """Отправляет сообщение если были введены данные не в том формате."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(
+            format=user_messages.CONFIRMATION_TEXT
+        )
+    )
+    await message.answer(text=user_messages.CLICK_CANCEL_BUTTON)

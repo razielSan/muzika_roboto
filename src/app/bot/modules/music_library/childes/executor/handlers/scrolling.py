@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aiogram import Router
 from aiogram.types import CallbackQuery
 from aiogram.filters.state import StateFilter
@@ -36,9 +38,11 @@ async def scrolling_albums_executor(
 
     current_page: int = callback_data.current_page_executor
     position: int = callback_data.position + callback_data.offset
-    user_id = callback_data.user_id
+    user_id: Optional[int] = callback_data.user_id
 
-    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
 
     await ShowExecutorPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
@@ -61,10 +65,12 @@ async def scrolling_global_executors(
 ):
     """Пролистывает исполнителей."""
 
-    user_id = callback_data.user_id
+    user_id: Optional[int] = callback_data.user_id
     current_page: int = callback_data.current_page_executor
 
-    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
 
     await ShowExecutorPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
@@ -87,14 +93,16 @@ async def scrolling_songs_album(
 ):
     """Пролистывает песни альбома."""
 
-    executor_id = callback_data.executor_id
+    executor_id: int = callback_data.executor_id
     current_page_executor: int = callback_data.current_page_executor
     album_id: int = callback_data.album_id
-    position = callback_data.position + callback_data.offset
-    user_id = callback_data.user_id
+    position: int = callback_data.position + callback_data.offset
+    user_id: Optional[int] = callback_data.user_id
     is_global_executor: bool = callback_data.is_global_executor
 
-    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
 
     await ShowAlbumPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call

@@ -185,9 +185,11 @@ async def callback_music_library_cancel_handler(
     """
     data: Dict = await state.get_data()
     collection_songs: Optional[bool] = data.get(FSMFlags.COLLECTION_SONGS)
+    search_executor: Optional[bool] = data.get(FSMFlags.SEARCH_EXECUTOR)
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await state.clear()
+    await call.message.delete_reply_markup()
     if collection_songs:
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
@@ -206,6 +208,12 @@ async def callback_music_library_cancel_handler(
             )
 
             return
+
+    if search_executor:
+        await call.message.answer(
+            text=user_messages.MAIN_MENU,
+            reply_markup=ReplyKeyboardRemove(),
+        )
 
     await call.message.edit_media(
         media=InputMediaPhoto(

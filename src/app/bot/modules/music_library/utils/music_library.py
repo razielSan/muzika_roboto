@@ -52,7 +52,7 @@ async def callback_update_menu_inline_music_library(
     """
 
     if message:
-        await call.message.answer(
+        await call.answer(
             text=message,
             reply_markup=ReplyKeyboardRemove(),
         )

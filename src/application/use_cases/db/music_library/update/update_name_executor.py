@@ -57,7 +57,7 @@ class UpdateNameExecutor:
 
             executors: List[
                 ExecutorDomain
-            ] = await self.uow.users.get_library_executors(user_id=user_id)
+            ] = await uow.users.get_library_executors(user_id=user_id)
             for page, executor in enumerate(executors, start=1):
                 if executor.name == name and executor.country == country:
                     curremt_page_executor = page

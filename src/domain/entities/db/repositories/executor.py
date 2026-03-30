@@ -49,6 +49,22 @@ class ExecutorRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_executor_by_name_lower(
+        self,
+        user_id: Union[None, int],
+        name_lower: str,
+    ) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
+    async def get_executors_by_name_lower_filter_like(
+        self,
+        user_id: Union[None, int],
+        name_lower: str,
+    ) -> Optional[DomainExecutor]:
+        pass
+
+    @abstractmethod
     async def get_executor_by_name_lower_and_country(
         self,
         user_id: Union[None, int],

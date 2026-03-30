@@ -14,12 +14,12 @@ from app.bot.helpers.album import return_to_album_page_callback
 from app.bot.modules.music_library.utils.music_library import (
     callback_update_menu_inline_music_library,
 )
-from application.use_cases.db.music_library.delete_executor import DeleteExecutor
-from application.use_cases.db.music_library.get_album_with_songs import (
+from application.use_cases.db.music_library.delete.delete_executor import DeleteExecutor
+from application.use_cases.db.music_library.get.get_album_with_songs import (
     GetAlbumWithSongs,
 )
-from application.use_cases.db.music_library.delete_songs import DeleteSongsAlbum
-from application.use_cases.db.music_library.delete_album import DeleteAlbum
+from application.use_cases.db.music_library.delete.delete_songs import DeleteSongsAlbum
+from application.use_cases.db.music_library.delete.delete_album import DeleteAlbum
 from domain.entities.response import SongResponse, AlbumPageResponse
 from infrastructure.aiogram.filters import DeleteCallbackDataFilters
 from infrastructure.aiogram.messages import (
@@ -89,7 +89,9 @@ async def confirm_delete_executor(
 
     executor_id: Optional[int] = callback_data.executor_id
     user_id: Optional[int] = callback_data.user_id
-    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
 
     result_delete_executor: Result = await DeleteExecutor(
         uow=UnitOfWork(), logging_data=logging_data
@@ -166,7 +168,9 @@ async def end_delete_album(
     user_id: Optional[int] = callback_data.user_id
     current_page_executor: int = callback_data.current_page_executor
     album_id: int = callback_data.album_id
-    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
 
     result_delete_album: Result = await DeleteAlbum(
         uow=UnitOfWork(), logging_data=logging_data
@@ -249,7 +253,9 @@ async def start_delete_songs_collection_songs(
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
 
-    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
 
     result: Result = await GetAlbumWithSongs(
         uow=UnitOfWork(), logging_data=logging_data
@@ -332,9 +338,7 @@ async def tag_songs(
     position: int = callback_data.position
 
     data: Dict = await state.get_data()
-    delete_state_data: DeleteSongsAlbumData = DeleteSongsAlbumData(
-        **data
-    )
+    delete_state_data: DeleteSongsAlbumData = DeleteSongsAlbumData(**data)
     album_songs: List[SongResponse] = delete_state_data.state_data.songs
     len_list_songs: int = len(album_songs)
 
@@ -468,7 +472,9 @@ async def end_delete_songs_album(
 
     data: Dict = await state.get_data()
     delete_state_data: DeleteSongsAlbumData = DeleteSongsAlbumData(**data)
-    logging_data: LoggingData = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
+    logging_data: LoggingData = get_loggers(
+        name=music_library_settings.NAME_FOR_LOG_FOLDER
+    )
 
     result: Result = await DeleteSongsAlbum(
         uow=UnitOfWork(), logging_data=logging_data

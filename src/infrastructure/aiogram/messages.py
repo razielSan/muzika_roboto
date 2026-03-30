@@ -1,3 +1,4 @@
+from typing import Dict
 from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
 
 
@@ -7,6 +8,7 @@ ERRORS = {
     ErorrCode.EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель с таким именем и страной уже существует",
     ErorrCode.USER_EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель присутствует в библиотеке",
     ErorrCode.ALBUM_ALREADY_EXISTS.name: "⚠ Альбом уже существует",
+    ErorrCode.GENRE_DOES_NOT_EXIST.name: "⚠ Жанр не существует"
 }
 
 
@@ -27,7 +29,7 @@ SUCCESS = {
     SuccessCode.ADD_USER_SUCCESS.name: "✅ Пользователь успешно добавлен",
     SuccessCode.ADD_AlBUM_SUCCESS.name: "✅ Альбом успешно добавлен",
     SuccessCode.GET_SONGS_SUCCESS.name: "✅ Песни успешно получены",
-    SuccessCode.GET_EXECUTORS_SUCCESS: "✅ Исполнители успешно получены",
+    SuccessCode.GET_EXECUTORS_SUCCESS.name: "✅ Исполнители успешно получены",
     SuccessCode.GET_ALBUMS_SUCCESS.name: "✅ Альбомы успешно получены",
     SuccessCode.UPDATE_PHOTO_SUCCESS.name: "✅ Фото успешно изменено",
     SuccessCode.UPDATE_EXECUTOR_COUNTRY_SUCCESS.name: "✅ Страна исполнителя успешно изменена",
@@ -47,6 +49,24 @@ SUCCESS = {
 LIMIT_COLLECTION_SONGS: int = 5
 LIMIT_ALBUMS: int = 5
 LIMIT_SONGS: int = 5
+LIMIT_SEARCH_EXECUTOR: int = 5
+
+GENRES: Dict = {
+    1: "punk-rock",
+    2: "hardcore",
+    3: "rap",
+    4: "anarcho-punk",
+    5: "grindcore",
+    6: "electronic music",
+    7: "crust",
+    8: "game covers",
+    9: "8-bit",
+    10: "alternative metal",
+    11: "d-beat",
+    12: "stenchcore",
+    13: "anarcho-chanson",
+    14: "russian rock",
+}
 
 
 def resolve_message(code: str):
@@ -66,6 +86,7 @@ class UserMessages:
     CAPTION_DELETE_EXECUTOR: str = "❗️ Вы действительно хотите удалить исполнителя ?"
     CAPTION_DELETE_ALBUM: str = "❗️ Вы действительно хотите удалить альбом ?"
     CLICK_ONE_OF_THE_BUTTONS_ABOVE: str = "👆🏾 Нажмите одну из кнопок выше"
+    CLICK_CANCEL_BUTTON: str = "🚫 Отмена: Отменить все действия"
     DROP_THE_SONG: str = "❗️ Скидывайте песни"
     DROP_THE_PHOTO: str = "❗️ Скидывайте фотографию"
     ENTER_THE_SONG_NAME: str = "❗️ Введите имя песни"
@@ -95,6 +116,8 @@ class UserMessages:
         "✅ Будут добавлены песни\n\n✅ Количество {count}"
     )
     SELECT_THE_SONGS_TO_DELETE: str = "❗️ Выберите песни для удаления"
+    SEARCH_RESULT: str = "✅ Результаты поиска"
+    WAIT_MESSAGE: str = "⌛️ Идет процесс обработки данных...."
     THERE_ARE_NO_SONGS: str = "🤷🏻‍♀️ У вас нет песен в сборнике"
     THE_SONG_HAS_ALREADY_BEEN_ADDED: str = "🤷🏻‍♀️ Песня {title} уже была добавленна"
     THE_SONG_IS_SAVED: str = "🎼 Песня {title} была сохранена"

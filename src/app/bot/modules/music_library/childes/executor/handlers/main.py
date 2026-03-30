@@ -78,8 +78,8 @@ async def user_library(
 ):
     """Показывает первого исполнителя пользовательской библиотеки."""
 
-    logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-    user_id = user.id
+    logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    user_id: int = user.id
 
     await ShowExecutorPageCallbackService(
         uow=UnitOfWork(),

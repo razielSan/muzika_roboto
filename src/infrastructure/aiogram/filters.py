@@ -39,6 +39,31 @@ class StartGlobalLibrary(CallbackData, prefix="start_g_l"):
     pass
 
 
+class Search(CallbackData, prefix="search"):
+    class Executor(CallbackData, prefix="search_ex"):
+        pass
+
+    class ExecutorName(CallbackData, prefix="search_ex_n"):
+        """Сценария для поиска исполнителя по имени."""
+
+        pass
+
+    class ExecutorGenres(CallbackData, prefix="search_ex_g"):
+        """Сценария для поиска исполнителя по жанрам."""
+
+        pass
+
+    class ExecutorGenreButton(CallbackData, prefix="search_exc_g_b"):
+        order: int
+
+    class ExecutorButton(CallbackData, prefix="search_ex_b"):
+        """
+        Сценария для отображение на кнопке клавиатуры исполнителя,который найден.
+        """
+
+        id: int
+
+
 class ShowAlbumExecutor(CallbackData, prefix="show_al_ex"):
     album_position: int
     album_id: int
@@ -62,7 +87,7 @@ class AddCallbackDataFilters:
 
     class AddAlbumExecutor(CallbackData, prefix="add_a_exc"):
         executor_id: int
-        user_id: int
+        user_id: Optional[int]
         current_page_executor: int
 
     class AddSongsAlbum(CallbackData, prefix="add_s_a"):
@@ -111,6 +136,10 @@ class ScrollingCallbackDataFilters:
         executor_id: int
         user_id: Optional[int]
         current_page_executor: int
+
+    class SearchExecutor(CallbackData, prefix="scr_search_ex"):
+        position: int
+        offset: int
 
 
 class UpdateCallbackDataFilters:
