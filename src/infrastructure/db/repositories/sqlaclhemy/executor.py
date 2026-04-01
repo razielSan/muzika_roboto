@@ -60,7 +60,7 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
     async def get_executors_by_name_lower_filter_like(
         self,
         user_id: Union[None, int],
-        name_lower: str,
+        like: str,
     ) -> Optional[Executor]:
 
         # для предотвращения ошибки при сравнивании None
@@ -70,7 +70,7 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
             user_id_condition: bool = self.model.user_id == user_id
         stmt = await self.session.scalars(
             select(self.model).where(
-                self.model.name_lower.like(f"{name_lower}%"),
+                self.model.name_lower.like(f"%{like}%"),
                 user_id_condition,
             )
         )
