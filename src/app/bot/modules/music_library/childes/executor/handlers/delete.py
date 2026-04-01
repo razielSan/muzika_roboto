@@ -20,7 +20,7 @@ from application.use_cases.db.music_library.get.get_album_with_songs import (
 )
 from application.use_cases.db.music_library.delete.delete_songs import DeleteSongsAlbum
 from application.use_cases.db.music_library.delete.delete_album import DeleteAlbum
-from domain.entities.response import SongResponse, AlbumPageResponse
+from domain.entities.response import SongResponse, AlbumPageResponse, LibraryMode
 from infrastructure.aiogram.filters import DeleteCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
@@ -100,7 +100,7 @@ async def confirm_delete_executor(
         result_message: str = resolve_message(code=result_delete_executor.code)
 
         await return_to_executor_page_callback(
-            user_id=user_id,
+            mode=LibraryMode(user_id=user_id),
             uow=UnitOfWork,
             call=call,
             message=result_message,
@@ -179,7 +179,7 @@ async def end_delete_album(
         result_message: str = resolve_message(code=result_delete_album.code)
 
         await return_to_executor_page_callback(
-            user_id=user_id,
+            mode=LibraryMode(user_id=user_id),
             uow=UnitOfWork,
             call=call,
             message=result_message,
