@@ -79,9 +79,15 @@ class UserCollectionSongsResponse:
 
 @dataclass
 class LibraryMode:
-    GLOBAL: bool = None
-    USER: bool = None
-    ADMIN: bool = None
+    user_id: Optional[None]
+
+    @property
+    def global_library(self):
+        return self.user_id is None
+
+    @property
+    def user_library(self):
+        return isinstance(self.user_id, int)
 
 
 @dataclass
