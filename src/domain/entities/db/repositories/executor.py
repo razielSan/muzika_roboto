@@ -52,7 +52,7 @@ class ExecutorRepository(ABC):
     async def get_executor_by_name_lower(
         self,
         user_id: Union[None, int],
-        name_lower: str,
+        like: str,
     ) -> Optional[DomainExecutor]:
         pass
 
