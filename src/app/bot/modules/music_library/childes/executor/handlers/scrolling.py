@@ -10,6 +10,7 @@ from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
 )
 from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
+from domain.entities.response import LibraryMode
 from infrastructure.aiogram.filters import (
     ScrollingCallbackDataFilters,
 )
@@ -48,7 +49,7 @@ async def scrolling_albums_executor(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-        user_id=user_id,
+        mode=LibraryMode(user_id=user_id),
         limit_albums=LIMIT_ALBUMS,
         album_position=position,
         current_page=current_page,
@@ -76,7 +77,7 @@ async def scrolling_global_executors(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-        user_id=user_id,
+        mode=LibraryMode(user_id=user_id),
         limit_albums=LIMIT_ALBUMS,
         album_position=0,
         current_page=current_page,
