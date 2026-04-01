@@ -38,6 +38,7 @@ from application.use_cases.db.music_library.update.update_title_album import (
 from application.use_cases.db.music_library.update.update_song_title import (
     UpdateSongTitle,
 )
+from domain.entities.response import LibraryMode
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
@@ -147,7 +148,7 @@ async def end_update_photo_executor(
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
             album_position=album_position,
-            user_id=user_id,
+            mode=LibraryMode(user_id=user_id)
         )
         return
 
@@ -257,7 +258,7 @@ async def end_update_country_executor(
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
             album_position=album_position,
-            user_id=user_id,
+            mode=LibraryMode(user_id=user_id)
         )
         return
 
@@ -363,7 +364,7 @@ async def end_update_genres_executor(
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
             album_position=album_position,
-            user_id=user_id,
+            mode=LibraryMode(user_id=user_id)
         )
         return
     if not result_update_country_executor.ok:
@@ -468,7 +469,7 @@ async def end_update_name_excutor(
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
             album_position=album_position,
-            user_id=user_id,
+            mode=LibraryMode(user_id=user_id)
         )
         return
     if not result_update_name_executor.ok:
