@@ -12,6 +12,7 @@ from app.bot.services.music_library.show_executor_page import (
 )
 from application.use_cases.db.music_library.sync_executor import SyncExecutorLibrary
 from application.use_cases.db.music_library.desync_executor import DesyncExecutorLibrary
+from domain.entities.response import LibraryMode
 from infrastructure.aiogram.filters import SyncExecutor, DesyncExecutor
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.db.utils.editing import get_information_executor
@@ -86,7 +87,7 @@ async def desync_executor(
             logging_data=logging_data,
             call=call,
         ).execute(
-            user_id=user_id,
+            mode=LibraryMode(user_id=user_id),
             get_information_executor=get_information_executor,
             limit_albums=LIMIT_ALBUMS,
             album_position=0,
