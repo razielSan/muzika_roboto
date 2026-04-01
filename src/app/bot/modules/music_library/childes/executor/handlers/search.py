@@ -25,7 +25,7 @@ from application.use_cases.db.music_library.search_executor_by_name import (
 from application.use_cases.db.music_library.search_executor_by_genre import (
     SearchExecutorGenre,
 )
-from domain.entities.response import ExecutorSearchResponse
+from domain.entities.response import ExecutorSearchResponse, LibraryMode
 from application.use_cases.db.music_library.get.get_executor_page import GetExecutorPage
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.db.utils.editing import get_information_executor
@@ -72,7 +72,7 @@ class FSMSearchExecutor(StatesGroup):
 @dataclass
 class SearchExecutorData:
     executors: List[ExecutorSearchResponse]
-    search_executror: bool
+    search_executor: bool
     name: None
     processing: None
 
@@ -114,7 +114,7 @@ async def show_find_executors(
     ).execute(
         name_lower=name_lower,
         user_id=None,
-        len_lower=5,
+        len_name=5,
     )
 
     if result.ok:
@@ -129,7 +129,7 @@ async def show_find_executors(
         await state.update_data(
             SearchExecutorData(
                 executors=executors,
-                search_executror=True,
+                search_executor=True,
                 name=None,
                 processing=None,
             ).__dict__
@@ -221,7 +221,7 @@ async def show_executors_search_by_genres(
         await state.update_data(
             SearchExecutorData(
                 executors=executors,
-                search_executror=True,
+                search_executor=True,
                 name=None,
                 processing=None,
             ).__dict__
@@ -320,7 +320,7 @@ async def return_exeucor_page(
             limit_albums=LIMIT_ALBUMS,
             album_position=0,
             get_information_executor=get_information_executor,
-            user_id=None,
+            mode=LibraryMode(user_id=None),
             message=result_message,
         )
     if not result.ok:
