@@ -7,12 +7,14 @@ from app.bot.modules.music_library.settings import settings as music_library_set
 from app.bot.settings import settings as bot_settings
 from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
+    ShowExecutorPageService,
 )
 from app.bot.modules.music_library.childes.executor.keyboards.inline import (
     select_library_keyboard,
 )
 from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
 from app.bot.services.music_library.show_song import ShowSongService
+from domain.entities.response import LibraryMode
 from infrastructure.aiogram.filters import (
     ShowAlbumExecutor,
     PlaySongsAlbums,
@@ -62,11 +64,11 @@ async def executor_library(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-        user_id=None,
         limit_albums=LIMIT_ALBUMS,
         album_position=0,
         current_page=1,
         get_information_executor=get_information_executor,
+        mode=LibraryMode(user_id=None),
     )
 
 
@@ -87,10 +89,10 @@ async def user_library(
         call=call,
     ).execute(
         get_information_executor=get_information_executor,
-        user_id=user_id,
         limit_albums=LIMIT_ALBUMS,
         current_page=1,
         album_position=0,
+        mode=LibraryMode(user_id=user_id),
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
     )
 
