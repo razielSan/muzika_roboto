@@ -54,18 +54,20 @@ LIMIT_SEARCH_EXECUTOR: int = 5
 GENRES: Dict = {
     1: "punk-rock",
     2: "hardcore",
-    3: "rap",
-    4: "anarcho-punk",
+    3: "alternative metal",
+    4: "8-bit",
     5: "grindcore",
     6: "electronic music",
     7: "crust",
     8: "game covers",
-    9: "8-bit",
-    10: "alternative metal",
+    9: "anarcho-punk",
+    10: "metal",
     11: "d-beat",
     12: "stenchcore",
-    13: "anarcho-chanson",
+    13: "rap",
     14: "russian rock",
+    15: "classic music",
+    16: "anarcho-chanson"
 }
 
 
