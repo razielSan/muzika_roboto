@@ -25,7 +25,7 @@ class SearchExecutorName:
         self,
         name_lower: str,
         user_id: Optional[int],
-        len_lower: int,
+        len_name: int,
     ) -> Result:
 
         async with self.uow as uow:
@@ -50,10 +50,10 @@ class SearchExecutorName:
                     code=SuccessCode.GET_EXECUTORS_SUCCESS.name,
                 )
             else:  # ищем по фильтру если не найдено по полному имени
-                name: str = name_lower[0:len_lower]
+                name: str = name_lower[0:len_name]
                 executors = await uow.executors.get_executors_by_name_lower_filter_like(
                     user_id=user_id,
-                    name_lower=name,
+                    like=name,
                 )
             if not executors:  # если не было найдено ни одного исполнителя
                 return ok(
