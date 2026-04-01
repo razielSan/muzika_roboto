@@ -8,6 +8,7 @@ from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
 )
 from domain.entities.db.uow import AbstractUnitOfWork
+from domain.entities.response import LibraryMode
 from core.response.response_data import LoggingData
 
 
@@ -22,7 +23,7 @@ async def return_to_executor_page(
     limit_albums: int,
     album_position: int,
     get_information_executor: Callable,
-    user_id: Optional[int],
+    mode=LibraryMode,
 ):
 
     await bot.send_message(
@@ -38,7 +39,7 @@ async def return_to_executor_page(
         current_page=current_page_executor,
         limit_albums=limit_albums,
         executor_default_photo_file_id=executor_default_photo_file_id,
-        user_id=user_id,
+        mode=mode,
         album_position=album_position,
         get_information_executor=get_information_executor,
     )
@@ -53,7 +54,7 @@ async def return_to_executor_page_callback(
     limit_albums: int,
     album_position: int,
     get_information_executor: Callable,
-    user_id: Optional[int],
+    mode: LibraryMode,
     message: Optional[str] = None,
 ):
     if message:
@@ -63,7 +64,7 @@ async def return_to_executor_page_callback(
     ).execute(
         get_information_executor=get_information_executor,
         executor_default_photo_file_id=executor_default_photo_file_id,
-        user_id=user_id,
+        mode=mode,
         limit_albums=limit_albums,
         album_position=album_position,
         current_page=current_page_executor,
