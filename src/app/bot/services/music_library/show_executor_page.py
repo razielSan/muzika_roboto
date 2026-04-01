@@ -17,6 +17,7 @@ from domain.entities.response import ExecutorPageResponse, LibraryMode
 from infrastructure.aiogram.keyboards.inline import (
     show_executor_user,
     show_executor_global,
+    build_executor_keyboards,
 )
 from infrastructure.aiogram.messages import resolve_message, user_messages
 from core.response.response_data import Result, LoggingData
@@ -37,8 +38,8 @@ class ShowExecutorPageCallbackService:
         self,
         get_information_executor: Callable,
         executor_default_photo_file_id: str,
-        user_id: Union[int, None],
         limit_albums: int,
+        mode: LibraryMode,
         album_position=0,
         current_page=1,
     ) -> Result:
@@ -56,7 +57,7 @@ class ShowExecutorPageCallbackService:
         result: Result = await GetExecutorWihtAlbums(
             uow=self.uow, logging_data=self.logging_data
         ).execute(
-            user_id=user_id,
+            user_id=mode.user_id,
             current_page=current_page,
         )
         if result.ok:
@@ -68,67 +69,30 @@ class ShowExecutorPageCallbackService:
                     genres=executor.genres,
                     number_of_albums=len(executor.albums),
                 )
+                photo_file_id = (
+                    executor.photo_file_id
+                    if executor.photo_file_id
+                    else executor_default_photo_file_id
+                )
+                keyboard = build_executor_keyboards(
+                    mode=mode,
+                    executor=executor,
+                    album_position=album_position,
+                    limit_albums=limit_albums,
+                )
 
-                if user_id:  # пользовательская библиотека
-                    if executor.is_global:  # глобальный исполнитель
-                        try:
-                            await self.call.message.edit_media(
-                                media=InputMediaPhoto(
-                                    caption=info_executor, media=executor.photo_file_id
-                                ),
-                                reply_markup=show_executor_global(
-                                    limit_albums=limit_albums,
-                                    album_position=album_position,
-                                    executor=executor,
-                                    is_sync_executor=False,
-                                ),
-                            )
-                        except TelegramBadRequest:
-                            await self.call.answer(
-                                text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR
-                            )
-                        return
-                    else:  # если пользовательский
-                        photo_file_id = (
-                            executor.photo_file_id
-                            if executor.photo_file_id
-                            else executor_default_photo_file_id
-                        )
-                        try:
-                            await self.call.message.edit_media(
-                                media=InputMediaPhoto(
-                                    caption=info_executor, media=photo_file_id
-                                ),
-                                reply_markup=show_executor_user(
-                                    executor=executor,
-                                    album_position=album_position,
-                                    limit_albums=limit_albums,
-                                ),
-                            )
-                        except TelegramBadRequest:
-                            await self.call.answer(
-                                text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR
-                            )
-                        return
-
-                if not user_id:  # глобальная библиотека
-                    try:
-                        await self.call.message.edit_media(
-                            media=InputMediaPhoto(
-                                caption=info_executor, media=executor.photo_file_id
-                            ),
-                            reply_markup=show_executor_global(
-                                limit_albums=limit_albums,
-                                album_position=album_position,
-                                executor=executor,
-                                is_sync_executor=True,
-                            ),
-                        )
-                    except TelegramBadRequest:
-                        await self.call.answer(
-                            text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR
-                        )
-                    return
+                try:
+                    await self.call.message.edit_media(
+                        media=InputMediaPhoto(
+                            caption=info_executor, media=photo_file_id
+                        ),
+                        reply_markup=keyboard,
+                    )
+                except TelegramBadRequest:
+                    await self.call.answer(
+                        text=user_messages.PRESSING_THE_BUTTON_AGAIN_EXECUTOR
+                    )
+                return
 
             # если исполнители не были найдены
             not_found_message: str = resolve_message(code=result.code)
@@ -159,7 +123,7 @@ class ShowExecutorPageService:
         chat_id: int,
         get_information_executor: Callable,
         executor_default_photo_file_id: str,
-        user_id: Union[int, None],
+        mode: LibraryMode,
         limit_albums: int,
         album_position=0,
         current_page=1,
@@ -178,7 +142,7 @@ class ShowExecutorPageService:
         result: Result = await GetExecutorWihtAlbums(
             uow=self.uow, logging_data=self.logging_data
         ).execute(
-            user_id=user_id,
+            user_id=mode.user_id,
             current_page=current_page,
         )
         if result.ok:
@@ -190,52 +154,24 @@ class ShowExecutorPageService:
                     genres=executor.genres,
                     number_of_albums=len(executor.albums),
                 )
-                if user_id:  # пользовательская библиотека
-                    if executor.is_global:  # глобальный исполнитель
-                        await self.bot.send_photo(
-                            chat_id=chat_id,
-                            caption=info_executor,
-                            photo=executor.photo_file_id,
-                            reply_markup=show_executor_global(
-                                executor=executor,
-                                limit_albums=limit_albums,
-                                album_position=album_position,
-                                is_sync_executor=False,
-                            ),
-                        )
-
-                        return
-                    else:  # если пользовательский
-                        photo_file_id = (
-                            executor.photo_file_id
-                            if executor.photo_file_id
-                            else executor_default_photo_file_id
-                        )
-                        await self.bot.send_photo(
-                            chat_id=chat_id,
-                            caption=info_executor,
-                            photo=photo_file_id,
-                            reply_markup=show_executor_user(
-                                limit_albums=limit_albums,
-                                executor=executor,
-                                album_position=album_position,
-                            ),
-                        )
-                        return
-
-                else:  # глобальная библиотека
-                    await self.bot.send_photo(
-                        caption=info_executor,
-                        chat_id=chat_id,
-                        photo=executor.photo_file_id,
-                        reply_markup=show_executor_global(
-                            executor=executor,
-                            limit_albums=limit_albums,
-                            album_position=album_position,
-                            is_sync_executor=True,
-                        ),
-                    )
-                    return
+                photo_file_id = (
+                    executor.photo_file_id
+                    if executor.photo_file_id
+                    else executor_default_photo_file_id
+                )
+                keyboard = build_executor_keyboards(
+                    mode=mode,
+                    executor=executor,
+                    album_position=album_position,
+                    limit_albums=limit_albums,
+                )
+                await self.bot.send_photo(
+                    chat_id=chat_id,
+                    caption=info_executor,
+                    photo=photo_file_id,
+                    reply_markup=keyboard,
+                )
+                return
 
             # если исполнители не были найдены
             not_found_message: str = resolve_message(code=result.code)
