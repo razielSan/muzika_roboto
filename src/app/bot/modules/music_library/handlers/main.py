@@ -31,6 +31,7 @@ from domain.entities.response import (
     UserCollectionSongsResponse,
 )
 from domain.entities.db.models.user import User as UserDomain
+from domain.entities.response import LibraryMode
 from infrastructure.aiogram.messages import user_messages
 from infrastructure.aiogram.filters import (
     BackMenuUserPanel,
@@ -129,7 +130,7 @@ async def music_library_cancel_handler(
             limit_albums=LIMIT_ALBUMS,
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             message=user_messages.USER_CANCEL_MESSAGE,
-            user_id=user.id,
+            mode=LibraryMode(user_id=user.id)
         )
         return
 
@@ -241,14 +242,13 @@ async def get_executor_page_panel(
     await return_to_executor_page_callback(
         call=call,
         logging_data=logging_data,
-        user_id=user_id,
         uow=UnitOfWork,
+        mode=LibraryMode(user_id=user_id),
         get_information_executor=get_information_executor,
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         limit_albums=LIMIT_ALBUMS,
         album_position=album_position,
         current_page_executor=current_page_executor,
-        message=user_messages.BACK_EXECUTOR_PAGE,
     )
 
 
