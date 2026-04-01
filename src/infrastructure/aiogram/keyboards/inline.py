@@ -10,6 +10,7 @@ from domain.entities.response import (
     SongResponse,
     AlbumPageResponse,
     Page,
+    LibraryMode,
 )
 from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.filters import (
@@ -282,6 +283,35 @@ def show_executor_global(
         )
     )
     return inline_kb.as_markup()
+
+
+def build_executor_keyboards(
+    mode: LibraryMode,
+    executor: ExecutorPageResponse,
+    album_position: int,
+    limit_albums: int,
+):
+    if mode.global_library:
+        return show_executor_global(
+            limit_albums=limit_albums,
+            album_position=album_position,
+            executor=executor,
+            is_sync_executor=True,
+        )
+    if mode.user_library:
+        if executor.is_global:
+            return show_executor_global(
+                limit_albums=limit_albums,
+                album_position=album_position,
+                executor=executor,
+                is_sync_executor=False,
+            )
+        else:
+            return show_executor_user(
+                limit_albums=limit_albums,
+                executor=executor,
+                album_position=album_position,
+            )
 
 
 def build_album_base(
