@@ -16,7 +16,7 @@ from app.bot.modules.music_library.utils.music_library import (
 from app.bot.helpers.album import return_to_album_page
 from application.use_cases.db.music_library.add_album import AddAlbumExecutor
 from application.use_cases.db.music_library.add_songs_album import AddSongsAlbum
-from domain.entities.response import SongResponse
+from domain.entities.response import SongResponse, LibraryMode
 from infrastructure.aiogram.filters import AddCallbackDataFilters
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.aiogram.messages import (
@@ -279,7 +279,7 @@ async def end_add_album(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             message=result_message,
             album_position=0,
-            user_id=state_data.user_id,
+            mode=LibraryMode(user_id=state_data.user_id),
             limit_albums=LIMIT_ALBUMS,
             current_page_executor=state_data.current_page_executor,
             get_information_executor=get_information_executor,
