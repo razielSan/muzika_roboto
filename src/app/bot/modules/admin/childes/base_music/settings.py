@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class ModuleSettings(BaseModel):
     SERVICE_NAME: str = "admin.childes.base_music"
     MENU_REPLY_TEXT: str = "admin.childes.base_music" 
-    MENU_CALLBACK_TEXT: str = "📻 Общая Музыкальная Коллекция"
+    MENU_CALLBACK_TEXT: str = "📻 Музыкальный архив"
     MENU_CALLBACK_DATA: str = "admin.childes.base_music"
     SHOW_IN_MAIN_MENU: bool = True
     NAME_FOR_LOG_FOLDER: str = "admin"

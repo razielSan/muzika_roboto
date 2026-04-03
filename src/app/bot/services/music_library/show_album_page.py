@@ -10,6 +10,7 @@ from domain.entities.db.uow import AbstractUnitOfWork
 from infrastructure.aiogram.keyboards.inline import (
     show_album_global,
     show_album_user,
+    build_album_keyboards,
 )
 from infrastructure.aiogram.messages import resolve_message
 from core.response.response_data import Result, LoggingData
@@ -38,6 +39,7 @@ class ShowAlbumPageCallbackService:
         album_position: int = 0,
         current_page_executor=1,
         is_global_executor=True,
+        is_admin=False,
     ) -> Result:
         """
         Application service для callback сценария показа альбома с песнями.
@@ -80,29 +82,20 @@ class ShowAlbumPageCallbackService:
                 if album.photo_file_id
                 else album_default_photo_file_id
             )
-
-            if is_global_executor:  # если альбом глобальной библиотеки
-                await self.call.message.edit_media(
-                    media=InputMediaPhoto(caption=info_album, media=photo_file_id),
-                    reply_markup=show_album_global(
-                        songs=album.songs,
-                        album=album,
-                        song_position=song_position,
-                        limit_songs=limit_songs,
-                        user_id=user_id,
-                    ),
-                )
-            if not is_global_executor:  # если пользовательский альбом
-                await self.call.message.edit_media(
-                    media=InputMediaPhoto(caption=info_album, media=photo_file_id),
-                    reply_markup=show_album_user(
-                        songs=album.songs,
-                        album=album,
-                        song_position=song_position,
-                        limit_songs=limit_songs,
-                        user_id=user_id,
-                    ),
-                )
+            keyboard = build_album_keyboards(
+                songs=album.songs,
+                album=album,
+                song_position=song_position,
+                limit_songs=limit_songs,
+                user_id=user_id,
+                is_admin=is_admin,
+                is_global_executor=is_global_executor,
+            )
+            await self.call.message.edit_media(
+                media=InputMediaPhoto(caption=info_album, media=photo_file_id),
+                reply_markup=keyboard,
+            )
+            return
 
         if not response_album.ok:
             error_message = resolve_message(code=response_album.error.code)
@@ -133,6 +126,7 @@ class ShowAlbumPageService:
         album_position: int = 0,
         current_page_executor=1,
         is_global_executor=True,
+        is_admin=False,
     ) -> Result:
         """
         Application service для сценария показа альбома с песнями.
@@ -175,35 +169,23 @@ class ShowAlbumPageService:
                 if album.photo_file_id
                 else album_default_photo_file_id
             )
-
-            if is_global_executor:  # если альбом глобальной библиотеки
-                await self.bot.send_photo(
-                    caption=info_album,
-                    photo=photo_file_id,
-                    chat_id=chat_id,
-                    reply_markup=show_album_global(
-                        songs=album.songs,
-                        album=album,
-                        song_position=song_position,
-                        limit_songs=limit_songs,
-                        user_id=user_id,
-                    ),
-                )
-
-            if not is_global_executor:  # если пользовательский альбом
-                await self.bot.send_photo(
-                    caption=info_album,
-                    photo=photo_file_id,
-                    chat_id=chat_id,
-                    reply_markup=show_album_user(
-                        songs=album.songs,
-                        album=album,
-                        song_position=song_position,
-                        limit_songs=limit_songs,
-                        user_id=user_id,
-                    ),
-                )
+            keyboard = build_album_keyboards(
+                songs=album.songs,
+                album=album,
+                song_position=song_position,
+                limit_songs=limit_songs,
+                user_id=user_id,
+                is_admin=is_admin,
+                is_global_executor=is_global_executor,
+            )
+            await self.bot.send_photo(
+                caption=info_album,
+                photo=photo_file_id,
+                chat_id=chat_id,
+                reply_markup=keyboard,
+            )
+            return
 
         if not response_album.ok:
             error_message = resolve_message(code=response_album.error.code)
-            await self.bot.send_message(text=error_message)
+            await self.bot.send_message(text=error_message, chat_id=chat_id)

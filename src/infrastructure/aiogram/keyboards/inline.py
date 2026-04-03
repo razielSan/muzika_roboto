@@ -26,6 +26,7 @@ from infrastructure.aiogram.filters import (
     SyncExecutor,
     DesyncExecutor,
     BackAlbumPage,
+    BackAdminMenuCallback,
 )
 from infrastructure.aiogram.filters import ScrollingCallbackDataFilters
 from infrastructure.aiogram.keyboards.utils import build_pages
@@ -35,6 +36,7 @@ def build_executor_base(
     executor: ExecutorPageResponse,
     album_position: int,
     limit_albums: int,
+    is_admin: bool,
 ):
     """Общие кнопки для страницы исполнителя."""
 
@@ -70,6 +72,7 @@ def build_executor_base(
                         user_id=user_id,
                         executor_id=executor_id,
                         current_page_executor=current_page,
+                        is_admin=is_admin,
                         is_global_executor=executor.is_global,
                     ).pack(),
                 )
@@ -91,6 +94,7 @@ def build_executor_base(
                         current_page_executor=current_page,
                         position=album_position,
                         offset=-limit_albums,
+                        is_admin=is_admin,
                     ).pack(),
                 )
             )
@@ -104,6 +108,7 @@ def build_executor_base(
                         current_page_executor=current_page,
                         position=album_position,
                         offset=limit_albums,
+                        is_admin=is_admin,
                     ).pack(),
                 )
             )
@@ -124,6 +129,7 @@ def build_executor_base(
                     executor_id=executor_id,
                     current_page_executor=back_button_page,
                     user_id=user_id,
+                    is_admin=is_admin,
                 ).pack(),
             )
         )
@@ -136,6 +142,7 @@ def build_executor_base(
                         executor_id=executor_id,
                         current_page_executor=page,
                         user_id=user_id,
+                        is_admin=is_admin,
                     ).pack(),
                 )
             )
@@ -146,6 +153,7 @@ def build_executor_base(
                     executor_id=executor_id,
                     current_page_executor=forward_button_page,
                     user_id=user_id,
+                    is_admin=is_admin,
                 ).pack(),
             )
         )
@@ -157,11 +165,13 @@ def show_executor_user(
     executor: ExecutorPageResponse,
     album_position: int,
     limit_albums: int,
+    is_admin: bool,
 ):
     inline_kb = build_executor_base(
         executor=executor,
         album_position=album_position,
         limit_albums=limit_albums,
+        is_admin=is_admin,
     )
 
     executor_id: int = executor.id
@@ -176,6 +186,7 @@ def show_executor_user(
                 current_page_executor=current_page,
                 executor_id=executor_id,
                 user_id=user_id,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -188,6 +199,7 @@ def show_executor_user(
                 user_id=user_id,
                 current_page_executor=current_page,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -200,6 +212,7 @@ def show_executor_user(
                 user_id=user_id,
                 current_page_executor=current_page,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -211,6 +224,7 @@ def show_executor_user(
                 user_id=user_id,
                 current_page_executor=current_page,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -223,6 +237,7 @@ def show_executor_user(
                 user_id=user_id,
                 current_page_executor=current_page,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -235,16 +250,24 @@ def show_executor_user(
                 executor_id=executor_id,
                 current_page_executor=current_page,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
-
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
 
     return inline_kb.as_markup()
 
@@ -254,11 +277,13 @@ def show_executor_global(
     album_position: int,
     executor: ExecutorPageResponse = None,
     is_sync_executor=True,
+    is_admin=False,
 ):
     inline_kb = build_executor_base(
         executor=executor,
         album_position=album_position,
         limit_albums=limit_albums,
+        is_admin=is_admin,
     )
     executor_id: int = executor.id
 
@@ -276,12 +301,22 @@ def show_executor_global(
                 callback_data=DesyncExecutor(executor_id=executor_id).pack(),
             )
         )
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
+
     return inline_kb.as_markup()
 
 
@@ -291,11 +326,20 @@ def build_executor_keyboards(
     album_position: int,
     limit_albums: int,
 ):
+    if mode.is_admin:
+        return show_executor_user(
+            limit_albums=limit_albums,
+            executor=executor,
+            is_admin=True,
+            album_position=album_position,
+        )
+
     if mode.global_library:
         return show_executor_global(
             limit_albums=limit_albums,
             album_position=album_position,
             executor=executor,
+            is_admin=False,
             is_sync_executor=True,
         )
     if mode.user_library:
@@ -304,12 +348,14 @@ def build_executor_keyboards(
                 limit_albums=limit_albums,
                 album_position=album_position,
                 executor=executor,
+                is_admin=False,
                 is_sync_executor=False,
             )
         else:
             return show_executor_user(
                 limit_albums=limit_albums,
                 executor=executor,
+                is_admin=False,
                 album_position=album_position,
             )
 
@@ -319,6 +365,7 @@ def build_album_base(
     album: AlbumPageResponse,
     song_position: int,
     limit_songs: int,
+    is_admin: bool,
     user_id: Optional[int],
 ):
     """Общие кнопки для страницы альбома."""
@@ -354,9 +401,7 @@ def build_album_base(
                     ).pack(),
                 )
             )
-        # buttons = []
-        # has_prev: bool = song_position > 0
-        # has_next: bool = song_position + limit_songs < number_of_songs
+
         page = Page(
             items=[],
             position=song_position,
@@ -368,6 +413,7 @@ def build_album_base(
                 InlineKeyboardButton(
                     text=KeyboardResponse.BACK_BUTTON,
                     callback_data=ScrollingCallbackDataFilters.SongsAlbumLibrary(
+                        album_position=album.album_position,
                         position=song_position,
                         offset=-limit_songs,
                         executor_id=executor_id,
@@ -375,6 +421,7 @@ def build_album_base(
                         album_id=album_id,
                         user_id=user_id,
                         is_global_executor=is_global_executor,
+                        is_admin=is_admin,
                     ).pack(),
                 )
             )
@@ -383,6 +430,7 @@ def build_album_base(
                 InlineKeyboardButton(
                     text=KeyboardResponse.FORWARD_BUTTON,
                     callback_data=ScrollingCallbackDataFilters.SongsAlbumLibrary(
+                        album_position=album.album_position,
                         position=song_position,
                         offset=limit_songs,
                         executor_id=executor_id,
@@ -390,6 +438,7 @@ def build_album_base(
                         album_id=album_id,
                         user_id=user_id,
                         is_global_executor=is_global_executor,
+                        is_admin=is_admin,
                     ).pack(),
                 )
             )
@@ -404,6 +453,7 @@ def show_album_user(
     song_position: int,
     limit_songs: int,
     user_id: Optional[int],
+    is_admin: bool,
 ):
     inline_kb = build_album_base(
         songs=songs,
@@ -411,6 +461,7 @@ def show_album_user(
         song_position=song_position,
         limit_songs=limit_songs,
         user_id=user_id,
+        is_admin=is_admin,
     )
     album_position: int = album.album_position
     executor_id: int = album.executor_id
@@ -428,6 +479,7 @@ def show_album_user(
                 current_page_executor=current_page_executor,
                 is_global_executor=is_global_executor,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -443,6 +495,7 @@ def show_album_user(
                     current_page_executor=current_page_executor,
                     is_global_executor=is_global_executor,
                     album_position=album_position,
+                    is_admin=is_admin,
                 ).pack(),
             )
         )
@@ -457,6 +510,7 @@ def show_album_user(
                 current_page_executor=current_page_executor,
                 is_global_executor=is_global_executor,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -471,6 +525,7 @@ def show_album_user(
                 current_page_executor=current_page_executor,
                 is_global_executor=is_global_executor,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -485,6 +540,7 @@ def show_album_user(
                 current_page_executor=current_page_executor,
                 is_global_executor=is_global_executor,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -499,6 +555,7 @@ def show_album_user(
                     is_global_executor=is_global_executor,
                     album_id=album_id,
                     album_position=album_position,
+                    is_admin=is_admin,
                 ).pack(),
             )
         )
@@ -513,10 +570,11 @@ def show_album_user(
                 is_global_executor=is_global_executor,
                 album_id=album_id,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
-
+    print(album_position)
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.BACK_TO_ALBUMS,
@@ -524,15 +582,25 @@ def show_album_user(
                 album_position=album_position,
                 current_page=current_page_executor,
                 user_id=user_id,
+                is_admin=is_admin,
             ).pack(),
         )
     )
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
+
     return inline_kb.as_markup()
 
 
@@ -542,6 +610,7 @@ def show_album_global(
     song_position: int,
     limit_songs: int,
     user_id: Optional[int],
+    is_admin: bool,
 ):
     inline_kb = build_album_base(
         songs=songs,
@@ -549,6 +618,7 @@ def show_album_global(
         song_position=song_position,
         limit_songs=limit_songs,
         user_id=user_id,
+        is_admin=is_admin,
     )
 
     album_position: int = album.album_position
@@ -561,22 +631,72 @@ def show_album_global(
                 album_position=album_position,
                 current_page=current_page_executor,
                 user_id=user_id,
+                is_admin=is_admin,
             ).pack(),
         )
     )
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
+
     return inline_kb.as_markup()
+
+
+def build_album_keyboards(
+    songs: List[SongResponse],
+    album: AlbumPageResponse,
+    song_position: int,
+    limit_songs: int,
+    user_id: Optional[int],
+    is_admin: bool,
+    is_global_executor: bool,
+):
+    if is_admin:
+        return show_album_user(
+            songs=songs,
+            album=album,
+            song_position=song_position,
+            limit_songs=limit_songs,
+            user_id=None,
+            is_admin=is_admin,
+        )
+    if is_global_executor:  # если глобальная библиотека
+        return show_album_global(
+            songs=songs,
+            album=album,
+            song_position=song_position,
+            limit_songs=limit_songs,
+            user_id=user_id,
+            is_admin=is_admin,
+        )
+    if not is_global_executor:  # если пользовательская
+        return show_album_user(
+            songs=songs,
+            album=album,
+            song_position=song_position,
+            limit_songs=limit_songs,
+            user_id=user_id,
+            is_admin=is_admin,
+        )
 
 
 ### инлайн клавиатуры для сборника песен
 
 
-def get_buttons_for_song_collection_empty_user():
+def get_buttons_for_song_collection_empty_user(
+    is_admin=False,
+):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     inline_kb.row(
         InlineKeyboardButton(
@@ -584,18 +704,28 @@ def get_buttons_for_song_collection_empty_user():
             callback_data=AddCallbackDataFilters.SongCollectionSongs().pack(),
         )
     )
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
+
     return inline_kb.as_markup()
 
 
 def get_buttons_for_song_collection_user(
     colellection_songs: List[CollectionSongsResponse],
     len_collection_songs: int,
+    is_admin: bool = False,
     song_position: int = 0,
     limit_songs: int = 1,
 ):
@@ -661,12 +791,21 @@ def get_buttons_for_song_collection_user(
             callback_data=DeleteCallbackDataFilters.SongCollectionSongs().pack(),
         )
     )
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
+
     return inline_kb.as_markup()
 
 
@@ -676,6 +815,7 @@ def get_menu_songs_collection_songs_delete(
     len_list_songs=0,
     limit_songs=5,
     delete_songs: set = None,
+    is_admin: bool = False,
 ):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     for song in list_songs:
@@ -743,7 +883,9 @@ def get_menu_songs_collection_songs_delete(
     return inline_kb.as_markup()
 
 
-def get_confirmation_delete_song_button():
+def get_confirmation_delete_song_button(
+    is_admin: bool = False,
+):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     inline_kb.row(
         InlineKeyboardButton(
@@ -774,6 +916,7 @@ def get_menu_album_songs_delete(
     song_position: int = 0,
     len_list_songs=0,
     limit_songs=5,
+    is_admin: bool = False,
     delete_songs: set = None,
 ):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
@@ -830,7 +973,9 @@ def get_menu_album_songs_delete(
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.CONFIRM_DELETE.value,
-            callback_data=DeleteCallbackDataFilters.ConfirmDeleteSongAlbum().pack(),
+            callback_data=DeleteCallbackDataFilters.ConfirmDeleteSongAlbum(
+                is_admin=is_admin,
+            ).pack(),
         )
     )
 
@@ -844,6 +989,7 @@ def get_menu_album_songs_delete(
                 album_position=album_position,
                 current_page_executor=current_page_executor,
                 is_global_executor=is_global_executor,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -856,6 +1002,7 @@ def get_confirmation_delete_executor_button(
     user_id: Optional[int],
     current_page_executor: int,
     album_position: int,
+    is_admin: bool,
 ):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     inline_kb.row(
@@ -865,6 +1012,7 @@ def get_confirmation_delete_executor_button(
                 executor_id=executor_id,
                 user_id=user_id,
                 current_page_executor=current_page_executor,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -875,6 +1023,7 @@ def get_confirmation_delete_executor_button(
                 user_id=user_id,
                 current_page=current_page_executor,
                 album_position=album_position,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -888,6 +1037,7 @@ def get_confirmation_delete_album_buttons(
     is_global_executor: bool,
     album_id: int,
     album_position: int,
+    is_admin: bool,
 ):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     inline_kb.row(
@@ -898,6 +1048,7 @@ def get_confirmation_delete_album_buttons(
                 user_id=user_id,
                 current_page_executor=current_page_executor,
                 album_id=album_id,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -912,6 +1063,7 @@ def get_confirmation_delete_album_buttons(
                 is_global_executor=is_global_executor,
                 album_id=album_id,
                 executor_id=executor_id,
+                is_admin=is_admin,
             ).pack(),
         )
     )
@@ -925,12 +1077,15 @@ def get_confirmation_delete_album_songs_button(
     is_global_executor: bool,
     album_id: int,
     album_position: int,
+    is_admin: bool = False,
 ):
     inline_kb: InlineKeyboardBuilder = InlineKeyboardBuilder()
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.YES.value,
-            callback_data=DeleteCallbackDataFilters.CompleteDeleteSongAlbum().pack(),
+            callback_data=DeleteCallbackDataFilters.CompleteDeleteSongAlbum(
+                is_admin=is_admin,
+            ).pack(),
         )
     )
 
@@ -944,6 +1099,7 @@ def get_confirmation_delete_album_songs_button(
                 is_global_executor=is_global_executor,
                 album_id=album_id,
                 executor_id=executor_id,
+                is_admin=is_admin,
             ).pack(),
         )
     )

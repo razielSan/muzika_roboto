@@ -14,6 +14,8 @@ class ModuleSettings(BaseModel):
 
     COLLECTION_SONGS_PHOTO_FILE_ID: str = "AgACAgIAAxkBAAKID2mdNxcQpN7sX4OvbwPXQMnrZy_9AAKJEmsbePvpSLvBWqeDeIdQAQADAgADeAADOgQ"
     COLLECTION_SONGS_PHOTO_FILE_UNIQUE_ID: str = "AQADiRJrG3j76Uh9"
+    
+    ADMIN_PANEL_PHOTO_FILE_ID: str = "AgACAgIAAxkBAAIHRGmBl3vdFd8Sb7Nh0dasuFYG1HtXAAJWEGsb6LYISDc5Cg0FAAFtpAEAAwIAA3kAAzgE"
 
 
 settings: ModuleSettings = ModuleSettings()

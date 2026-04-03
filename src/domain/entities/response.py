@@ -77,9 +77,15 @@ class UserCollectionSongsResponse:
     collection_songs_photo_file_unique_id: Optional[str] = None
 
 
+class LibraryRole(Enum):
+    ADMIN: str = "admin"
+    USER: str = "user"
+
+
 @dataclass
 class LibraryMode:
     user_id: Optional[None]
+    role: LibraryRole
 
     @property
     def global_library(self):
@@ -88,6 +94,11 @@ class LibraryMode:
     @property
     def user_library(self):
         return isinstance(self.user_id, int)
+
+    @property
+    def is_admin(self):
+        return self.role == LibraryRole.ADMIN
+    
 
 
 @dataclass

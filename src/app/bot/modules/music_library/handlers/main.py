@@ -11,14 +11,12 @@ from app.bot.modules.music_library.services.collection_songs import (
     show_user_collection,
     callback_show_user_collection,
 )
-from app.bot.services.music_library.show_executor_page import (
-    ShowExecutorPageCallbackService,
-)
 from app.bot.helpers.executor import (
     return_to_executor_page,
     return_to_executor_page_callback,
 )
 from app.bot.helpers.album import return_to_album_page, return_to_album_page_callback
+from app.bot.keyboards.inlinle import select_admin_library_keyboard
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
@@ -31,7 +29,7 @@ from domain.entities.response import (
     UserCollectionSongsResponse,
 )
 from domain.entities.db.models.user import User as UserDomain
-from domain.entities.response import LibraryMode
+from domain.entities.response import LibraryMode, LibraryRole
 from infrastructure.aiogram.messages import user_messages
 from infrastructure.aiogram.filters import (
     BackMenuUserPanel,
@@ -51,6 +49,7 @@ from infrastructure.db.utils.editing import (
 )
 from infrastructure.aiogram.response import KeyboardResponse
 from core.response.response_data import LoggingData, Result
+from core.response.messages import messages
 from core.logging.api import get_loggers
 
 
@@ -91,11 +90,13 @@ async def music_library_cancel_handler(
     collection_songs: Optional[bool] = data.get(FSMFlags.COLLECTION_SONGS)
     music_library_executor: Optional[bool] = data.get(FSMFlags.MUSIC_LIBRARY_EXECUTOR)
     music_library_album: Optional[bool] = data.get(FSMFlags.MUSIC_LIBRARY_ALBUM)
+    search_executor: Optional[bool] = data.get(FSMFlags.SEARCH_EXECUTOR)
+    is_admin: Optional[bool] = data.get(FSMFlags.IS_ADMIN)
+    user_id: int = user.id
 
     chat_id: int = message.chat.id
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-
     await state.clear()
     if collection_songs:  # Возвращаемся к сборнику песен пользователя
 
@@ -118,7 +119,13 @@ async def music_library_cancel_handler(
             return
 
     if music_library_executor:  # возращает на страницу исполнителя
+        role: LibraryMode.role = LibraryRole.USER
+        if is_admin:
+            role: LibraryMode.role = LibraryRole.ADMIN
+            user_id = None
+
         current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             chat_id=chat_id,
             current_page_executor=current_page_executor,
@@ -130,11 +137,17 @@ async def music_library_cancel_handler(
             limit_albums=LIMIT_ALBUMS,
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             message=user_messages.USER_CANCEL_MESSAGE,
-            mode=LibraryMode(user_id=user.id)
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+            ),
         )
         return
 
-    if music_library_album:  # возращает на страницу альббома
+    if music_library_album:  # возращает на страницу альбома
+        if is_admin:
+            user_id = None
+
         current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
         album_id: int = data.get(FSMFlags.ALBUM_ID)
         executor_id: int = data.get(FSMFlags.EXECUTOR_ID)
@@ -145,7 +158,7 @@ async def music_library_cancel_handler(
             bot=bot,
             chat_id=chat_id,
             message=user_messages.USER_CANCEL_MESSAGE,
-            user_id=user.id,
+            user_id=user_id,
             album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
             logging_data=logging_data,
             uow=UnitOfWork,
@@ -157,6 +170,20 @@ async def music_library_cancel_handler(
             executor_id=executor_id,
             is_global_executor=is_global_executor,
             album_position=album_position,
+            is_admin=is_admin,
+        )
+        return
+    if search_executor and is_admin:
+        await bot.send_message(
+            chat_id=chat_id,
+            text=user_messages.USER_CANCEL_MESSAGE,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        await bot.send_photo(
+            chat_id=message.chat.id,
+            caption=user_messages.ADMIN_PANEL_CAPTION,
+            reply_markup=select_admin_library_keyboard(is_admin=True),
+            photo=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
         )
         return
 
@@ -191,6 +218,7 @@ async def callback_music_library_cancel_handler(
 
     await state.clear()
     await call.message.delete_reply_markup()
+
     if collection_songs:
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
@@ -237,13 +265,18 @@ async def get_executor_page_panel(
     user_id: Optional[int] = callback_data.user_id
     album_position: int = callback_data.album_position
     current_page_executor: int = callback_data.current_page
+    is_admin: bool = callback_data.is_admin
+    role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
 
     await state.clear()
     await return_to_executor_page_callback(
         call=call,
         logging_data=logging_data,
         uow=UnitOfWork,
-        mode=LibraryMode(user_id=user_id),
+        mode=LibraryMode(
+            user_id=user_id,
+            role=role,
+        ),
         get_information_executor=get_information_executor,
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         limit_albums=LIMIT_ALBUMS,
@@ -265,6 +298,7 @@ async def get_album_page(
     album_id: int = callback_data.album_id
     is_global_executor: bool = callback_data.is_global_executor
     executor_id: int = callback_data.executor_id
+    is_admin: bool = callback_data.is_admin
 
     await state.clear()
     await return_to_album_page_callback(
@@ -282,4 +316,5 @@ async def get_album_page(
         is_global_executor=is_global_executor,
         message=user_messages.BACK_ALBUM_PAGE,
         limit_songs=LIMIT_SONGS,
+        is_admin=is_admin,
     )

@@ -40,11 +40,14 @@ async def admin(
     )
 
 
-@router.callback_query(StateFilter(None), BackAdminMenuCallback.filter())
+@router.callback_query(BackAdminMenuCallback.filter())
 async def base_music(
     call: CallbackQuery,
     callback_data: BackAdminMenuCallback,
+    state: FSMContext,
 ) -> None:
+    await state.clear()
+
     """Возвращает к главному меню админки по нажатию кнопки."""
     await call.message.edit_media(
         media=InputMediaPhoto(

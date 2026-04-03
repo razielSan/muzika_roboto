@@ -22,6 +22,7 @@ class UpdateNameExecutor:
         executor_id: int,
         name: str,
         country: str,
+        is_admin: bool,
     ) -> Result:
         async with self.uow as uow:
             curremt_page_executor: int = 1
@@ -54,13 +55,16 @@ class UpdateNameExecutor:
                     empty=True,
                     code=NotFoundCode.EXECUTOR_NOT_FOUND.name,
                 )
-
-            executors: List[
-                ExecutorDomain
-            ] = await uow.users.get_library_executors(user_id=user_id)
+            if is_admin:
+                executors = await self.uow.executors.get_all_executors(user_id=None)
+            else:
+                executors: List[
+                    ExecutorDomain
+                ] = await uow.users.get_library_executors(user_id=user_id)
             for page, executor in enumerate(executors, start=1):
                 if executor.name == name and executor.country == country:
                     curremt_page_executor = page
+                    break
 
         return ok(
             data=curremt_page_executor,

@@ -20,7 +20,12 @@ from application.use_cases.db.music_library.get.get_album_with_songs import (
 )
 from application.use_cases.db.music_library.delete.delete_songs import DeleteSongsAlbum
 from application.use_cases.db.music_library.delete.delete_album import DeleteAlbum
-from domain.entities.response import SongResponse, AlbumPageResponse, LibraryMode
+from domain.entities.response import (
+    SongResponse,
+    AlbumPageResponse,
+    LibraryMode,
+    LibraryRole,
+)
 from infrastructure.aiogram.filters import DeleteCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
@@ -63,6 +68,7 @@ async def delete_user_executor(
     executor_id: int = callback_data.executor_id
     current_page_executor: int = callback_data.current_page_executor
     album_position: int = callback_data.album_position
+    is_admin: bool = callback_data.is_admin
 
     await call.message.edit_media(
         InputMediaPhoto(
@@ -74,6 +80,7 @@ async def delete_user_executor(
             user_id=user_id,
             current_page_executor=current_page_executor,
             album_position=album_position,
+            is_admin=is_admin,
         ),
     )
 
@@ -89,6 +96,7 @@ async def confirm_delete_executor(
 
     executor_id: Optional[int] = callback_data.executor_id
     user_id: Optional[int] = callback_data.user_id
+    is_admin: bool = callback_data.is_admin
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
@@ -99,8 +107,9 @@ async def confirm_delete_executor(
     if result_delete_executor.ok:
         result_message: str = resolve_message(code=result_delete_executor.code)
 
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page_callback(
-            mode=LibraryMode(user_id=user_id),
+            mode=LibraryMode(user_id=user_id, role=role),
             uow=UnitOfWork,
             call=call,
             message=result_message,
@@ -139,6 +148,7 @@ async def start_delete_album(
     is_global_executor: bool = callback_data.is_global_executor
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
+    is_admin: bool = callback_data.is_admin
 
     await call.message.edit_media(
         InputMediaPhoto(
@@ -152,6 +162,7 @@ async def start_delete_album(
             is_global_executor=is_global_executor,
             album_id=album_id,
             album_position=album_position,
+            is_admin=is_admin,
         ),
     )
 
@@ -168,6 +179,7 @@ async def end_delete_album(
     user_id: Optional[int] = callback_data.user_id
     current_page_executor: int = callback_data.current_page_executor
     album_id: int = callback_data.album_id
+    is_admin: bool = callback_data.is_admin
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
@@ -178,8 +190,12 @@ async def end_delete_album(
     if result_delete_album.ok:
         result_message: str = resolve_message(code=result_delete_album.code)
 
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page_callback(
-            mode=LibraryMode(user_id=user_id),
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+            ),
             uow=UnitOfWork,
             call=call,
             message=result_message,
@@ -223,6 +239,7 @@ class FSMDeleteSongsAlbumML(StatesGroup):
     is_global_executor: State = State()
     album_position: State = State()
     year: State = State()
+    is_admin: State = State()
     state_data: State = State()
 
 
@@ -236,6 +253,7 @@ class DeleteSongsAlbumData:
     is_global_executor: bool
     album_position: int
     state_data: SongsStorage
+    is_admin: bool
 
 
 @router.callback_query(StateFilter(None), DeleteCallbackDataFilters.SongsAlbum.filter())
@@ -252,6 +270,7 @@ async def start_delete_songs_collection_songs(
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
+    is_admin: bool = callback_data.is_admin
 
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
@@ -285,6 +304,7 @@ async def start_delete_songs_collection_songs(
                 album_id=album_id,
                 is_global_executor=is_global_executor,
                 album_position=album_position,
+                is_admin=is_admin,
             ).__dict__
         )
 
@@ -309,6 +329,7 @@ async def start_delete_songs_collection_songs(
                 song_position=0,
                 len_list_songs=len_list_songs,
                 limit_songs=LIMIT_SONGS,
+                is_admin=is_admin,
                 delete_songs=set(),
             ),
         ),
@@ -368,6 +389,7 @@ async def tag_songs(
             len_list_songs=len_list_songs,
             limit_songs=LIMIT_SONGS,
             delete_songs=del_song_ids,
+            is_admin=delete_state_data.is_admin
         ),
     ),
 
@@ -410,6 +432,7 @@ async def scrolling_delete_menu_song_album(
             len_list_songs=len_list_songs,
             limit_songs=LIMIT_SONGS,
             delete_songs=delete_state_data.state_data.selected_songs_ids,
+            is_admin=delete_state_data.is_admin
         ),
     ),
 
@@ -453,6 +476,7 @@ async def confirm_delete_song_album(
                 is_global_executor=delete_state_data.is_global_executor,
                 album_id=delete_state_data.album_id,
                 album_position=delete_state_data.album_position,
+                is_admin=delete_state_data.is_admin
             ),
         )
     if not positions:
@@ -500,6 +524,7 @@ async def end_delete_songs_album(
             song_position=0,
             is_global_executor=delete_state_data.is_global_executor,
             message=result_message,
+            is_admin=delete_state_data.is_admin
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)

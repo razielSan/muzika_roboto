@@ -25,7 +25,7 @@ from application.use_cases.db.music_library.search_executor_by_name import (
 from application.use_cases.db.music_library.search_executor_by_genre import (
     SearchExecutorGenre,
 )
-from domain.entities.response import ExecutorSearchResponse, LibraryMode
+from domain.entities.response import ExecutorSearchResponse, LibraryMode, LibraryRole
 from application.use_cases.db.music_library.get.get_executor_page import GetExecutorPage
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.db.utils.editing import get_information_executor
@@ -39,42 +39,60 @@ from infrastructure.aiogram.messages import (
     GENRES,
 )
 from core.logging.api import get_loggers
+from core.response.messages import messages
 from core.response.response_data import LoggingData, Result
 
 router: Router = Router(name=__name__)
 
 
-@router.callback_query(StateFilter(None), Search.Executor.filter())
-async def search_executor(
-    call: CallbackQuery,
-    callback_data: Search.Executor,
-):
-    """Отправляет клавиатуру поиска исполнителей."""
-
-    await call.message.edit_media(
-        InputMediaPhoto(
-            media=music_library_settings.MENU_IMAGE_FILE_ID,
-            caption=user_messages.USER_PANEL_CAPTION,
-        ),
-        reply_markup=select_search_keyboard(),
-    )
-
-
 class FSMSearchExecutor(StatesGroup):
     executors: State = State()
+    is_admin: State = State()
     name: State = State()
     search_executor: State = (
         State()
     )  # для отправки сообщения при возвращении к главной панели
+    media: State() = State()
+    caption: State() = State()
     processing: State = State()
 
 
 @dataclass
 class SearchExecutorData:
     executors: List[ExecutorSearchResponse]
+    is_admin: bool
     search_executor: bool
+    media: str
+    caption: str
     name: None
     processing: None
+
+
+@router.callback_query(StateFilter(None), Search.Executor.filter())
+async def search_executor(
+    call: CallbackQuery, callback_data: Search.Executor, state: FSMContext
+):
+    """Отправляет клавиатуру поиска исполнителей."""
+
+    is_admin: bool = callback_data.is_admin
+    if is_admin:
+        media: str = music_library_settings.ADMIN_PANEL_PHOTO_FILE_ID
+        caption: str = messages.ADMIN_PANEL_TEXT
+    else:
+        media = music_library_settings.MENU_IMAGE_FILE_ID
+        caption = user_messages.USER_PANEL_CAPTION
+
+    await state.update_data(media=media)
+    await state.update_data(caption=caption)
+    await state.update_data(is_admin=is_admin)
+    await state.update_data(name=None)
+    await state.update_data(search_executor=True)
+    await state.update_data(processing=None)
+
+    await call.message.edit_media(
+        InputMediaPhoto(media=media, caption=caption),
+        reply_markup=select_search_keyboard(is_admin=is_admin),
+    )
 
 
 # Поиск исполнителя по имени
@@ -82,12 +100,14 @@ class SearchExecutorData:
 
 @router.callback_query(StateFilter(None), Search.ExecutorName.filter())
 async def start_search_executor_by_name(
-    call: CallbackQuery, callback_data: CallbackQuery, state: FSMContext
+    call: CallbackQuery, callback_data: Search.ExecutorName, state: FSMContext
 ):
     """Просит ввести имя исполнителя."""
 
+    is_admin: bool = callback_data.is_admin
     await call.message.edit_reply_markup(reply_markup=None)
 
+    await state.update_data(is_admin=is_admin)
     await state.set_state(FSMSearchExecutor.name)
     await call.message.answer(
         text=user_messages.ENTER_THE_EXECUTOR_NAME,
@@ -125,34 +145,34 @@ async def show_find_executors(
             )
             return
 
+        data: Dict = await state.get_data()
+        is_admin: bool = data.get("is_admin")
+        caption: str = data.get("caption")
+        media: str = data.get("media")
+
         executors: ExecutorSearchResponse = result.data
-        await state.update_data(
-            SearchExecutorData(
-                executors=executors,
-                search_executor=True,
-                name=None,
-                processing=None,
-            ).__dict__
-        )
+
+        await state.update_data(executors=executors)
         await state.set_state(FSMSearchExecutor.processing)
 
         total: int = len(executors)
         executors = executors[0:LIMIT_SEARCH_EXECUTOR]
         await bot.send_photo(
-            caption=user_messages.USER_PANEL_CAPTION,
+            caption=caption,
             chat_id=chat_id,
-            photo=music_library_settings.MENU_IMAGE_FILE_ID,
+            photo=media,
             reply_markup=show_executor_search(
                 executors=executors,
                 position=0,
                 limit=LIMIT_SEARCH_EXECUTOR,
                 total=total,
+                is_admin=is_admin,
             ),
         )
 
     if not result.ok:
         await state.clear()
-        error_message = resolve_message(code=result.error.code)
+        error_message: str = resolve_message(code=result.error.code)
         await get_inline_menu_music_library(
             chat_id=chat_id,
             bot=bot,
@@ -176,17 +196,24 @@ async def show_find_executors_message(
 # поиск по жанру
 @router.callback_query(StateFilter(None), Search.ExecutorGenres.filter())
 async def search_executor_by_genres(
-    call: CallbackQuery,
-    callback_data: Search.ExecutorGenres.filter(),
+    call: CallbackQuery, callback_data: Search.ExecutorGenres, state: FSMContext
 ):
     """Отправляет инлайн клавиатуру жанров для поиска."""
 
+    is_admin: bool = callback_data.is_admin
+    data: Dict = await state.get_data()
+    media: str = data.get("media")
+    caption: str = data.get("caption")
+
     await call.message.edit_media(
         InputMediaPhoto(
-            media=music_library_settings.MENU_IMAGE_FILE_ID,
-            caption=user_messages.USER_PANEL_CAPTION,
+            media=media,
+            caption=caption,
         ),
-        reply_markup=select_executor_genres_keybord(quantity_button=3),
+        reply_markup=select_executor_genres_keybord(
+            quantity_button=3,
+            is_admin=is_admin,
+        ),
     )
 
 
@@ -199,6 +226,7 @@ async def show_executors_search_by_genres(
     """Отправляет найденных исполнителей по жанру."""
 
     order: int = callback_data.order
+    is_admin: bool = callback_data.is_admin
     genre: str = GENRES.get(order)
 
     logging_data: LoggingData = get_loggers(
@@ -218,28 +246,27 @@ async def show_executors_search_by_genres(
         )
 
         executors: ExecutorSearchResponse = result.data
-        await state.update_data(
-            SearchExecutorData(
-                executors=executors,
-                search_executor=True,
-                name=None,
-                processing=None,
-            ).__dict__
-        )
+        await state.update_data(executors=executors)
         await state.set_state(FSMSearchExecutor.processing)
 
         total: int = len(executors)
         executors = executors[0:LIMIT_SEARCH_EXECUTOR]
+
+        is_admin: bool = callback_data.is_admin
+        data: Dict = await state.get_data()
+        media: str = data.get("media")
+        caption: str = data.get("caption")
         await call.message.edit_media(
             InputMediaPhoto(
-                media=music_library_settings.MENU_IMAGE_FILE_ID,
-                caption=user_messages.USER_PANEL_CAPTION,
+                media=media,
+                caption=caption,
             ),
             reply_markup=show_executor_search(
                 executors=executors,
                 position=0,
                 total=total,
                 limit=LIMIT_SEARCH_EXECUTOR,
+                is_admin=is_admin,
             ),
         )
 
@@ -265,22 +292,28 @@ async def scrolling_search_executor(
     """Пролистывает исполнителей поиска."""
 
     position: int = callback_data.position + callback_data.offset
+    # is_admin: bool = callback_data.is_admin
     data: Dict = await state.get_data()
     state_data: SearchExecutorData = SearchExecutorData(**data)
 
     executors: List[ExecutorSearchResponse] = state_data.executors
     total: int = len(executors)
     executors = executors[position : position + LIMIT_SEARCH_EXECUTOR]
+
+    media: str = data.get("media")
+    caption: str = data.get("caption")
+
     await call.message.edit_media(
         media=InputMediaPhoto(
-            media=music_library_settings.MENU_IMAGE_FILE_ID,
-            caption=user_messages.USER_PANEL_CAPTION,
+            media=media,
+            caption=caption,
         ),
         reply_markup=show_executor_search(
             executors=executors,
             position=position,
             total=total,
             limit=LIMIT_SEARCH_EXECUTOR,
+            is_admin=state_data.is_admin,
         ),
     )
 
@@ -302,6 +335,7 @@ async def return_exeucor_page(
         reply_markup=ReplyKeyboardRemove(),
     )
 
+    is_admin: bool = callback_data.is_admin
     executor_id: int = callback_data.id
     logging_data: str = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
 
@@ -311,6 +345,7 @@ async def return_exeucor_page(
     if result.ok:
         result_message: str = resolve_message(code=result.code)
         current_page_executor: int = result.data
+        role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page_callback(
             call=call,
             uow=UnitOfWork,
@@ -320,11 +355,14 @@ async def return_exeucor_page(
             limit_albums=LIMIT_ALBUMS,
             album_position=0,
             get_information_executor=get_information_executor,
-            mode=LibraryMode(user_id=None),
+            mode=LibraryMode(
+                user_id=None,
+                role=role,
+            ),
             message=result_message,
         )
     if not result.ok:
-        error_message = resolve_message(code=result.error.code)
+        error_message: str = resolve_message(code=result.error.code)
         await callback_update_menu_inline_music_library(
             call=call,
             message=error_message,

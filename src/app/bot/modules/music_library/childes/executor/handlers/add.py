@@ -16,7 +16,7 @@ from app.bot.modules.music_library.utils.music_library import (
 from app.bot.helpers.album import return_to_album_page
 from application.use_cases.db.music_library.add_album import AddAlbumExecutor
 from application.use_cases.db.music_library.add_songs_album import AddSongsAlbum
-from domain.entities.response import SongResponse, LibraryMode
+from domain.entities.response import SongResponse, LibraryMode, LibraryRole
 from infrastructure.aiogram.filters import AddCallbackDataFilters
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.aiogram.messages import (
@@ -43,6 +43,7 @@ class FSMAddAlbumML(StatesGroup):
 
     current_page_executor: State = State()
     music_library_executor: State = State()
+    is_admin: State = State()
     executor_id: State = State()
     user_id: State = State()
     title: State = State()
@@ -59,6 +60,7 @@ class FSMAddAlbumML(StatesGroup):
 class AddAlbumData:
     current_page_executor: int
     music_library_executor: bool
+    is_admin: bool
     song_counter: Optional[int]
     executor_id: int
     user_id: Optional[int]
@@ -83,6 +85,7 @@ async def start_add_album(
 
     await call.message.edit_reply_markup(reply_markup=None)
 
+    is_admin: bool = callback_data.is_admin
     executor_id: int = callback_data.executor_id
     user_id: int = callback_data.user_id
     current_page_executor: int = callback_data.current_page_executor
@@ -101,6 +104,7 @@ async def start_add_album(
             photo_file_unique_id="",
             photo=None,
             processing=None,
+            is_admin=is_admin,
         ).__dict__
     )
 
@@ -253,6 +257,7 @@ async def end_add_album(
 
     data: Dict = await state.get_data()
     state_data: AddAlbumData = AddAlbumData(**data)
+    is_admin: bool = state_data.is_admin
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
@@ -271,6 +276,7 @@ async def end_add_album(
     if result_add_album.ok:
         await state.clear()
         result_message: str = resolve_message(code=result_add_album.code)
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             bot=bot,
             uow=UnitOfWork,
@@ -279,7 +285,10 @@ async def end_add_album(
             executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
             message=result_message,
             album_position=0,
-            mode=LibraryMode(user_id=state_data.user_id),
+            mode=LibraryMode(
+                user_id=state_data.user_id,
+                role=role,
+            ),
             limit_albums=LIMIT_ALBUMS,
             current_page_executor=state_data.current_page_executor,
             get_information_executor=get_information_executor,
@@ -291,7 +300,8 @@ async def end_add_album(
         await state.set_state(FSMAddAlbumML.title)
         error_message: str = resolve_message(code=result_add_album.error.code)
         await message.answer(
-            text=f"{error_message}\n\n{user_messages.ENTER_THE_ALBUM_TITLE}"
+            text=f"{error_message}\n\n{user_messages.ENTER_THE_ALBUM_TITLE}",
+            reply_markup=get_reply_cancel_button(),
         )
 
 
@@ -319,6 +329,7 @@ class FSMAddSongsAlbumML(StatesGroup):
     album_position: State = State()
     song_counter: State = State()
     songs: State = State()
+    is_admin: State = State()
     processing: State = State()
 
 
@@ -333,6 +344,7 @@ class AddSongsAlbumMLData:
     album_position: int
     song_counter: int
     songs: List[SongResponse]
+    is_admin: bool
     processing: None
 
 
@@ -352,6 +364,7 @@ async def start_add_songs_album(
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
+    is_admin: bool = callback_data.is_admin
 
     await state.update_data(
         AddSongsAlbumMLData(
@@ -364,6 +377,7 @@ async def start_add_songs_album(
             song_counter=0,
             music_library_album=True,
             album_position=album_position,
+            is_admin=is_admin,
             processing=None,
         ).__dict__
     )
@@ -481,6 +495,7 @@ async def end_songs_album(
             is_global_executor=state_data.is_global_executor,
             album_position=state_data.album_position,
             user_id=state_data.user_id,
+            is_admin=state_data.is_admin,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)

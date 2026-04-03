@@ -27,6 +27,7 @@ async def return_to_album_page(
     album_position: int,
     song_position: int,
     is_global_executor: bool,
+    is_admin: bool,
 ):
 
     await bot.send_message(
@@ -47,6 +48,7 @@ async def return_to_album_page(
         song_position=song_position,
         user_id=user_id,
         is_global_executor=is_global_executor,
+        is_admin=is_admin,
     )
 
 
@@ -64,6 +66,7 @@ async def return_to_album_page_callback(
     album_position: int,
     song_position: int,
     is_global_executor: bool,
+    is_admin: bool = False,
     message: Optional[str] = None,
 ):
     if message:
@@ -83,4 +86,5 @@ async def return_to_album_page_callback(
         album_position=album_position,
         current_page_executor=current_page_executor,
         is_global_executor=is_global_executor,
+        is_admin=is_admin,
     )

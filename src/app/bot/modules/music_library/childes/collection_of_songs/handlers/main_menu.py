@@ -59,6 +59,7 @@ async def main_menu(
             start_collection_songs=0,
             limit_collection_songs=LIMIT_COLLECTION_SONGS,
             caption=user_messages.MY_COLLECTION_OF_SONGS,
+            is_admin=False,
         )
 
     if not result.ok:
@@ -74,7 +75,8 @@ async def scrolling_song_collection(
     callback_data: ScrollingCallbackDataFilters.SongCollectionSongs,
     user: User,
 ):
-
+    """Пролистывает песни из сборника."""
+    
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     position: int = callback_data.position + callback_data.offset
     result: Result = await GetUserCollectionSongs(

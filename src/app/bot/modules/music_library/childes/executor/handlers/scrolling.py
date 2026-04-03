@@ -10,7 +10,7 @@ from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
 )
 from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
-from domain.entities.response import LibraryMode
+from domain.entities.response import LibraryMode, LibraryRole
 from infrastructure.aiogram.filters import (
     ScrollingCallbackDataFilters,
 )
@@ -44,12 +44,16 @@ async def scrolling_albums_executor(
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
-
+    is_admin: bool = callback_data.is_admin
+    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
     await ShowExecutorPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-        mode=LibraryMode(user_id=user_id),
+        mode=LibraryMode(
+            user_id=user_id,
+            role=role,
+        ),
         limit_albums=LIMIT_ALBUMS,
         album_position=position,
         current_page=current_page,
@@ -68,16 +72,22 @@ async def scrolling_global_executors(
 
     user_id: Optional[int] = callback_data.user_id
     current_page: int = callback_data.current_page_executor
+    is_admin: bool = callback_data.is_admin
 
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
 
+    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+
     await ShowExecutorPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-        mode=LibraryMode(user_id=user_id),
+        mode=LibraryMode(
+            user_id=user_id,
+            role=role,
+        ),
         limit_albums=LIMIT_ALBUMS,
         album_position=0,
         current_page=current_page,
@@ -94,12 +104,14 @@ async def scrolling_songs_album(
 ):
     """Пролистывает песни альбома."""
 
+    album_position: int = callback_data.album_position
     executor_id: int = callback_data.executor_id
     current_page_executor: int = callback_data.current_page_executor
     album_id: int = callback_data.album_id
     position: int = callback_data.position + callback_data.offset
     user_id: Optional[int] = callback_data.user_id
     is_global_executor: bool = callback_data.is_global_executor
+    is_admin: bool = callback_data.is_admin
 
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
@@ -117,4 +129,6 @@ async def scrolling_songs_album(
         current_page_executor=current_page_executor,
         is_global_executor=is_global_executor,
         album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+        is_admin=is_admin,
+        album_position=album_position,
     )

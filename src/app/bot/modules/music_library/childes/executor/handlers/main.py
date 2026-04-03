@@ -7,14 +7,13 @@ from app.bot.modules.music_library.settings import settings as music_library_set
 from app.bot.settings import settings as bot_settings
 from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageCallbackService,
-    ShowExecutorPageService,
 )
 from app.bot.modules.music_library.childes.executor.keyboards.inline import (
     select_library_keyboard,
 )
 from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
 from app.bot.services.music_library.show_song import ShowSongService
-from domain.entities.response import LibraryMode
+from domain.entities.response import LibraryMode, LibraryRole
 from infrastructure.aiogram.filters import (
     ShowAlbumExecutor,
     PlaySongsAlbums,
@@ -47,7 +46,9 @@ async def main(call: CallbackQuery):
             media=music_library_settings.MENU_IMAGE_FILE_ID,
             caption=user_messages.USER_PANEL_CAPTION,
         ),
-        reply_markup=select_library_keyboard(),
+        reply_markup=select_library_keyboard(
+            is_admin=False,
+        ),
     )
 
 
@@ -57,6 +58,9 @@ async def executor_library(
     callback_data: StartGlobalLibrary,
 ):
     """Показывает первого исполнителя глобальной библиотеки."""
+
+    is_admin: bool = callback_data.is_admin
+    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
@@ -68,7 +72,10 @@ async def executor_library(
         album_position=0,
         current_page=1,
         get_information_executor=get_information_executor,
-        mode=LibraryMode(user_id=None),
+        mode=LibraryMode(
+            user_id=None,
+            role=role,
+        ),
     )
 
 
@@ -92,7 +99,10 @@ async def user_library(
         limit_albums=LIMIT_ALBUMS,
         current_page=1,
         album_position=0,
-        mode=LibraryMode(user_id=user_id),
+        mode=LibraryMode(
+            user_id=user_id,
+            role=LibraryRole.USER,
+        ),
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
     )
 
@@ -111,6 +121,7 @@ async def show_album_executor(
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+    is_admin: bool = callback_data.is_admin
 
     await ShowAlbumPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
@@ -125,6 +136,7 @@ async def show_album_executor(
         album_position=album_position,
         is_global_executor=is_global_executor,
         album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+        is_admin=is_admin,
     )
 
 

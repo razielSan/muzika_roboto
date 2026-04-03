@@ -107,6 +107,7 @@ async def start_delete_songs_collection_songs(
                 song_position=0,
                 list_songs=collection_songs,
                 delete_songs=set(),
+                is_admin=False,
             ),
         ),
     if not result.ok:
@@ -204,6 +205,7 @@ async def scrolling_songe_menu_delete(
                 delete_songs=delete_songs,
                 song_position=position,
                 list_songs=songs,
+                is_admin=False,
             ),
         )
     if not result_scrolling.ok:
@@ -243,7 +245,9 @@ async def confirm_delete_songs(
                     count=count, positions=str(positions)
                 ),
             ),
-            reply_markup=get_confirmation_delete_song_button(),
+            reply_markup=get_confirmation_delete_song_button(
+                is_admin=False,
+            ),
         )
         return
 
@@ -290,6 +294,7 @@ async def delete_collection_songs(
                 limit_collection_songs=LIMIT_COLLECTION_SONGS,
                 start_collection_songs=0,
                 message=msg_result_delete,
+                is_admin=False,
             )
     if not result_delete.ok:
         error_message: str = resolve_message(code=result_delete.error.code)

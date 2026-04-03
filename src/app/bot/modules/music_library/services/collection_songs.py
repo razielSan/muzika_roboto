@@ -23,6 +23,7 @@ async def show_user_collection(
     start_collection_songs: int,
     limit_collection_songs: int,
     caption: str,
+    is_admin: bool = False,
     message: Optional[str] = None,
 ):
     """
@@ -82,6 +83,7 @@ async def show_user_collection(
             len_collection_songs=len_collection_songs,
             song_position=start_collection_songs,
             limit_songs=limit_collection_songs,
+            is_admin=is_admin,
         ),
     )
 
@@ -92,6 +94,7 @@ async def callback_show_user_collection(
     start_collection_songs: int,
     limit_collection_songs: int,
     caption: str,
+    is_admin: bool = False,
     message: str = None,
 ):
     """
@@ -125,7 +128,9 @@ async def callback_show_user_collection(
                 media=photo_file_id,
                 caption=f"{user_messages.THERE_ARE_NO_SONGS}",
             ),
-            reply_markup=get_buttons_for_song_collection_empty_user(),
+            reply_markup=get_buttons_for_song_collection_empty_user(
+                is_admin=is_admin,
+            ),
         )
         return
 

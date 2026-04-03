@@ -38,7 +38,7 @@ from application.use_cases.db.music_library.update.update_title_album import (
 from application.use_cases.db.music_library.update.update_song_title import (
     UpdateSongTitle,
 )
-from domain.entities.response import LibraryMode
+from domain.entities.response import LibraryMode, LibraryRole
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
@@ -69,6 +69,7 @@ class FSMUpdateExecutorPhotoML(StatesGroup):
     """FSM для сценария обновления фотографии исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    is_admin: State = State()
     user_id: State = State()
     executor_id: State = State()
     current_page_executor: State = State()
@@ -90,6 +91,7 @@ async def start_update_photo_executor(
     user_id: Optional[int] = callback_data.user_id
     current_page_executor: int = callback_data.current_page_executor
     album_position: int = callback_data.album_position
+    is_admin: bool = callback_data.is_admin
 
     await call.message.edit_reply_markup(reply_markup=None)
 
@@ -97,6 +99,7 @@ async def start_update_photo_executor(
     await state.update_data(user_id=user_id)
     await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(album_position=album_position)
+    await state.update_data(is_admin=is_admin)
     await state.update_data(music_library_executor=True)
     await state.set_state(FSMUpdateExecutorPhotoML.photo)
     await call.message.answer(
@@ -122,6 +125,7 @@ async def end_update_photo_executor(
     user_id: Optional[int] = update_photo_executor_data.get("user_id")
     current_page_executor: int = update_photo_executor_data.get("current_page_executor")
     album_position: int = update_photo_executor_data.get("album_position")
+    is_admin: bool = update_photo_executor_data.get("is_admin")
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
@@ -137,6 +141,7 @@ async def end_update_photo_executor(
     )
     if result_update_photo_executor.ok:
         result_message: str = resolve_message(code=result_update_photo_executor.code)
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             chat_id=chat_id,
             bot=bot,
@@ -148,7 +153,10 @@ async def end_update_photo_executor(
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
             album_position=album_position,
-            mode=LibraryMode(user_id=user_id)
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+            ),
         )
         return
 
@@ -179,6 +187,7 @@ class FSMUpdateCountryExecutorML(StatesGroup):
     """FSM для сценария обновления страны исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    is_admin: State = State()
     user_id: State = State()
     executor_id: State = State()
     current_page_executor: State = State()
@@ -202,11 +211,13 @@ async def start_update_country_executor(
     executor_id: int = callback_data.excecutor_id
     current_page_executor: int = callback_data.current_page_executor
     album_position: int = callback_data.album_position
+    is_admin: bool = callback_data.is_admin
 
     await state.update_data(user_id=user_id)
     await state.update_data(executor_id=executor_id)
     await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(album_position=album_position)
+    await state.update_data(is_admin=is_admin)
     await state.update_data(music_library_executor=True)
     await state.set_state(FSMUpdateCountryExecutorML.country)
 
@@ -231,6 +242,7 @@ async def end_update_country_executor(
     current_page_executor: int = update_country_executor_data.get(
         "current_page_executor"
     )
+    is_admin: bool = update_country_executor_data.get("is_admin")
     chat_id: int = message.chat.id
     country: str = message.text.strip()
     logging_data: LoggingData = get_loggers(
@@ -246,6 +258,7 @@ async def end_update_country_executor(
     )
     if result_update_country_executor.ok:
         await state.clear()
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         result_message: str = resolve_message(code=result_update_country_executor.code)
         await return_to_executor_page(
             chat_id=chat_id,
@@ -258,7 +271,10 @@ async def end_update_country_executor(
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
             album_position=album_position,
-            mode=LibraryMode(user_id=user_id)
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+            ),
         )
         return
 
@@ -286,6 +302,7 @@ class FSMUpdateGenresExecutorML(StatesGroup):
     """FSM для сценария обновления жанров исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    is_admin: State = State()
     user_id: State = State()
     executor_id: State = State()
     album_position: State = State()
@@ -309,11 +326,13 @@ async def start_update_executor_genres(
     executor_id: int = callback_data.excecutor_id
     current_page_executor: int = callback_data.current_page_executor
     album_position: int = callback_data.album_position
+    is_admin: bool = callback_data.is_admin
 
     await state.update_data(user_id=user_id)
     await state.update_data(executor_id=executor_id)
     await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(album_position=album_position)
+    await state.update_data(is_admin=is_admin)
     await state.update_data(music_library_executor=True)
     await state.set_state(FSMUpdateGenresExecutorML.genres)
     await call.message.answer(
@@ -337,6 +356,7 @@ async def end_update_genres_executor(
     current_page_executor: int = update_genres_executor_data.get(
         "current_page_executor"
     )
+    is_admin: bool = update_genres_executor_data.get("is_admin")
     chat_id: int = message.chat.id
     genres: List[str] = message.text.split(".")
     genres = [genre.strip() for genre in genres]
@@ -353,6 +373,7 @@ async def end_update_genres_executor(
     )
     if result_update_country_executor.ok:
         result_message: str = resolve_message(code=result_update_country_executor.code)
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             chat_id=chat_id,
             bot=bot,
@@ -364,7 +385,10 @@ async def end_update_genres_executor(
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
             album_position=album_position,
-            mode=LibraryMode(user_id=user_id)
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+            ),
         )
         return
     if not result_update_country_executor.ok:
@@ -394,6 +418,7 @@ class FSMUpdateNameExecutorML(StatesGroup):
     """FSM для сценария для обновления имения исполнителя."""
 
     music_library_executor: State = State()  # для возратка к исполнителю при отмене
+    is_admin: State = State()
     current_page_executor: State = State()
     album_position: State = State()
     user_id: State = State()
@@ -417,6 +442,7 @@ async def start_update_name_executor(
     country: str = callback_data.country
     current_page_executor: int = callback_data.current_page_executor
     album_position: int = callback_data.album_position
+    is_admin: bool = callback_data.is_admin
 
     await call.message.edit_reply_markup(reply_markup=None)
 
@@ -425,6 +451,7 @@ async def start_update_name_executor(
     await state.update_data(country=country)
     await state.update_data(current_page_executor=current_page_executor)
     await state.update_data(album_position=album_position)
+    await state.update_data(is_admin=is_admin)
     await state.update_data(music_library_executor=True)
     await state.set_state(FSMUpdateNameExecutorML.name)
     await call.message.answer(
@@ -446,6 +473,7 @@ async def end_update_name_excutor(
     executor_id: int = update_name_executor_data.get("executor_id")
     user_id: Optional[int] = update_name_executor_data.get("user_id")
     country: str = update_name_executor_data.get("country")
+    is_admin: bool = update_name_executor_data.get("is_admin")
     chat_id: int = message.chat.id
     album_position: int = update_name_executor_data.get("album_position")
     logging_data: LoggingData = get_loggers(
@@ -453,11 +481,18 @@ async def end_update_name_excutor(
     )
     result_update_name_executor: Result = await UpdateNameExecutor(
         uow=UnitOfWork(), logging_data=logging_data
-    ).execute(user_id=user_id, executor_id=executor_id, name=name, country=country)
+    ).execute(
+        user_id=user_id,
+        executor_id=executor_id,
+        name=name,
+        country=country,
+        is_admin=is_admin,
+    )
     if result_update_name_executor.ok:
         await state.clear()
         result_message: str = resolve_message(code=result_update_name_executor.code)
         current_page_executor: int = result_update_name_executor.data
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             chat_id=chat_id,
             bot=bot,
@@ -469,7 +504,10 @@ async def end_update_name_excutor(
             get_information_executor=get_information_executor,
             uow=UnitOfWork,
             album_position=album_position,
-            mode=LibraryMode(user_id=user_id)
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+            ),
         )
         return
     if not result_update_name_executor.ok:
@@ -506,6 +544,7 @@ class FSMUpdatePhotoAlbumML(StatesGroup):
     album_id: State = State()
     is_global_executor: State = State()
     album_position: State = State()
+    is_admin: State = State()
     photo: State = State()
 
 
@@ -517,6 +556,7 @@ class UpdatePhotoAlbumData:
     user_id: Optional[int]
     album_id: int
     is_global_executor: bool
+    is_admin: bool
     album_position: int
     photo: None
 
@@ -533,6 +573,7 @@ async def start_update_photo_album(
     executor_id: int = callback_data.executor_id
     user_id: Optional[int] = callback_data.user_id
     album_id: int = callback_data.album_id
+    is_admin: bool = callback_data.is_admin
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
     await state.update_data(
@@ -544,6 +585,7 @@ async def start_update_photo_album(
             album_id=album_id,
             is_global_executor=is_global_executor,
             album_position=album_position,
+            is_admin=is_admin,
             photo=None,
         ).__dict__
     )
@@ -603,6 +645,7 @@ async def end_update_photo_album(
             user_id=state_data.user_id,
             album_id=state_data.album_id,
             is_global_executor=state_data.is_global_executor,
+            is_admin=state_data.is_admin,
         )
 
     if not result.ok:
@@ -636,6 +679,7 @@ class FSMUpdateAlbumYearML(StatesGroup):
     album_id: State = State()
     is_global_executor: State = State()
     album_position: State = State()
+    is_admin: State = State()
     year: State = State()
 
 
@@ -648,6 +692,7 @@ class UpdateAlbumYearData:
     album_id: int
     is_global_executor: bool
     album_position: int
+    is_admin: bool
     year: None
 
 
@@ -665,6 +710,7 @@ async def start_update_year_album(
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
+    is_admin: bool = callback_data.is_admin
 
     await state.update_data(
         UpdateAlbumYearData(
@@ -675,6 +721,7 @@ async def start_update_year_album(
             album_id=album_id,
             is_global_executor=is_global_executor,
             album_position=album_position,
+            is_admin=is_admin,
             year=None,
         ).__dict__
     )
@@ -737,6 +784,7 @@ async def end_update_year_album(
             album_position=state_data.album_position,
             song_position=0,
             is_global_executor=state_data.is_global_executor,
+            is_admin=state_data.is_admin
         )
         return
     if not result.ok:
@@ -770,6 +818,7 @@ class FSMUpdateAlbumTitleML(StatesGroup):
     album_id: State = State()
     is_global_executor: State = State()
     album_position: State = State()
+    is_admin: State()
     title: State = State()
 
 
@@ -782,6 +831,7 @@ class UpdateAlbumTitleData:
     album_id: int
     is_global_executor: bool
     album_position: int
+    is_admin: bool
     title: None
 
 
@@ -799,6 +849,7 @@ async def start_update_title_album(
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
+    is_admin: bool = callback_data.is_admin
 
     await state.update_data(
         UpdateAlbumTitleData(
@@ -809,6 +860,7 @@ async def start_update_title_album(
             album_id=album_id,
             is_global_executor=is_global_executor,
             album_position=album_position,
+            is_admin=is_admin,
             title=None,
         ).__dict__
     )
@@ -865,6 +917,7 @@ async def end_update_title_album(
             album_position=state_data.album_position,
             song_position=0,
             is_global_executor=state_data.is_global_executor,
+            is_admin=state_data.is_admin,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
@@ -894,8 +947,9 @@ class FSMUpdateTitleSong(StatesGroup):
     album_id: State = State()
     is_global_executor: State = State()
     album_position: State = State()
-    title: State = State()
     position: State = State()
+    is_admin: State = State()
+    title: State = State()
 
 
 @dataclass
@@ -908,6 +962,7 @@ class UpdateTitleSongData:
     is_global_executor: bool
     album_position: int
     position: int
+    is_admin: bool
     title: None
 
 
@@ -925,6 +980,7 @@ async def start_update_song_title(
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
     is_global_executor: bool = callback_data.is_global_executor
+    is_admin: bool = callback_data.is_admin
 
     await state.update_data(
         UpdateTitleSongData(
@@ -935,6 +991,7 @@ async def start_update_song_title(
             album_id=album_id,
             album_position=album_position,
             is_global_executor=is_global_executor,
+            is_admin=is_admin,
             position=0,
             title=None,
         ).__dict__
@@ -987,9 +1044,7 @@ async def end_update_song_title(
     """Обновляет имя песни."""
 
     data: Dict = await state.get_data()
-    state_data: UpdateTitleSongData = UpdateTitleSongData(
-        **data
-    )
+    state_data: UpdateTitleSongData = UpdateTitleSongData(**data)
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
@@ -1034,6 +1089,7 @@ async def end_update_song_title(
             album_position=state_data.album_position,
             song_position=0,
             is_global_executor=state_data.is_global_executor,
+            is_admin=state_data.is_admin,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)

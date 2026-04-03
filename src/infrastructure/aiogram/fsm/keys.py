@@ -17,3 +17,6 @@ class FSMFlags:
 
     # поиск исполнителей
     SEARCH_EXECUTOR: str = "search_executor"
+    
+    # для админа
+    IS_ADMIN: str = "is_admin"

@@ -14,22 +14,28 @@ from infrastructure.aiogram.filters import (
     StartGlobalLibrary,
     Search,
     ScrollingCallbackDataFilters,
+    BackAdminMenuCallback,
 )
 
 
-def select_library_keyboard():
+def select_library_keyboard(
+    is_admin: bool,
+):
     inline_kb = InlineKeyboardBuilder()
 
     inline_kb.row(
         InlineKeyboardButton(
             text=settings.SEARCH_EXECUTOR,
-            callback_data=Search.Executor().pack(),
+            callback_data=Search.Executor(is_admin=is_admin).pack(),
         )
     )
 
     inline_kb.row(
         InlineKeyboardButton(
-            text=settings.GLOBAL_LIBRARY_NAME, callback_data=StartGlobalLibrary().pack()
+            text=settings.GLOBAL_LIBRARY_NAME,
+            callback_data=StartGlobalLibrary(
+                is_admin=is_admin,
+            ).pack(),
         )
     )
 
@@ -39,45 +45,63 @@ def select_library_keyboard():
         )
     )
 
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
 
     return inline_kb.as_markup()
 
 
-def select_search_keyboard():
+def select_search_keyboard(
+    is_admin: bool,
+):
 
     inline_kb = InlineKeyboardBuilder()
 
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.SEARCH_BY_NAME,
-            callback_data=Search.ExecutorName().pack(),
+            callback_data=Search.ExecutorName(is_admin=is_admin).pack(),
         )
     )
 
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.SEARCH_BY_GENRES,
-            callback_data=Search.ExecutorGenres().pack(),
+            callback_data=Search.ExecutorGenres(is_admin=is_admin).pack(),
         )
     )
 
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
-
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
     return inline_kb.as_markup()
 
 
 def select_executor_genres_keybord(
+    is_admin: bool,
     quantity_button: int = 1,
 ):
     inline_kb = InlineKeyboardBuilder()
@@ -86,17 +110,28 @@ def select_executor_genres_keybord(
         inline_kb.add(
             InlineKeyboardButton(
                 text=genre,
-                callback_data=Search.ExecutorGenreButton(order=order).pack(),
+                callback_data=Search.ExecutorGenreButton(
+                    order=order,
+                    is_admin=is_admin,
+                ).pack(),
             )
         )
     inline_kb.adjust(quantity_button)
 
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
     return inline_kb.as_markup()
 
 
@@ -105,6 +140,7 @@ def show_executor_search(
     position: int,
     total: int,
     limit: int,
+    is_admin: bool,
 ):
     inline_kb = InlineKeyboardBuilder()
 
@@ -112,7 +148,10 @@ def show_executor_search(
         inline_kb.row(
             InlineKeyboardButton(
                 text=f"{executor.name} ({executor.country})",
-                callback_data=Search.ExecutorButton(id=executor.id).pack(),
+                callback_data=Search.ExecutorButton(
+                    id=executor.id,
+                    is_admin=is_admin,
+                ).pack(),
             )
         )
 
@@ -129,6 +168,7 @@ def show_executor_search(
                 callback_data=ScrollingCallbackDataFilters.SearchExecutor(
                     position=position,
                     offset=-limit,
+                    is_admin=is_admin,
                 ).pack(),
             )
         )
@@ -139,16 +179,25 @@ def show_executor_search(
                 callback_data=ScrollingCallbackDataFilters.SearchExecutor(
                     position=position,
                     offset=limit,
+                    is_admin=is_admin,
                 ).pack(),
             )
         )
     inline_kb.row(*page.items)
 
-    inline_kb.row(
-        InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
-            callback_data=BackMenuUserPanel().pack(),
+    if is_admin:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackAdminMenuCallback().pack(),
+            )
         )
-    )
+    else:
+        inline_kb.row(
+            InlineKeyboardButton(
+                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                callback_data=BackMenuUserPanel().pack(),
+            )
+        )
 
     return inline_kb.as_markup()

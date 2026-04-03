@@ -15,6 +15,7 @@ class BotSettings(BaseSettings):
     NAME_FOR_LOG_FOLDER: str = "bot"
 
     TOKEN: Optional[str] = None
+    ADMIN_MODE: str = "/start"
     LIST_BOT_COMMANDS: List[BotCommand] = [
         BotCommand(command="start", description="Запуск бота / Регистрация"),
         BotCommand(command="admin", description="Для администраторов"),
@@ -33,6 +34,8 @@ class BotSettings(BaseSettings):
 
     DELETE_IMAGE_FILE_ID: str = "AgACAgIAAxkBAAIJvGmFdN5orJwkcWn2wwv7J-2ALiaBAALzC2sbm8kwSKCgwqBOos5mAQADAgADeAADOAQ"
     DELETE_IMAGE_FILE_UNIQUE_ID: str = "AQAD8wtrG5vJMEh9"
+
+    ADMIN_PANEL_PHOTO_FILE_ID: str = "AgACAgIAAxkBAAIHRGmBl3vdFd8Sb7Nh0dasuFYG1HtXAAJWEGsb6LYISDc5Cg0FAAFtpAEAAwIAA3kAAzgE"
 
     AUDIO_EXTENSIONS: Set[str] = {".mp3", ".flac", ".wav", ".ogg", ".m4a"}
     MUSICL_LIBRARY_MODULE_NAME: str = "music_library"

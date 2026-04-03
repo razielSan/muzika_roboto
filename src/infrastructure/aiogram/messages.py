@@ -126,6 +126,7 @@ class UserMessages:
     THE_DATA_MUST_BE_IN_THE_FORMAT: str = "⚠ Данные должны быть в формате\n\n{format}"
     USER_CANCEL_MESSAGE: str = "❌ Все запросы отменены"
     USER_PANEL_CAPTION: str = "🤔 Что же мне сегодня послушать ?"
+    ADMIN_PANEL_CAPTION: str = "🔧 Админ Панель"
 
 
 user_messages: UserMessages = UserMessages()
