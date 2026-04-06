@@ -90,11 +90,13 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         else:
             user_id_condition: bool = self.model.user_id == user_id
         executor = await self.session.scalar(
-            select(self.model).where(
+            select(self.model)
+            .where(
                 self.model.name_lower == name_lower,
                 self.model.country == country,
                 user_id_condition,
             )
+            .options(selectinload(self.model.genres))
         )
         return executor
 

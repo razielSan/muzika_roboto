@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, List, Union
+from pathlib import Path
 
 
 @dataclass
@@ -14,11 +15,29 @@ class SongResponse:
 
 
 @dataclass
+class GenreResponse:
+    title: str
+    id: int
+
+
+@dataclass
 class AlbumResponse:
     id: int
     executor_id: int
     year: int
     title: str
+
+
+@dataclass
+class AlbumParsedResponse:
+    title: str
+    year: int
+    info_executor: Optional[str] = None
+    executor_id: Optional[int] = None
+    executor_photo_file_id: Optional[str] = None
+    album_id: Optional[int] = None
+    path: Optional[Path] = None
+    count_executors: Optional[int] = None
 
 
 @dataclass
@@ -98,7 +117,6 @@ class LibraryMode:
     @property
     def is_admin(self):
         return self.role == LibraryRole.ADMIN
-    
 
 
 @dataclass

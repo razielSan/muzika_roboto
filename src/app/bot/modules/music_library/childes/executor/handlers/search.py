@@ -30,6 +30,7 @@ from application.use_cases.db.music_library.get.get_executor_page import GetExec
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.db.utils.editing import get_information_executor
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.filters import Search, ScrollingCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
@@ -190,7 +191,11 @@ async def show_find_executors_message(
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
-    await message.answer(text=user_messages.ENTER_THE_EXECUTOR_NAME)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 # поиск по жанру
@@ -377,4 +382,8 @@ async def show_find_executors_message_message(
     """Отправляет сообщение если были введены данные а не нажата кнопка."""
 
     await message.answer(text=user_messages.CLICK_ONE_OF_THE_BUTTONS_ABOVE)
-    await message.answer(text=user_messages.CLICK_CANCEL_BUTTON)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )

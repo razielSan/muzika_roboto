@@ -8,12 +8,13 @@ from infrastructure.aiogram.response import KeyboardResponse
 
 
 def get_reply_cancel_button(
-    cancel_text: str = KeyboardResponse.USER_CANCEL_BUTTON.value,
     optional_button_text: Optional[str] = None,
+    cancel_button: str = KeyboardResponse.USER_CANCEL_BUTTON.value,
 ) -> ReplyKeyboardMarkup:
     """Reply кнопка отмены."""
     reply_kb: ReplyKeyboardBuilder = ReplyKeyboardBuilder()
     if optional_button_text:
         reply_kb.row(KeyboardButton(text=optional_button_text))
-    reply_kb.row(KeyboardButton(text=cancel_text))
+
+    reply_kb.row(KeyboardButton(text=cancel_button))
     return reply_kb.as_markup(resize_keyboard=True)

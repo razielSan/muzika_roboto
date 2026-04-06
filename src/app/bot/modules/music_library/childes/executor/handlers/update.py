@@ -46,6 +46,7 @@ from infrastructure.aiogram.messages import (
     resolve_message,
     LIMIT_SONGS,
 )
+from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.db.utils.editing import (
     get_information_executor,
@@ -177,7 +178,11 @@ async def end_update_photo_executor_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="фото")
     )
-    await message.answer(text=user_messages.DROP_THE_PHOTO)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 # обновление страны исполнителя
@@ -294,7 +299,11 @@ async def end_update_country_executor_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
-    await message.answer(text=user_messages.ENTER_THE_СOUNTRY_EXECUTOR)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 # Обновление жанров исполнителя
@@ -410,7 +419,11 @@ async def end_update_genres_executor_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
-    await message.answer(text=user_messages.ENTER_THE_GENRES)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 # обновляет имя исполнителя
@@ -526,7 +539,11 @@ async def end_update_name_executor_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
-    await message.answer(text=user_messages.ENTER_THE_EXECUTOR_NAME)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 ###  Обновление альбома
@@ -665,7 +682,11 @@ async def end_update_photo_album_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="фото")
     )
-    await message.answer(text=user_messages.DROP_THE_PHOTO)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 # Обновление года альбома
@@ -784,7 +805,7 @@ async def end_update_year_album(
             album_position=state_data.album_position,
             song_position=0,
             is_global_executor=state_data.is_global_executor,
-            is_admin=state_data.is_admin
+            is_admin=state_data.is_admin,
         )
         return
     if not result.ok:
@@ -804,7 +825,11 @@ async def end_update_year_album_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
-    await message.answer(text=user_messages.ENTER_THE_ALBUM_YEAR)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 # обновления заголовка альбома
@@ -933,7 +958,11 @@ async def end_update_title_album_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
-    await message.answer(text=user_messages.ENTER_THE_ALBUM_TITLE)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 # обновления имени песеи
@@ -1032,7 +1061,11 @@ async def add_position_song_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
-    await message.answer(text=user_messages.ENTER_THE_SONG_POSITION)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )
 
 
 @router.message(FSMUpdateTitleSong.title, F.text)
@@ -1108,4 +1141,8 @@ async def end_update_song_title_message(message: Message):
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
     )
-    await message.answer(text=user_messages.ENTER_THE_SONG_NAME)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )

@@ -1,6 +1,7 @@
 from typing import Dict
-from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
 
+from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
+from infrastructure.aiogram.response import format_album
 
 ERRORS = {
     ErorrCode.UNKNOWN_ERROR.name: "❌ Произошла неизвестная ошибка",
@@ -8,7 +9,8 @@ ERRORS = {
     ErorrCode.EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель с таким именем и страной уже существует",
     ErorrCode.USER_EXECUTOR_ALREADY_EXISTS.name: "⚠ Исполнитель присутствует в библиотеке",
     ErorrCode.ALBUM_ALREADY_EXISTS.name: "⚠ Альбом уже существует",
-    ErorrCode.GENRE_DOES_NOT_EXIST.name: "⚠ Жанр не существует"
+    ErorrCode.GENRE_DOES_NOT_EXIST.name: "⚠ Жанр не существует",
+    ErorrCode.CANCEL_ERROR.name: "❌ Отменены все действия",
 }
 
 
@@ -67,7 +69,7 @@ GENRES: Dict = {
     13: "rap",
     14: "russian rock",
     15: "classic music",
-    16: "anarcho-chanson"
+    16: "anarcho-chanson",
 }
 
 
@@ -82,13 +84,16 @@ def resolve_message(code: str):
 
 
 class UserMessages:
+    ADD_SONGS_MESSAGE: str = "✅ ({year}) {title}\n⌛️ {song} - идет добавление песни"
+    ADD_SONGS_COMPLETE: str = "✅ ({year}) {title}\n✅ {song} - песня добавлена"
     BACK_ALBUM_PAGE: str = "✅ Возвращение на страницу альбома"
     BACK_EXECUTOR_PAGE: str = "✅ Возвращение на страницу исполнителя"
     CONFIRMATION_TEXT: str = "✅ Подтверждаю"
     CAPTION_DELETE_EXECUTOR: str = "❗️ Вы действительно хотите удалить исполнителя ?"
     CAPTION_DELETE_ALBUM: str = "❗️ Вы действительно хотите удалить альбом ?"
     CLICK_ONE_OF_THE_BUTTONS_ABOVE: str = "👆🏾 Нажмите одну из кнопок выше"
-    CLICK_CANCEL_BUTTON: str = "🚫 Отмена: Отменить все действия"
+    CLICK_CANCEL_BUTTON: str = "{button}: Отменить все действия"
+    CLICK_UNKNOWN_BUTTON: str = "Неизвестно: Название по умолчанию"
     DROP_THE_SONG: str = "❗️ Скидывайте песни"
     DROP_THE_PHOTO: str = "❗️ Скидывайте фотографию"
     ENTER_THE_SONG_NAME: str = "❗️ Введите имя песни"
@@ -103,6 +108,10 @@ class UserMessages:
         "🖌 Пример: панк-рок.метал.русский рок\n\n"
     )
     ENTER_THE_EXECUTOR_NAME: str = "❗️ Введите имя исполнителя"
+    ENTER_THE_FULL_ALBUM_PATH: str = (
+        "❗️ Введите путь до альбомов исполнителя"
+        f"\n\n{format_album.FORMAT_ALBUM}: формат альбома"
+    )
     ENTER_THE_SONG_POSITION: str = "❗️ Введите позицию песни"
     MESSAGE_TO_CONFIRM_THE_DELETION_OF_SONGS: str = (
         "❗️ Подтвердите"
@@ -123,7 +132,9 @@ class UserMessages:
     THERE_ARE_NO_SONGS: str = "🤷🏻‍♀️ У вас нет песен в сборнике"
     THE_SONG_HAS_ALREADY_BEEN_ADDED: str = "🤷🏻‍♀️ Песня {title} уже была добавленна"
     THE_SONG_IS_SAVED: str = "🎼 Песня {title} была сохранена"
-    THE_DATA_MUST_BE_IN_THE_FORMAT: str = "⚠ Данные должны быть в формате\n\n{format}"
+    THE_DATA_MUST_BE_IN_THE_FORMAT: str = (
+        "⚠ Данные должны" " быть в формате\n\n{format}\n\n🖌 Отправляйте, снова, данные"
+    )
     USER_CANCEL_MESSAGE: str = "❌ Все запросы отменены"
     USER_PANEL_CAPTION: str = "🤔 Что же мне сегодня послушать ?"
     ADMIN_PANEL_CAPTION: str = "🔧 Админ Панель"

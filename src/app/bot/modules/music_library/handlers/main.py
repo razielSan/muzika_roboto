@@ -49,7 +49,6 @@ from infrastructure.db.utils.editing import (
 )
 from infrastructure.aiogram.response import KeyboardResponse
 from core.response.response_data import LoggingData, Result
-from core.response.messages import messages
 from core.logging.api import get_loggers
 
 
@@ -90,14 +89,21 @@ async def music_library_cancel_handler(
     collection_songs: Optional[bool] = data.get(FSMFlags.COLLECTION_SONGS)
     music_library_executor: Optional[bool] = data.get(FSMFlags.MUSIC_LIBRARY_EXECUTOR)
     music_library_album: Optional[bool] = data.get(FSMFlags.MUSIC_LIBRARY_ALBUM)
-    search_executor: Optional[bool] = data.get(FSMFlags.SEARCH_EXECUTOR)
+    search_executor: Optional[bool] = data.get(
+        FSMFlags.SEARCH_EXECUTOR
+    )  # сценацрия при поиске исполнителей
+    deleting_songs: Optional[bool] = data.get(
+        FSMFlags.DELETING_SONGS
+    )  # сценария при удалении песен
     is_admin: Optional[bool] = data.get(FSMFlags.IS_ADMIN)
+
     user_id: int = user.id
 
     chat_id: int = message.chat.id
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
     await state.clear()
+
     if collection_songs:  # Возвращаемся к сборнику песен пользователя
 
         result: Result = await GetUserCollectionSongs(
@@ -144,7 +150,7 @@ async def music_library_cancel_handler(
         )
         return
 
-    if music_library_album:  # возращает на страницу альбома
+    if music_library_album or deleting_songs:  # возращает на страницу альбома
         if is_admin:
             user_id = None
 
@@ -299,6 +305,16 @@ async def get_album_page(
     is_global_executor: bool = callback_data.is_global_executor
     executor_id: int = callback_data.executor_id
     is_admin: bool = callback_data.is_admin
+
+    data: Dict = await state.get_data()
+    deleting_songs: bool = data.get(FSMFlags.DELETING_SONGS)
+    if (
+        deleting_songs
+    ):  # отравляем сообщение при удалении песен, для удаления клавиатуры
+        await call.message.answer(
+            text=user_messages.USER_CANCEL_MESSAGE,
+            reply_markup=ReplyKeyboardRemove(),
+        )
 
     await state.clear()
     await return_to_album_page_callback(

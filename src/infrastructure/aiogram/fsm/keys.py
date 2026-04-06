@@ -17,6 +17,12 @@ class FSMFlags:
 
     # поиск исполнителей
     SEARCH_EXECUTOR: str = "search_executor"
-    
+
+    # удалеине песен
+    DELETING_SONGS: str = "deleting_songs"
+
     # для админа
     IS_ADMIN: str = "is_admin"
+
+    # добавление исполнителя из пути
+    PROCESSING: str = "processing"

@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class ErorrCode(Enum):
+    CANCEL_ERROR: str = "CANCEL_ERROR"
     UNKNOWN_ERROR: str = "UNKNOWN_ERROR"
     USER_ALREADY_EXISTS: str = "USER_ALREADY_EXISTS"
     EXECUTOR_ALREADY_EXISTS: str = "EXECUTOR_ALREADY_EXISTS"

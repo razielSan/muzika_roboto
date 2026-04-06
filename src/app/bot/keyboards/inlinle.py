@@ -5,7 +5,6 @@ from app.bot.filters.admin_filters import (
     AdminCreateFullExecutorCallback,
     AdminCreateExecutorCallback,
 )
-
 from app.bot.modules.music_library.childes.executor.settings import settings
 from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.filters import (
@@ -67,7 +66,7 @@ def select_admin_library_keyboard(
 
     inline_kb.row(
         InlineKeyboardButton(
-            text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+            text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
             callback_data=BackAdminMenuCallback().pack(),
         )
     )

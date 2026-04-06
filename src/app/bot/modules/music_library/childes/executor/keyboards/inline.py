@@ -2,7 +2,6 @@ from typing import List
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.bot.modules.music_library.childes.executor.settings import settings
 from domain.entities.response import ExecutorSearchResponse, Page
@@ -48,7 +47,7 @@ def select_library_keyboard(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )
@@ -86,7 +85,7 @@ def select_search_keyboard(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )
@@ -121,7 +120,7 @@ def select_executor_genres_keybord(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )
@@ -188,7 +187,7 @@ def show_executor_search(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )

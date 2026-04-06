@@ -124,3 +124,11 @@ def get_button_for_forward_or_back(
             )
 
     return inline_kb.as_markup(resize_keyboard=True)
+
+
+def get_buttons_reply_keyboard(buttons: List[str]) -> ReplyKeyboardMarkup:
+    reply_kb: ReplyKeyboardBuilder = ReplyKeyboardBuilder()
+    for button in buttons:
+        reply_kb.row(KeyboardButton(text=button))
+
+    return reply_kb.as_markup(resize_keyboard=True)

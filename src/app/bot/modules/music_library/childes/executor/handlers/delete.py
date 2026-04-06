@@ -2,7 +2,7 @@ from typing import Optional, List, Dict, Set
 from dataclasses import dataclass
 
 from aiogram import Router
-from aiogram.types import CallbackQuery, InputMediaPhoto, Message
+from aiogram.types import CallbackQuery, InputMediaPhoto, Message, ReplyKeyboardRemove
 from aiogram.filters.state import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -47,7 +47,9 @@ from infrastructure.aiogram.keyboards.inline import (
     get_confirmation_delete_album_songs_button,
     get_menu_album_songs_delete,
 )
+from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.aiogram.response import KeyboardResponse
 from core.logging.api import get_loggers
 from core.response.response_data import Result, LoggingData
 
@@ -233,6 +235,7 @@ class FSMDeleteSongsAlbumML(StatesGroup):
 
     current_page_executor: State = State()
     music_library_album: State = State()
+    deleting_songs: State = State()
     executor_id: State = State()
     user_id: State = State()
     album_id: State = State()
@@ -247,6 +250,7 @@ class FSMDeleteSongsAlbumML(StatesGroup):
 class DeleteSongsAlbumData:
     current_page_executor: int
     music_library_album: bool
+    deleting_songs: bool
     executor_id: int
     user_id: Optional[int]
     album_id: int
@@ -276,6 +280,11 @@ async def start_delete_songs_collection_songs(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
 
+    await call.message.answer(
+        text=user_messages.SELECT_THE_SONGS_TO_DELETE,
+        reply_markup=get_reply_cancel_button(),
+    )
+
     result: Result = await GetAlbumWithSongs(
         uow=UnitOfWork(), logging_data=logging_data
     ).execute(
@@ -299,6 +308,7 @@ async def start_delete_songs_collection_songs(
                     selected_songs_ids=set(),
                 ),
                 music_library_album=True,
+                deleting_songs=True,
                 executor_id=executor_id,
                 user_id=user_id,
                 album_id=album_id,
@@ -389,7 +399,7 @@ async def tag_songs(
             len_list_songs=len_list_songs,
             limit_songs=LIMIT_SONGS,
             delete_songs=del_song_ids,
-            is_admin=delete_state_data.is_admin
+            is_admin=delete_state_data.is_admin,
         ),
     ),
 
@@ -432,7 +442,7 @@ async def scrolling_delete_menu_song_album(
             len_list_songs=len_list_songs,
             limit_songs=LIMIT_SONGS,
             delete_songs=delete_state_data.state_data.selected_songs_ids,
-            is_admin=delete_state_data.is_admin
+            is_admin=delete_state_data.is_admin,
         ),
     ),
 
@@ -476,7 +486,7 @@ async def confirm_delete_song_album(
                 is_global_executor=delete_state_data.is_global_executor,
                 album_id=delete_state_data.album_id,
                 album_position=delete_state_data.album_position,
-                is_admin=delete_state_data.is_admin
+                is_admin=delete_state_data.is_admin,
             ),
         )
     if not positions:
@@ -509,6 +519,10 @@ async def end_delete_songs_album(
     await state.clear()
     if result.ok:
         result_message: str = resolve_message(code=result.code)
+        await call.message.answer(
+            text=result_message,
+            reply_markup=ReplyKeyboardRemove(),
+        )
         await return_to_album_page_callback(
             call=call,
             uow=UnitOfWork,
@@ -523,18 +537,27 @@ async def end_delete_songs_album(
             album_position=delete_state_data.album_position,
             song_position=0,
             is_global_executor=delete_state_data.is_global_executor,
-            message=result_message,
-            is_admin=delete_state_data.is_admin
+            is_admin=delete_state_data.is_admin,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
+        await call.message.answer(
+            text=error_message,
+            reply_markup=ReplyKeyboardRemove(),
+        )
         await callback_update_menu_inline_music_library(
             call=call,
-            message=error_message,
             caption=user_messages.USER_PANEL_CAPTION,
         )
 
 
 @router.message(FSMDeleteSongsAlbumML.state_data)
 async def end_delete_songs_album_message(message: Message):
+    """Отправляет сообщение при вводе дааных при сценарии удаления песен."""
+    
     await message.answer(text=user_messages.CLICK_ONE_OF_THE_BUTTONS_ABOVE)
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.USER_CANCEL_BUTTON.value
+        )
+    )

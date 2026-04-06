@@ -15,16 +15,9 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters.state import StateFilter
 from pydantic import ValidationError
 
-from app.bot.modules.admin.childes.add_executor.services.add_executor import (
-    add_executor_service,
-)
-from app.bot.modules.admin.childes.add_executor.keyboards.reply import (
-    get_reply_add_executor_button,
-)
-from app.app_utils.keyboards import get_reply_cancel_button
+from app.app_utils.keyboards import get_buttons_reply_keyboard
 from app.bot.modules.admin.childes.add_executor.settings import settings
 from app.bot.settings import settings as bot_settings
-from core.response.messages import telegram_emoji, messages
 from app.bot.filters.admin_filters import (
     AdminFilter,
     AdminCreateExecutorCallback,
@@ -34,10 +27,22 @@ from app.bot.modules.admin.response import get_keyboards_menu_buttons
 from app.bot.keyboards.inlinle import get_buttons_create_executor
 from app.bot.modules.admin.childes.add_executor.dto import ExecutorImportDTO
 from app.bot.modules.admin.settings import settings as admin_settings
+from app.bot.modules.admin.utils.admin import get_admin_panel
 from app.app_utils.fsm import async_make_update_progress
-from infrastructure.aiogram.response import format_album
+from application.use_cases.db.music_library.create_executor import CreateExecutor
+from application.use_cases.db.music_library.import_executor_from_path import (
+    ImportExecutorFromPath,
+)
+from application.use_cases.db.music_library.chek_executor_exists import (
+    ChekExecutorExists,
+)
+from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
+from infrastructure.db.uow import UnitOfWork
+from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.messages import user_messages, resolve_message
-from core.response.response_data import Result
+from core.response.response_data import Result, LoggingData
+from core.logging.api import get_loggers
+from core.response.messages import telegram_emoji
 
 
 router: Router = Router(name=__name__)
@@ -98,7 +103,7 @@ async def start_add_executor(
 # создание исполнителя без альбомов
 
 
-class FSMAddExecutor(StatesGroup):
+class FSMAddExecutorAdmin(StatesGroup):
     """FSM для сценария добавления исполнителя без альбомов."""
 
     name: State = State()
@@ -108,15 +113,21 @@ class FSMAddExecutor(StatesGroup):
 async def add_executor_without_albums(
     call: CallbackQuery, callback_data: AdminCreateExecutorCallback, state: FSMContext
 ):
+    """Просит ввести имя исполнителя."""
+
+    await call.message.edit_reply_markup(reply_markup=None)
+
     await call.message.answer(
         text=user_messages.ENTER_THE_EXECUTOR_NAME,
-        reply_markup=get_reply_cancel_button(),
+        reply_markup=get_reply_cancel_button(
+            cancel_button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value,
+        ),
     )
 
-    await state.set_state(FSMAddExecutor.name)
+    await state.set_state(FSMAddExecutorAdmin.name)
 
 
-@router.message(FSMAddExecutor.name, F.text)
+@router.message(FSMAddExecutorAdmin.name, F.text)
 async def finish_add_executor_without_albums(
     message: Message,
     state: FSMContext,
@@ -125,36 +136,51 @@ async def finish_add_executor_without_albums(
     """Добавляет исполнителя в БД."""
 
     name: str = message.text.strip()
-    result = await add_executor_service.add_executor_without_albums(
+    chat_id: int = message.chat.id
+    logging_data: LoggingData = get_loggers(name=admin_settings.NAME_FOR_LOG_FOLDER)
+
+    result: Result = await CreateExecutor(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(
         name=name,
-        genres_list_executor=["неизвестно"],
         country="неизвестно",
-        file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
-        file_unique_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_UNIQUE_ID,
+        genres_executor=["неизвестно"],
+        user_id=None,
+        photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
+        photo_file_unique_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_UNIQUE_ID,
     )
-    await state.clear()
-    msg = None
     if result.ok:
-        msg: str = resolve_message(code=result.data)
+        await state.clear()
+        result_message: str = resolve_message(code=result.code)
+        await message.answer(
+            text=result_message,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        await get_admin_panel(
+            caption=user_messages.ADMIN_PANEL_CAPTION,
+            chat_id=chat_id,
+            bot=bot,
+        )
 
     if not result.ok:
-        msg: str = resolve_message(code=result.error.code)
-    await message.answer(text=msg)
-    await bot.send_photo(
-        chat_id=message.chat.id,
-        reply_markup=get_keyboards_menu_buttons,
-        photo=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
-        caption=messages.ADMIN_PANEL_TEXT,
-    )
+        error_message: str = resolve_message(code=result.error.code)
+        await message.answer(
+            text=f"{error_message}\n\n{user_messages.ENTER_THE_EXECUTOR_NAME}"
+        )
 
 
-@router.message(FSMAddExecutor.name)
+@router.message(FSMAddExecutorAdmin.name)
 async def finish_add_executor_without_albums_message(
     message: Message,
 ):
     """Отправляет сообщение при вводе данных не в том формате."""
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст"),
+    )
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value
+        )
     )
 
 
@@ -173,49 +199,27 @@ async def add_executor(
     """
     Просит ввести название исполнителя с альбомами.
     """
-
-    await call.message.answer(
-        f"{telegram_emoji.pencil} Введите название исполнителя\n\n{messages.CANCEL_TEXT}: Отмена",
-        reply_markup=get_reply_cancel_button(),
-    )
     await call.message.edit_reply_markup(reply_markup=None)
 
-    try:  # Удаляем админ панель
-        await bot.delete_message(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-        )
-    except Exception:
-        pass
+    await call.message.answer(
+        text=user_messages.ENTER_THE_EXECUTOR_NAME,
+        reply_markup=get_reply_cancel_button(
+            cancel_button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value,
+        ),
+    )
 
     await state.set_state(FSMAddFullExecutor.name)
-
-
-@router.message(FSMAddFullExecutor.processing, F.text)
-async def processing_message(message: Message, state: FSMContext) -> None:
-    """
-    Отправляют сообщение при вводе текста во время обработки запроса или
-    отменяет запрос при нажатии кнопки.
-    """
-
-    if message.text == messages.CANCEL_TEXT_UPLOAD_EXECUTOR:
-        await message.answer(
-            text="Запрос на отмену принят..Дождитесь завершения добавления песен в текущий альбом..."
-        )
-
-        await state.update_data(cancel=True)
-        return
-
-    await message.answer(text=messages.WAIT_AND_CANCEL_MESSAGE)
 
 
 @router.message(FSMAddFullExecutor.name, F.text)
 async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
     """
     Просит ввести страну исполнителя.
+
+    Добавляет имя в FSM.
     """
 
-    executor_name = message.text.strip()
+    executor_name: str = message.text.strip()
 
     try:  # проверяем данные на валидность
         ExecutorImportDTO(
@@ -231,12 +235,33 @@ async def add_name(message: Message, state: FSMContext, bot: Bot) -> None:
     await state.update_data(name=message.text.strip())
 
     await message.answer(
-        text=f"{telegram_emoji.pencil} Введите страну исполнителя\n\n"
-        f"{messages.UNKNOWN_TEXT}: Название по умолчанию\n"
-        f"{messages.CANCEL_TEXT}: Отмена",
-        reply_markup=get_reply_add_executor_button(),
+        text=user_messages.ENTER_THE_СOUNTRY_EXECUTOR,
+        reply_markup=get_buttons_reply_keyboard(
+            buttons=[
+                KeyboardResponse.UNKNOWN_BUTTON.value,
+                KeyboardResponse.ADMIN_CANCEL_BUTTON.value,
+            ]
+        ),
+    )
+    await message.answer(
+        text=f"{user_messages.CLICK_UNKNOWN_BUTTON}\n"
+        f"{user_messages.CLICK_CANCEL_BUTTON.format(button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value)}",
     )
     await state.set_state(FSMAddFullExecutor.country)
+
+
+@router.message(FSMAddFullExecutor.name)
+async def add_name_message(message: Message) -> None:
+    """Отправляет сообщение если были введены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+    await message.answer(
+        text=user_messages.CLICK_CANCEL_BUTTON.format(
+            button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value
+        )
+    )
 
 
 @router.message(FSMAddFullExecutor.country, F.text)
@@ -244,9 +269,12 @@ async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
     """
     Просит ввести жанры исполнителя или переходит к обработчику для ввода пути,
     если есть исполнитель.
+
+    Добавляет страну в FSM.
     """
 
     country: str = message.text.strip()
+    logging_data: LoggingData = get_loggers(name=admin_settings.NAME_FOR_LOG_FOLDER)
 
     try:  # проверяем данные на валидность
         ExecutorImportDTO(
@@ -256,9 +284,12 @@ async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
         msg: Dict = json.loads(err.json())[0].get("msg")
         await message.answer(
             f"{telegram_emoji.yellow_triangle_with_exclamation_mark} {msg}\n\n"
-            f"{telegram_emoji.pencil} Введите,снова, страну исполнителя\n\n"
-            f"{messages.UNKNOWN_TEXT}: Название по умолчанию\n",
-            f"{messages.CANCEL_TEXT}: Отмена",
+        )
+
+        await message.answer(
+            text=f"{user_messages.ENTER_THE_СOUNTRY_EXECUTOR}\n\n"
+            f"{user_messages.CLICK_UNKNOWN_BUTTON}\n"
+            f"{user_messages.CLICK_CANCEL_BUTTON.format(button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value)}"
         )
         return
     await state.update_data(country=country)
@@ -267,29 +298,45 @@ async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
     data: Dict = await state.get_data()
     executor_name: str = data.get("name")
 
-    result = await add_executor_service.chek_executor_exists(
-        executor_name=executor_name,
-        country=country,
-    )
+    result: Result = await ChekExecutorExists(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(user_id=None, name=executor_name, country=country)
 
     if result.ok:  # если исполнитель существует то переходим сразу к добавлению пути
-        genres = result.data
-        await state.update_data(genres=genres)
-        await go_to_photo_step(
-            message=message,
-            state=state,
-            bot=bot,
-        )
-        return
+        if not result.empty:
+            genres = result.data
+            print(genres)
+            await state.update_data(genres=genres)
+            await go_to_photo_step(
+                message=message,
+                state=state,
+                bot=bot,
+            )
+            return
 
     await message.answer(
-        text=f"{telegram_emoji.pencil} Введите жанры исполнителя через точку"
-        "\n\nПример: панк-рок.металл\n\n"
-        f"{messages.UNKNOWN_TEXT}: Название по умолчанию\n"
-        f"{messages.CANCEL_TEXT}: Отмена",
-        reply_markup=get_reply_add_executor_button(),
+        text=user_messages.ENTER_THE_GENRES,
+        reply_markup=get_buttons_reply_keyboard(
+            buttons=[
+                KeyboardResponse.UNKNOWN_BUTTON.value,
+                KeyboardResponse.ADMIN_CANCEL_BUTTON.value,
+            ]
+        ),
     )
     await state.set_state(FSMAddFullExecutor.genres)
+
+
+@router.message(FSMAddFullExecutor.country)
+async def add_country_message(message: Message) -> None:
+    """Отправляет сообщение если были введены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+    await message.answer(
+        text=f"{user_messages.CLICK_UNKNOWN_BUTTON}\n"
+        f"{user_messages.CLICK_CANCEL_BUTTON.format(button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value)}",
+    )
 
 
 @router.message(FSMAddFullExecutor.genres, F.text)
@@ -300,23 +347,41 @@ async def add_genres(
 ) -> None:
     """
     Просит скинуть фото исполнителя.
+
+    Добавляет жанры в FSM.
     """
 
     genres: List[str] = [genre.lower().strip() for genre in message.text.split(".")]
     await state.update_data(genres=genres)
 
     await message.answer(
-        text=f"{telegram_emoji.pencil} Скидывайте фотографию"
-        f" исполнителя или напечатайте любой символ\n\n{messages.CANCEL_TEXT}: Отмена",
-        reply_markup=get_reply_cancel_button(),
+        text=user_messages.ENTER_THE_PHOTO_DEFAULT,
+        reply_markup=get_reply_cancel_button(
+            cancel_button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value,
+        ),
     )
     await state.set_state(FSMAddFullExecutor.photo)
+
+
+@router.message(FSMAddFullExecutor.genres)
+async def add_genres_message(message: Message) -> None:
+    """Отправляет сообщение если были введены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+    await message.answer(
+        text=f"{user_messages.CLICK_UNKNOWN_BUTTON}\n"
+        f"{user_messages.CLICK_CANCEL_BUTTON.format(button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value)}",
+    )
 
 
 @router.message(FSMAddFullExecutor.photo)
 async def add_photo_file_id(message: Message, state: FSMContext, bot: Bot):
     """
     Просит ввести путь до альбомов исполнителя.
+
+    Добавляет фото в FSM.
     """
 
     if message.photo:  # если сообщение является фотографией
@@ -329,15 +394,15 @@ async def add_photo_file_id(message: Message, state: FSMContext, bot: Bot):
         )
 
     await message.answer(
-        text=f"{telegram_emoji.pencil} Введите путь до альбома с исполнителем\n\n"
-        f"Формат имени альбома: {format_album.FORMAT_ALBUM}\n"
-        f"{messages.CANCEL_TEXT}: Отмена",
-        reply_markup=get_reply_cancel_button(),
+        text=user_messages.ENTER_THE_FULL_ALBUM_PATH,
+        reply_markup=get_reply_cancel_button(
+            cancel_button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value,
+        ),
     )
     await state.set_state(FSMAddFullExecutor.path)
 
 
-@router.message(FSMAddFullExecutor.path)
+@router.message(FSMAddFullExecutor.path, F.text)
 async def add_executor_base(
     message: Message,
     state: FSMContext,
@@ -359,6 +424,7 @@ async def add_executor_base(
     genres: List[str] = data.get("genres")
     file_id: str = data.get("file_id")
     file_unique_id: str = data.get("file_unique_id")
+    logging_data: LoggingData = get_loggers(name=admin_settings.NAME_FOR_LOG_FOLDER)
 
     try:  # проверяем данные на валидность
         ExecutorImportDTO(
@@ -367,14 +433,22 @@ async def add_executor_base(
     except ValidationError as err:
         msg: Dict = json.loads(err.json())[0].get("msg")
         await message.answer(
-            text=f"{telegram_emoji.yellow_triangle_with_exclamation_mark} {msg}"
-            "\n\nВведите, снова, путь до альбома с исполнителем\n"
-            f"{messages.CANCEL_TEXT}: Отмена",
-            reply_markup=get_reply_cancel_button(),
+            text=f"{telegram_emoji.yellow_triangle_with_exclamation_mark} {msg}",
+            reply_markup=get_reply_cancel_button(
+                cancel_button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value,
+            ),
+        )
+        await message.answer(
+            text=f"{user_messages.ENTER_THE_FULL_ALBUM_PATH}\n"
+            f"{user_messages.CLICK_CANCEL_BUTTON.format(button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value)}"
         )
         return
 
-    async def get_audio_telegram(audio_path: Path, album_name: str) -> Message:
+    async def get_audio_telegram(
+        audio_path: Path,
+        album_name: str,
+        year: int,
+    ) -> Message:
         """
         Отправляет в телеграм песню и возвращает полученный ответ, для получения
         file_id песни.
@@ -382,7 +456,9 @@ async def add_executor_base(
 
         await bot.send_message(
             chat_id=message.chat.id,
-            text=f"Идет добавление песни {audio_path.stem} в альбом {album_name}",
+            text=user_messages.ADD_SONGS_MESSAGE.format(
+                year=year, title=album_name, song=audio_path.stem
+            ),
         )
         msg: Message = await bot.send_audio(
             chat_id=chat_id,
@@ -391,48 +467,84 @@ async def add_executor_base(
         )
         await bot.send_message(
             chat_id=chat_id,
-            text=f"Альбом {album_name}. Песня {audio_path.stem} добавлена",
+            text=user_messages.ADD_SONGS_COMPLETE.format(
+                year=year, title=album_name, song=audio_path.stem
+            ),
         )
         return msg
 
     # Для отправки сообщений при запросе и избежания спама
+    await state.update_data(processing=True)
     await state.set_state(FSMAddFullExecutor.processing)
     await bot.send_message(
         chat_id=chat_id,
-        text=messages.WAIT_MESSAGE,
-        reply_markup=get_reply_cancel_button(
-            cancel_text=messages.CANCEL_TEXT_UPLOAD_EXECUTOR,
+        text=user_messages.WAIT_MESSAGE,
+        reply_markup=get_buttons_reply_keyboard(
+            buttons=[KeyboardResponse.CANCEL_TEXT_UPLOAD_EXECUTOR]
         ),
-    ),
+    )
 
     # Функция для отслежвания состояние отмены
     update_progress = async_make_update_progress(state=state)
 
-    result: Result = await add_executor_service.import_executor_from_path(
+    result = await ImportExecutorFromPath(
+        uow=UnitOfWork(), logging_data=logging_data
+    ).execute(
         executor_name=executor_name,
         country=country,
-        genres=genres,
         base_path=path,
+        genres=genres,
         file_id=file_id,
         file_unique_id=file_unique_id,
-        get_audio_telegram=get_audio_telegram,
         audio_extensions=bot_settings.AUDIO_EXTENSIONS,
         update_progress=update_progress,
+        album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
+        album_defautl_photo_file_unique_id=bot_settings.ALBUM_DEFAULT_PHOTO_UNIQUE_ID,
+        get_audio_telegram=get_audio_telegram,
     )
+
     await state.clear()
     if result.ok:
-        await message.answer(
-            text=result.data,
-            reply_markup=ReplyKeyboardRemove(),
-        )
+        result_message: str = resolve_message(result.code)
     else:
-        await message.answer(
-            text=result.error.message,
-            reply_markup=ReplyKeyboardRemove(),
-        )
+        result_message: str = resolve_message(result.error.code)
+
+    await message.answer(text=result_message, reply_markup=ReplyKeyboardRemove())
     await bot.send_photo(
         chat_id=message.chat.id,
         reply_markup=get_keyboards_menu_buttons,
         photo=admin_settings.ADMIN_PANEL_PHOTO_FILE_ID,
-        caption=messages.ADMIN_PANEL_TEXT,
+        caption=user_messages.ADMIN_PANEL_CAPTION,
+    )
+
+
+@router.message(FSMAddFullExecutor.path)
+async def add_executor_base_message(message: Message) -> None:
+    """Отправляет сообщение если были введены не те данные."""
+
+    await message.answer(
+        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    )
+    await message.answer(
+        f"{user_messages.CLICK_CANCEL_BUTTON.format(button=KeyboardResponse.ADMIN_CANCEL_BUTTON.value)}",
+    )
+
+
+@router.message(FSMAddFullExecutor.processing)
+async def processing_message(message: Message, state: FSMContext) -> None:
+    """
+    Отправляют сообщение при вводе данных во время обработки запроса или
+    отменяет запрос при нажатии кнопки.
+    """
+
+    if message.text == KeyboardResponse.CANCEL_TEXT_UPLOAD_EXECUTOR.value:
+        await message.answer(
+            text="Запрос на отмену принят..Дождитесь завершения добавления песен в текущий альбом..."
+        )
+
+        await state.update_data(cancel=True)
+        return
+
+    await message.answer(
+        text=f"{KeyboardResponse.CANCEL_TEXT_UPLOAD_EXECUTOR.value}: Отменить скачивание исполнителя"
     )

@@ -37,6 +37,7 @@ from core.logging.api import get_loggers
 
 router: Router = Router(name=__name__)
 
+
 # Добавление альбома
 class FSMAddAlbumML(StatesGroup):
     """FSM для сценария добавления альбома."""
@@ -81,7 +82,8 @@ async def start_add_album(
     callback_data: AddCallbackDataFilters.AddAlbumExecutor,
     state: FSMContext,
 ):
-    """Просит ввести название альбома."""
+    """
+    Просит ввести название альбома."""
 
     await call.message.edit_reply_markup(reply_markup=None)
 
@@ -118,7 +120,11 @@ async def start_add_album(
 
 @router.message(FSMAddAlbumML.title, F.text)
 async def add_title(message: Message, state: FSMContext):
-    """Просит ввести год выхода альбома."""
+    """
+    Просит ввести год выхода альбома.
+
+    Добавляет название альбома в FSM.
+    """
 
     title: str = message.text.strip()
     await state.update_data(title=title)
@@ -130,14 +136,21 @@ async def add_title(message: Message, state: FSMContext):
 async def add_title_message(message: Message):
     """Отправляет сообщение если были введены данные не в том формате."""
 
-    await message.answer(
-        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    message_1: str = user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    message_2: str = user_messages.CLICK_CANCEL_BUTTON.format(
+        button=KeyboardResponse.USER_CANCEL_BUTTON.value
     )
+    await message.answer(message_1)
+    await message.answer(message_2)
 
 
 @router.message(FSMAddAlbumML.year, F.text)
 async def add_year(message: Message, state: FSMContext):
-    "Просит скинуть фото альбома."
+    """
+    Просит скинуть фото альбома.
+
+    Добавляет год выхода альбома в FSM.
+    """
 
     result_year: Result = check_number_is_positivity(number=message.text)
     if not result_year.ok:
@@ -159,22 +172,28 @@ async def add_year(message: Message, state: FSMContext):
 async def add_year_message(message: Message):
     """Отправляет сообщение если были введены данные не в том формате."""
 
-    await message.answer(
-        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    message_1: str = user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="текст")
+    message_2: str = user_messages.CLICK_CANCEL_BUTTON.format(
+        button=KeyboardResponse.USER_CANCEL_BUTTON.value
     )
+    await message.answer(message_1)
+    await message.answer(message_2)
 
 
-@router.message(FSMAddAlbumML.photo, F.photo)
-@router.message(FSMAddAlbumML.photo, F.text)
+@router.message(FSMAddAlbumML.photo)
 async def add_photo(message: Message, state: FSMContext):
-    """Добавляет фото в FSM."""
+    """
+    Просит скинуть песни для добавления в альбом.
 
-    if message.text:
-        photo_file_id = None
-        photo_file_unique_id = None
+    Добавляет фото в FSM.
+    """
+
     if message.photo:
         photo_file_id: str = message.photo[-1].file_id
         photo_file_unique_id: str = message.photo[-1].file_unique_id
+    else:
+        photo_file_id = None
+        photo_file_unique_id = None
 
     await state.update_data(photo_file_id=photo_file_id)
     await state.update_data(photo_file_unique_id=photo_file_unique_id)
@@ -242,9 +261,12 @@ async def confirm_add_songs(message: Message, state: FSMContext):
 async def add_songs_message(message: Message):
     """Отправляет сообщение если были введены данные не в том формате."""
 
-    await message.answer(
-        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="аудио")
+    message_1: str = user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="аудио")
+    message_2: str = user_messages.CLICK_CANCEL_BUTTON.format(
+        button=KeyboardResponse.USER_CANCEL_BUTTON.value
     )
+    await message.answer(message_1)
+    await message.answer(message_2)
 
 
 @router.message(FSMAddAlbumML.processing, F.text == user_messages.CONFIRMATION_TEXT)
@@ -387,7 +409,7 @@ async def start_add_songs_album(
     await call.message.answer(
         text=user_messages.DROP_THE_SONG,
         reply_markup=get_reply_cancel_button(
-            optional_button_text=user_messages.CONFIRMATION_TEXT
+            optional_button_text=user_messages.CONFIRMATION_TEXT,
         ),
     )
 
@@ -446,11 +468,12 @@ async def confirm_add_songs_album(message: Message, state: FSMContext):
 async def add_songs_album_message(message: Message):
     """Отправляет сообщение если были введены данные не в том формате."""
 
-    await message.answer(
-        text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="аудио")
+    message_1: str = user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(format="аудио")
+    message_2: str = user_messages.CLICK_CANCEL_BUTTON.format(
+        button=KeyboardResponse.USER_CANCEL_BUTTON.value
     )
-
-    await message.answer(text=user_messages.DROP_THE_SONG)
+    await message.answer(message_1)
+    await message.answer(message_2)
 
 
 @router.message(
@@ -514,7 +537,6 @@ async def end_songs_album_message(message: Message):
 
     await message.answer(
         text=user_messages.THE_DATA_MUST_BE_IN_THE_FORMAT.format(
-            format=user_messages.CONFIRMATION_TEXT
+            format=f"{user_messages.CONFIRMATION_TEXT}\n{KeyboardResponse.USER_CANCEL_BUTTON.value}"
         )
     )
-    await message.answer(text=user_messages.CLICK_CANCEL_BUTTON)

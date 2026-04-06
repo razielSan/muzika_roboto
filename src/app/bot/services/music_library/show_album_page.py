@@ -82,6 +82,7 @@ class ShowAlbumPageCallbackService:
                 if album.photo_file_id
                 else album_default_photo_file_id
             )
+
             keyboard = build_album_keyboards(
                 songs=album.songs,
                 album=album,

@@ -257,7 +257,7 @@ def show_executor_user(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )
@@ -305,7 +305,7 @@ def show_executor_global(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )
@@ -574,7 +574,6 @@ def show_album_user(
             ).pack(),
         )
     )
-    print(album_position)
     inline_kb.row(
         InlineKeyboardButton(
             text=KeyboardResponse.BACK_TO_ALBUMS,
@@ -589,7 +588,7 @@ def show_album_user(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )
@@ -638,7 +637,7 @@ def show_album_global(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )
@@ -707,7 +706,7 @@ def get_buttons_for_song_collection_empty_user(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )
@@ -794,7 +793,7 @@ def get_buttons_for_song_collection_user(
     if is_admin:
         inline_kb.row(
             InlineKeyboardButton(
-                text=KeyboardResponse.BACK_TO_THE_USER_PANEL,
+                text=KeyboardResponse.BACK_TO_THE_ADMIN_PANEL,
                 callback_data=BackAdminMenuCallback().pack(),
             )
         )

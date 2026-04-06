@@ -18,13 +18,16 @@ def get_information_executor(
     return data
 
 
-def get_information_album(
-    title: str,
-    year: int,
-    number_of_songs: int
-):
+def get_information_album(title: str, year: int, number_of_songs: int):
     return (
         f"🎸 Год: {year}\n"
         f"🎸 Название: {title}\n"
         f"🎸 Количестов песен: {number_of_songs}"
+    )
+
+
+def get_info_photo(file_id: str, file_unique_id: str):
+    return (
+        f"🎆 Информация о фотографии:\n\n🎆 file_id: {file_id}\n\n"
+        f"🎆 file_unique_id: {file_unique_id}"
     )
