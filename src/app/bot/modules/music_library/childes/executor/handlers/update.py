@@ -38,7 +38,7 @@ from application.use_cases.db.music_library.update.update_title_album import (
 from application.use_cases.db.music_library.update.update_song_title import (
     UpdateSongTitle,
 )
-from domain.entities.response import LibraryMode, LibraryRole
+from domain.entities.response import LibraryMode, LibraryRole, ExecutorScope
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
@@ -644,11 +644,22 @@ async def end_update_photo_album(
     )
     await state.clear()
     if result.ok:
+        is_global_executor: bool = state_data.is_global_executor
+        is_admin: bool = state_data.is_admin
+        user_id: Optional[int] = state_data.user_id
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        executor_scrope: LibraryMode.executor_scope = (
+            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        )
+
         result_message: str = resolve_message(result.code)
 
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
+            mode=LibraryMode(
+                user_id=user_id, role=role, executor_scope=executor_scrope
+            ),
             current_page_executor=state_data.current_page_executor,
             message=result_message,
             logging_data=logging_data,
@@ -659,10 +670,7 @@ async def end_update_photo_album(
             song_position=0,
             album_position=state_data.album_position,
             executor_id=state_data.executor_id,
-            user_id=state_data.user_id,
             album_id=state_data.album_id,
-            is_global_executor=state_data.is_global_executor,
-            is_admin=state_data.is_admin,
         )
 
     if not result.ok:
@@ -788,10 +796,22 @@ async def end_update_year_album(
     )
     await state.clear()
     if result.ok:
+        is_global_executor: bool = state_data.is_global_executor
+        is_admin: bool = state_data.is_admin
+        user_id: Optional[int] = state_data.user_id
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        executor_scrope: LibraryMode.executor_scope = (
+            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        )
         result_message: str = resolve_message(code=result.code)
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+                executor_scope=executor_scrope,
+            ),
             message=result_message,
             uow=UnitOfWork,
             logging_data=logging_data,
@@ -801,11 +821,8 @@ async def end_update_year_album(
             get_information_album=get_information_album,
             album_id=state_data.album_id,
             executor_id=state_data.executor_id,
-            user_id=state_data.user_id,
             album_position=state_data.album_position,
             song_position=0,
-            is_global_executor=state_data.is_global_executor,
-            is_admin=state_data.is_admin,
         )
         return
     if not result.ok:
@@ -925,10 +942,22 @@ async def end_update_title_album(
     )
     if result.ok:
         await state.clear()
+        is_global_executor: bool = state_data.is_global_executor
+        is_admin: bool = state_data.is_admin
+        user_id: Optional[int] = state_data.user_id
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        executor_scrope: LibraryMode.executor_scope = (
+            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        )
         result_message: str = resolve_message(code=result.code)
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+                executor_scope=executor_scrope,
+            ),
             message=result_message,
             uow=UnitOfWork,
             logging_data=logging_data,
@@ -938,11 +967,8 @@ async def end_update_title_album(
             get_information_album=get_information_album,
             album_id=state_data.album_id,
             executor_id=state_data.executor_id,
-            user_id=state_data.user_id,
             album_position=state_data.album_position,
             song_position=0,
-            is_global_executor=state_data.is_global_executor,
-            is_admin=state_data.is_admin,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
@@ -1104,11 +1130,24 @@ async def end_update_song_title(
             return
 
         await state.clear()
+
+        is_global_executor: bool = state_data.is_global_executor
+        is_admin: bool = state_data.is_admin
+        user_id: Optional[int] = state_data.user_id
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        executor_scrope: LibraryMode.executor_scope = (
+            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        )
         result_message: str = resolve_message(code=result.code)
         result_message: str = result_message.format(title=title)
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
+            mode=LibraryMode(
+                user_id=user_id,
+                executor_scope=executor_scrope,
+                role=role,
+            ),
             message=result_message,
             uow=UnitOfWork,
             logging_data=logging_data,
@@ -1118,11 +1157,8 @@ async def end_update_song_title(
             get_information_album=get_information_album,
             album_id=state_data.album_id,
             executor_id=state_data.executor_id,
-            user_id=state_data.user_id,
             album_position=state_data.album_position,
             song_position=0,
-            is_global_executor=state_data.is_global_executor,
-            is_admin=state_data.is_admin,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
