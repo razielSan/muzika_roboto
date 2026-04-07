@@ -8,6 +8,7 @@ from app.bot.services.music_library.show_album_page import (
     ShowAlbumPageCallbackService,
 )
 from domain.entities.db.uow import AbstractUnitOfWork
+from domain.entities.response import LibraryMode
 from core.response.response_data import LoggingData
 
 
@@ -23,11 +24,9 @@ async def return_to_album_page(
     get_information_album: Callable,
     album_id: int,
     executor_id: int,
-    user_id: Optional[int],
+    mode: LibraryMode,
     album_position: int,
     song_position: int,
-    is_global_executor: bool,
-    is_admin: bool,
 ):
 
     await bot.send_message(
@@ -46,9 +45,7 @@ async def return_to_album_page(
         album_position=album_position,
         current_page_executor=current_page_executor,
         song_position=song_position,
-        user_id=user_id,
-        is_global_executor=is_global_executor,
-        is_admin=is_admin,
+        mode=mode,
     )
 
 
@@ -62,11 +59,9 @@ async def return_to_album_page_callback(
     get_information_album: Callable,
     album_id: int,
     executor_id: int,
-    user_id: Optional[int],
+    mode: LibraryMode,
     album_position: int,
     song_position: int,
-    is_global_executor: bool,
-    is_admin: bool = False,
     message: Optional[str] = None,
 ):
     if message:
@@ -80,11 +75,9 @@ async def return_to_album_page_callback(
         album_default_photo_file_id=album_default_photo_file_id,
         album_id=album_id,
         executor_id=executor_id,
-        user_id=user_id,
         limit_songs=limit_songs,
+        mode=mode,
         song_position=song_position,
         album_position=album_position,
         current_page_executor=current_page_executor,
-        is_global_executor=is_global_executor,
-        is_admin=is_admin,
     )
