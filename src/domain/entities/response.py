@@ -101,10 +101,16 @@ class LibraryRole(Enum):
     USER: str = "user"
 
 
+class ExecutorScope(Enum):
+    GLOBAL: str = "global"
+    USER: str = "user"
+
+
 @dataclass
 class LibraryMode:
-    user_id: Optional[None]
+    user_id: Optional[int]
     role: LibraryRole
+    executor_scope: Optional[ExecutorScope] = None
 
     @property
     def global_library(self):
@@ -117,6 +123,10 @@ class LibraryMode:
     @property
     def is_admin(self):
         return self.role == LibraryRole.ADMIN
+    
+    @property
+    def is_global_executor(self):
+        return self.executor_scope == ExecutorScope.GLOBAL
 
 
 @dataclass
