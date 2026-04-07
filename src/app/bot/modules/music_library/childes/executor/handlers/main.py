@@ -13,7 +13,7 @@ from app.bot.modules.music_library.childes.executor.keyboards.inline import (
 )
 from app.bot.services.music_library.show_album_page import ShowAlbumPageCallbackService
 from app.bot.services.music_library.show_song import ShowSongService
-from domain.entities.response import LibraryMode, LibraryRole
+from domain.entities.response import LibraryMode, LibraryRole, ExecutorScope
 from infrastructure.aiogram.filters import (
     ShowAlbumExecutor,
     PlaySongsAlbums,
@@ -114,19 +114,24 @@ async def show_album_executor(
 ):
     """Показывает альбом исполнителя с песнями."""
 
-    user_id = callback_data.user_id
     executor_id = callback_data.executor_id
     current_page_executor = callback_data.current_page_executor
     album_id: int = callback_data.album_id
     album_position: int = callback_data.album_position
-    is_global_executor: bool = callback_data.is_global_executor
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
+
+    user_id = callback_data.user_id
+    is_global_executor: bool = callback_data.is_global_executor
     is_admin: bool = callback_data.is_admin
+
+    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+    executor_scrope: LibraryMode.executor_scope = (
+        ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+    )
 
     await ShowAlbumPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
-        user_id=user_id,
         get_information_album=get_information_album,
         album_id=album_id,
         executor_id=executor_id,
@@ -134,9 +139,12 @@ async def show_album_executor(
         song_position=0,
         current_page_executor=current_page_executor,
         album_position=album_position,
-        is_global_executor=is_global_executor,
+        mode=LibraryMode(
+            user_id=user_id,
+            role=role,
+            executor_scope=executor_scrope
+        ),
         album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
-        is_admin=is_admin,
     )
 
 
