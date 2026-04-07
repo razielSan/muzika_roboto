@@ -7,6 +7,7 @@ from application.use_cases.db.music_library.get.get_album_with_songs import (
     GetAlbumWithSongs,
 )
 from domain.entities.db.uow import AbstractUnitOfWork
+from domain.entities.response import LibraryMode
 from infrastructure.aiogram.keyboards.inline import (
     show_album_global,
     show_album_user,
@@ -33,13 +34,11 @@ class ShowAlbumPageCallbackService:
         album_default_photo_file_id: str,
         album_id: int,
         executor_id: int,
-        user_id: Union[int, None],
         limit_songs: int,
+        mode: LibraryMode,
         song_position=0,
         album_position: int = 0,
         current_page_executor=1,
-        is_global_executor=True,
-        is_admin=False,
     ) -> Result:
         """
         Application service для callback сценария показа альбома с песнями.
@@ -56,12 +55,12 @@ class ShowAlbumPageCallbackService:
         response_album = await GetAlbumWithSongs(
             uow=self.uow, logging_data=self.logging_data
         ).execute(
-            user_id=user_id,
+            user_id=mode.user_id,
             executor_id=executor_id,
             album_id=album_id,
             current_page_executor=current_page_executor,
             album_position=album_position,
-            is_global_executor=is_global_executor,
+            is_global_executor=mode.is_global_executor,
         )
         if response_album.ok:
             if response_album.empty:
@@ -88,9 +87,7 @@ class ShowAlbumPageCallbackService:
                 album=album,
                 song_position=song_position,
                 limit_songs=limit_songs,
-                user_id=user_id,
-                is_admin=is_admin,
-                is_global_executor=is_global_executor,
+                mode=mode,
             )
             await self.call.message.edit_media(
                 media=InputMediaPhoto(caption=info_album, media=photo_file_id),
@@ -121,13 +118,11 @@ class ShowAlbumPageService:
         album_default_photo_file_id: str,
         album_id: int,
         executor_id: int,
-        user_id: Union[int, None],
         limit_songs: int,
+        mode: LibraryMode,
         song_position=0,
         album_position: int = 0,
         current_page_executor=1,
-        is_global_executor=True,
-        is_admin=False,
     ) -> Result:
         """
         Application service для сценария показа альбома с песнями.
@@ -144,12 +139,12 @@ class ShowAlbumPageService:
         response_album = await GetAlbumWithSongs(
             uow=self.uow, logging_data=self.logging_data
         ).execute(
-            user_id=user_id,
+            user_id=mode.user_id,
             executor_id=executor_id,
             album_id=album_id,
             current_page_executor=current_page_executor,
             album_position=album_position,
-            is_global_executor=is_global_executor,
+            is_global_executor=mode.is_global_executor,
         )
         if response_album.ok:
             if response_album.empty:
@@ -175,9 +170,7 @@ class ShowAlbumPageService:
                 album=album,
                 song_position=song_position,
                 limit_songs=limit_songs,
-                user_id=user_id,
-                is_admin=is_admin,
-                is_global_executor=is_global_executor,
+                mode=mode,
             )
             await self.bot.send_photo(
                 caption=info_album,
