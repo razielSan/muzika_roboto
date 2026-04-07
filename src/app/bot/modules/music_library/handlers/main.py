@@ -29,7 +29,7 @@ from domain.entities.response import (
     UserCollectionSongsResponse,
 )
 from domain.entities.db.models.user import User as UserDomain
-from domain.entities.response import LibraryMode, LibraryRole
+from domain.entities.response import LibraryMode, LibraryRole, ExecutorScope
 from infrastructure.aiogram.messages import user_messages
 from infrastructure.aiogram.filters import (
     BackMenuUserPanel,
@@ -157,14 +157,23 @@ async def music_library_cancel_handler(
         current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
         album_id: int = data.get(FSMFlags.ALBUM_ID)
         executor_id: int = data.get(FSMFlags.EXECUTOR_ID)
-        is_global_executor: bool = data.get(FSMFlags.IS_GLOBAL_EXECUTOR)
         album_position: int = data.get(FSMFlags.ALBUM_POSITION)
 
+        is_global_executor: bool = data.get(FSMFlags.IS_GLOBAL_EXECUTOR)
+        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        executor_scope: LibraryMode.executor_scope = (
+            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        )
+
         await return_to_album_page(
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+                executor_scope=executor_scope,
+            ),
             bot=bot,
             chat_id=chat_id,
             message=user_messages.USER_CANCEL_MESSAGE,
-            user_id=user_id,
             album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
             logging_data=logging_data,
             uow=UnitOfWork,
@@ -174,9 +183,7 @@ async def music_library_cancel_handler(
             limit_songs=LIMIT_SONGS,
             album_id=album_id,
             executor_id=executor_id,
-            is_global_executor=is_global_executor,
             album_position=album_position,
-            is_admin=is_admin,
         )
         return
     if search_executor and is_admin:
@@ -302,9 +309,14 @@ async def get_album_page(
     album_position: int = callback_data.album_position
     current_page_executor: int = callback_data.current_page_executor
     album_id: int = callback_data.album_id
+
     is_global_executor: bool = callback_data.is_global_executor
     executor_id: int = callback_data.executor_id
     is_admin: bool = callback_data.is_admin
+    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+    executor_scrope: LibraryMode.executor_scope = (
+        ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+    )
 
     data: Dict = await state.get_data()
     deleting_songs: bool = data.get(FSMFlags.DELETING_SONGS)
@@ -321,7 +333,11 @@ async def get_album_page(
         call=call,
         uow=UnitOfWork,
         logging_data=logging_data,
-        user_id=user_id,
+        mode=LibraryMode(
+            user_id=user_id,
+            role=role,
+            executor_scope=executor_scrope,
+        ),
         album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
         album_position=album_position,
         album_id=album_id,
@@ -329,8 +345,6 @@ async def get_album_page(
         get_information_album=get_information_album,
         executor_id=executor_id,
         song_position=0,
-        is_global_executor=is_global_executor,
         message=user_messages.BACK_ALBUM_PAGE,
         limit_songs=LIMIT_SONGS,
-        is_admin=is_admin,
     )
