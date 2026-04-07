@@ -16,7 +16,12 @@ from app.bot.modules.music_library.utils.music_library import (
 from app.bot.helpers.album import return_to_album_page
 from application.use_cases.db.music_library.add_album import AddAlbumExecutor
 from application.use_cases.db.music_library.add_songs_album import AddSongsAlbum
-from domain.entities.response import SongResponse, LibraryMode, LibraryRole
+from domain.entities.response import (
+    SongResponse,
+    LibraryMode,
+    LibraryRole,
+    ExecutorScope,
+)
 from infrastructure.aiogram.filters import AddCallbackDataFilters
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.aiogram.messages import (
@@ -499,6 +504,14 @@ async def end_songs_album(
         songs=state_data.songs,
     )
 
+    is_admin: bool = state_data.is_admin
+    user_id: Optional[int] = state_data.user_id
+    is_global_executor: bool = state_data.is_global_executor
+    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+    executor_scrope: LibraryMode.executor_scope = (
+        ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+    )
+
     await state.clear()
     if result.ok:
         result_message: str = resolve_message(code=result.code)
@@ -514,11 +527,13 @@ async def end_songs_album(
             get_information_album=get_information_album,
             album_id=state_data.album_id,
             executor_id=state_data.executor_id,
+            mode=LibraryMode(
+                user_id=user_id,
+                executor_scope=executor_scrope,
+                role=role,
+            ),
             song_position=0,
-            is_global_executor=state_data.is_global_executor,
             album_position=state_data.album_position,
-            user_id=state_data.user_id,
-            is_admin=state_data.is_admin,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
