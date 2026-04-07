@@ -25,6 +25,7 @@ from domain.entities.response import (
     AlbumPageResponse,
     LibraryMode,
     LibraryRole,
+    ExecutorScope,
 )
 from infrastructure.aiogram.filters import DeleteCallbackDataFilters
 from infrastructure.aiogram.messages import (
@@ -509,6 +510,13 @@ async def end_delete_songs_album(
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
+    user_id = delete_state_data.user_id
+    is_global_executor = delete_state_data.is_global_executor
+    is_admin = delete_state_data.is_admin
+    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+    executor_scrope: LibraryMode.executor_scope = (
+        ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+    )
 
     result: Result = await DeleteSongsAlbum(
         uow=UnitOfWork(), logging_data=logging_data
@@ -527,17 +535,20 @@ async def end_delete_songs_album(
             call=call,
             uow=UnitOfWork,
             logging_data=logging_data,
+            mode=LibraryMode(
+                user_id=user_id,
+                role=role,
+                executor_scope=executor_scrope,
+            ),
             current_page_executor=delete_state_data.current_page_executor,
             album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
             limit_songs=LIMIT_SONGS,
             get_information_album=get_information_album,
             album_id=delete_state_data.album_id,
             executor_id=delete_state_data.executor_id,
-            user_id=delete_state_data.user_id,
             album_position=delete_state_data.album_position,
             song_position=0,
-            is_global_executor=delete_state_data.is_global_executor,
-            is_admin=delete_state_data.is_admin,
+            message=result_message,
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
@@ -554,7 +565,7 @@ async def end_delete_songs_album(
 @router.message(FSMDeleteSongsAlbumML.state_data)
 async def end_delete_songs_album_message(message: Message):
     """Отправляет сообщение при вводе дааных при сценарии удаления песен."""
-    
+
     await message.answer(text=user_messages.CLICK_ONE_OF_THE_BUTTONS_ABOVE)
     await message.answer(
         text=user_messages.CLICK_CANCEL_BUTTON.format(
