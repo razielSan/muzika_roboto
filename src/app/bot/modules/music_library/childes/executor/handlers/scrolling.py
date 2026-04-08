@@ -45,7 +45,7 @@ async def scrolling_albums_executor(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
     is_admin: bool = callback_data.is_admin
-    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+    role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
 
     await ShowExecutorPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
@@ -79,7 +79,7 @@ async def scrolling_global_executors(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
 
-    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+    role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
 
     await ShowExecutorPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
@@ -111,12 +111,12 @@ async def scrolling_songs_album(
     album_id: int = callback_data.album_id
     position: int = callback_data.position + callback_data.offset
 
-    user_id: Optional[int] = callback_data.user_id
-    is_global_executor: bool = callback_data.is_global_executor
-    is_admin: bool = callback_data.is_admin
-    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
-    executor_scrope: LibraryMode.executor_scope = (
-        ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+    mode: LibraryMode = LibraryMode(
+        user_id=callback_data.user_id,
+        role=LibraryRole.ADMIN if callback_data.is_admin else LibraryRole.USER,
+        executor_scope=ExecutorScope.GLOBAL
+        if callback_data.is_global_executor
+        else ExecutorScope.USER,
     )
 
     logging_data: LoggingData = get_loggers(
@@ -126,11 +126,7 @@ async def scrolling_songs_album(
     await ShowAlbumPageCallbackService(
         uow=UnitOfWork(), logging_data=logging_data, call=call
     ).execute(
-        mode=LibraryMode(
-            user_id=user_id,
-            role=role,
-            executor_scope=executor_scrope,
-        ),
+        mode=mode,
         get_information_album=get_information_album,
         album_id=album_id,
         executor_id=executor_id,

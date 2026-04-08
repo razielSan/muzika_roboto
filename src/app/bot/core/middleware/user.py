@@ -23,12 +23,21 @@ class UserMiddleware(BaseMiddleware):
         telegram_id: int = event.from_user.id
 
         async with UnitOfWork() as uwo:
-            user: UserDomain = await uwo.users.get_user_by_telegram(telegram=telegram_id)
+            user: UserDomain = await uwo.users.get_user_by_telegram(
+                telegram=telegram_id
+            )
             if not user:  # если пользователь не найден
-                user = await uwo.users.create_user()
+                name: str = event.from_user.first_name
+                user = await uwo.users.create_user(
+                    name=name,
+                    telegram=telegram_id,
+                )
                 state: FSMContext = data.get("state")
+                
                 await state.clear()
-                error_message: str = resolve_message(code=NotFoundCode.USER_NOT_FOUND.name)
+                error_message: str = resolve_message(
+                    code=NotFoundCode.USER_NOT_FOUND.name
+                )
                 if hasattr(event, "message"):  # если каллбэк событие
                     return await event.message.answer(text=error_message)
                 else:

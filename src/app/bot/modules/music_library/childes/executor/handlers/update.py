@@ -142,7 +142,7 @@ async def end_update_photo_executor(
     )
     if result_update_photo_executor.ok:
         result_message: str = resolve_message(code=result_update_photo_executor.code)
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             chat_id=chat_id,
             bot=bot,
@@ -263,7 +263,7 @@ async def end_update_country_executor(
     )
     if result_update_country_executor.ok:
         await state.clear()
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         result_message: str = resolve_message(code=result_update_country_executor.code)
         await return_to_executor_page(
             chat_id=chat_id,
@@ -382,7 +382,7 @@ async def end_update_genres_executor(
     )
     if result_update_country_executor.ok:
         result_message: str = resolve_message(code=result_update_country_executor.code)
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             chat_id=chat_id,
             bot=bot,
@@ -505,7 +505,7 @@ async def end_update_name_excutor(
         await state.clear()
         result_message: str = resolve_message(code=result_update_name_executor.code)
         current_page_executor: int = result_update_name_executor.data
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             chat_id=chat_id,
             bot=bot,
@@ -644,12 +644,12 @@ async def end_update_photo_album(
     )
     await state.clear()
     if result.ok:
-        is_global_executor: bool = state_data.is_global_executor
-        is_admin: bool = state_data.is_admin
-        user_id: Optional[int] = state_data.user_id
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
-        executor_scrope: LibraryMode.executor_scope = (
-            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        mode: LibraryMode = LibraryMode(
+            user_id=state_data.user_id,
+            role=LibraryRole.ADMIN if state_data.is_admin else LibraryRole.USER,
+            executor_scope=ExecutorScope.GLOBAL
+            if state_data.is_global_executor
+            else ExecutorScope.USER,
         )
 
         result_message: str = resolve_message(result.code)
@@ -657,9 +657,7 @@ async def end_update_photo_album(
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
-            mode=LibraryMode(
-                user_id=user_id, role=role, executor_scope=executor_scrope
-            ),
+            mode=mode,
             current_page_executor=state_data.current_page_executor,
             message=result_message,
             logging_data=logging_data,
@@ -796,22 +794,18 @@ async def end_update_year_album(
     )
     await state.clear()
     if result.ok:
-        is_global_executor: bool = state_data.is_global_executor
-        is_admin: bool = state_data.is_admin
-        user_id: Optional[int] = state_data.user_id
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
-        executor_scrope: LibraryMode.executor_scope = (
-            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        mode: LibraryMode = LibraryMode(
+            user_id=state_data.user_id,
+            role=LibraryRole.ADMIN if state_data.is_admin else LibraryRole.USER,
+            executor_scope=ExecutorScope.GLOBAL
+            if state_data.is_global_executor
+            else ExecutorScope.USER,
         )
         result_message: str = resolve_message(code=result.code)
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
-            mode=LibraryMode(
-                user_id=user_id,
-                role=role,
-                executor_scope=executor_scrope,
-            ),
+            mode=mode,
             message=result_message,
             uow=UnitOfWork,
             logging_data=logging_data,
@@ -942,22 +936,18 @@ async def end_update_title_album(
     )
     if result.ok:
         await state.clear()
-        is_global_executor: bool = state_data.is_global_executor
-        is_admin: bool = state_data.is_admin
-        user_id: Optional[int] = state_data.user_id
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
-        executor_scrope: LibraryMode.executor_scope = (
-            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        mode: LibraryMode = LibraryMode(
+            user_id=state_data.user_id,
+            role=LibraryRole.ADMIN if state_data.is_admin else LibraryRole.USER,
+            executor_scope=ExecutorScope.GLOBAL
+            if state_data.is_global_executor
+            else ExecutorScope.USER,
         )
         result_message: str = resolve_message(code=result.code)
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
-            mode=LibraryMode(
-                user_id=user_id,
-                role=role,
-                executor_scope=executor_scrope,
-            ),
+            mode=mode,
             message=result_message,
             uow=UnitOfWork,
             logging_data=logging_data,
@@ -1131,23 +1121,19 @@ async def end_update_song_title(
 
         await state.clear()
 
-        is_global_executor: bool = state_data.is_global_executor
-        is_admin: bool = state_data.is_admin
-        user_id: Optional[int] = state_data.user_id
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
-        executor_scrope: LibraryMode.executor_scope = (
-            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        mode: LibraryMode = LibraryMode(
+            user_id=state_data.user_id,
+            role=LibraryRole.ADMIN if state_data.is_admin else LibraryRole.USER,
+            executor_scope=ExecutorScope.GLOBAL
+            if state_data.is_global_executor
+            else ExecutorScope.USER,
         )
         result_message: str = resolve_message(code=result.code)
         result_message: str = result_message.format(title=title)
         await return_to_album_page(
             chat_id=chat_id,
             bot=bot,
-            mode=LibraryMode(
-                user_id=user_id,
-                executor_scope=executor_scrope,
-                role=role,
-            ),
+            mode=mode,
             message=result_message,
             uow=UnitOfWork,
             logging_data=logging_data,

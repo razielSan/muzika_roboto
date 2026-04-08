@@ -125,13 +125,13 @@ async def music_library_cancel_handler(
             return
 
     if music_library_executor:  # возращает на страницу исполнителя
-        role: LibraryMode.role = LibraryRole.USER
+        role: LibraryRole = LibraryRole.USER
         if is_admin:
-            role: LibraryMode.role = LibraryRole.ADMIN
+            role: LibraryRole = LibraryRole.ADMIN
             user_id = None
 
         current_page_executor: int = data.get(FSMFlags.CURRENT_PAGE_EXECUTOR)
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             chat_id=chat_id,
             current_page_executor=current_page_executor,
@@ -160,17 +160,16 @@ async def music_library_cancel_handler(
         album_position: int = data.get(FSMFlags.ALBUM_POSITION)
 
         is_global_executor: bool = data.get(FSMFlags.IS_GLOBAL_EXECUTOR)
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
-        executor_scope: LibraryMode.executor_scope = (
-            ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+        mode: LibraryMode = LibraryMode(
+            user_id=user_id,
+            role=LibraryRole.ADMIN if is_admin else LibraryRole.USER,
+            executor_scope=ExecutorScope.GLOBALif
+            if is_global_executor
+            else ExecutorScope.USER,
         )
 
         await return_to_album_page(
-            mode=LibraryMode(
-                user_id=user_id,
-                role=role,
-                executor_scope=executor_scope,
-            ),
+            mode=mode,
             bot=bot,
             chat_id=chat_id,
             message=user_messages.USER_CANCEL_MESSAGE,
@@ -305,17 +304,18 @@ async def get_album_page(
     """Сценария для альбома с песнями при нажатии инлайн-кнопки возврата."""
 
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-    user_id: Optional[int] = callback_data.user_id
     album_position: int = callback_data.album_position
     current_page_executor: int = callback_data.current_page_executor
     album_id: int = callback_data.album_id
-
-    is_global_executor: bool = callback_data.is_global_executor
+    call.from_user.first_name
     executor_id: int = callback_data.executor_id
-    is_admin: bool = callback_data.is_admin
-    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
-    executor_scrope: LibraryMode.executor_scope = (
-        ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+
+    mode: LibraryMode = LibraryMode(
+        user_id=callback_data.user_id,
+        role=LibraryRole.ADMIN if callback_data.is_admin else LibraryRole.USER,
+        executor_scope=ExecutorScope.GLOBAL
+        if callback_data.is_global_executor
+        else ExecutorScope.USER,
     )
 
     data: Dict = await state.get_data()
@@ -333,11 +333,7 @@ async def get_album_page(
         call=call,
         uow=UnitOfWork,
         logging_data=logging_data,
-        mode=LibraryMode(
-            user_id=user_id,
-            role=role,
-            executor_scope=executor_scrope,
-        ),
+        mode=mode,
         album_default_photo_file_id=bot_settings.ALBUM_DEFAULT_PHOTO_FILE_ID,
         album_position=album_position,
         album_id=album_id,

@@ -303,7 +303,7 @@ async def end_add_album(
     if result_add_album.ok:
         await state.clear()
         result_message: str = resolve_message(code=result_add_album.code)
-        role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
+        role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
         await return_to_executor_page(
             bot=bot,
             uow=UnitOfWork,
@@ -504,12 +504,12 @@ async def end_songs_album(
         songs=state_data.songs,
     )
 
-    is_admin: bool = state_data.is_admin
-    user_id: Optional[int] = state_data.user_id
-    is_global_executor: bool = state_data.is_global_executor
-    role: LibraryMode.role = LibraryRole.ADMIN if is_admin else LibraryRole.USER
-    executor_scrope: LibraryMode.executor_scope = (
-        ExecutorScope.GLOBAL if is_global_executor else ExecutorScope.USER
+    mode: LibraryMode = LibraryMode(
+        user_id=state_data.user_id,
+        role=LibraryRole.ADMIN if state_data.is_admin else LibraryRole.USER,
+        executor_scope=ExecutorScope.GLOBAL
+        if state_data.is_global_executor
+        else ExecutorScope.USER,
     )
 
     await state.clear()
@@ -527,11 +527,7 @@ async def end_songs_album(
             get_information_album=get_information_album,
             album_id=state_data.album_id,
             executor_id=state_data.executor_id,
-            mode=LibraryMode(
-                user_id=user_id,
-                executor_scope=executor_scrope,
-                role=role,
-            ),
+            mode=mode,
             song_position=0,
             album_position=state_data.album_position,
         )

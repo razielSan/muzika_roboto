@@ -110,7 +110,7 @@ class ExecutorScope(Enum):
 class LibraryMode:
     user_id: Optional[int]
     role: LibraryRole
-    executor_scope: Optional[ExecutorScope] = None
+    executor_scope: Optional[ExecutorScope] = ExecutorScope.GLOBAL
 
     @property
     def global_library(self):
@@ -123,7 +123,7 @@ class LibraryMode:
     @property
     def is_admin(self):
         return self.role == LibraryRole.ADMIN
-    
+
     @property
     def is_global_executor(self):
         return self.executor_scope == ExecutorScope.GLOBAL
