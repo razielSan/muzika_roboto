@@ -1,11 +1,10 @@
-from typing import List, Optional, Callable, Set, Awaitable
+from typing import List, Callable, Set, Awaitable
 from pathlib import Path
 
 from aiogram.types import Message
 
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.entities.response import SongResponse
-from domain.entities.db.models.album import Album as AlbumDomain
 from domain.errors.error_code import ErorrCode, SuccessCode
 from infrastructure.utils.parsed import parse_album
 from core.error_handlers.decorator import safe_async_execution

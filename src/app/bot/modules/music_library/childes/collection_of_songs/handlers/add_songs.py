@@ -27,6 +27,7 @@ from infrastructure.aiogram.messages import (
     LIMIT_COLLECTION_SONGS,
     resolve_message,
 )
+from infrastructure.db.db_helper import db_helper
 from core.response.messages import messages
 from core.logging.api import get_loggers
 from core.response.response_data import Result, LoggingData
@@ -173,7 +174,7 @@ async def final_add_collection_songs(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_add_song: Result = await AddSongsToCollectionSongs(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(collection_songs=songs, user_id=user.id)
 
     await state.clear()
@@ -181,7 +182,7 @@ async def final_add_collection_songs(
         msg_add_song: str = resolve_message(code=result_add_song.code)
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
-            uow=UnitOfWork(),
+            uow=UnitOfWork(session_factory=db_helper.session),
         ).execute(user=user)
 
         if result.ok:

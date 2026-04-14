@@ -7,6 +7,7 @@ from app.bot.services.music_library.show_executor_page import (
     ShowExecutorPageService,
     ShowExecutorPageCallbackService,
 )
+from infrastructure.db.db_helper import db_helper
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.entities.response import LibraryMode
 from core.response.response_data import LoggingData
@@ -33,7 +34,7 @@ async def return_to_executor_page(
     )
 
     await ShowExecutorPageService(
-        uow=uow(), bot=bot, logging_data=logging_data
+        uow=uow(session_factory=db_helper.session), bot=bot, logging_data=logging_data
     ).execute(
         chat_id=chat_id,
         current_page=current_page_executor,
@@ -60,7 +61,7 @@ async def return_to_executor_page_callback(
     if message:
         await call.answer(text=message)
     await ShowExecutorPageCallbackService(
-        uow=uow(), logging_data=logging_data, call=call
+        uow=uow(session_factory=db_helper.session), logging_data=logging_data, call=call
     ).execute(
         get_information_executor=get_information_executor,
         executor_default_photo_file_id=executor_default_photo_file_id,

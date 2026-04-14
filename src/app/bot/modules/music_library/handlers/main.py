@@ -48,6 +48,7 @@ from infrastructure.db.utils.editing import (
     get_information_album,
 )
 from infrastructure.aiogram.response import KeyboardResponse
+from infrastructure.db.db_helper import db_helper
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
 
@@ -108,7 +109,7 @@ async def music_library_cancel_handler(
 
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
-            uow=UnitOfWork(),
+            uow=UnitOfWork(session_factory=db_helper.session),
         ).execute(user=user)
         if result.ok:
             user_response: UserCollectionSongsResponse = result.data
@@ -163,7 +164,7 @@ async def music_library_cancel_handler(
         mode: LibraryMode = LibraryMode(
             user_id=user_id,
             role=LibraryRole.ADMIN if is_admin else LibraryRole.USER,
-            executor_scope=ExecutorScope.GLOBALif
+            executor_scope=ExecutorScope.GLOBAL
             if is_global_executor
             else ExecutorScope.USER,
         )
@@ -234,7 +235,7 @@ async def callback_music_library_cancel_handler(
     if collection_songs:
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
-            uow=UnitOfWork(),
+            uow=UnitOfWork(session_factory=db_helper.session),
         ).execute(user=user)
 
         if result:

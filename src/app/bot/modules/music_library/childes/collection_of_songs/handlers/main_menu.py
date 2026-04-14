@@ -28,6 +28,7 @@ from infrastructure.aiogram.messages import (
     LIMIT_COLLECTION_SONGS,
     resolve_message,
 )
+from infrastructure.db.db_helper import db_helper
 from core.logging.api import get_loggers
 from core.response.response_data import LoggingData, Result
 
@@ -47,7 +48,7 @@ async def main_menu(
 
     result: Result = await GetUserCollectionSongs(
         logging_data=logging_data,
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
     ).execute(user=user)
 
     if result.ok:
@@ -81,7 +82,7 @@ async def scrolling_song_collection(
     position: int = callback_data.position + callback_data.offset
     result: Result = await GetUserCollectionSongs(
         logging_data=logging_data,
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
     ).execute(user=user)
 
     if result.ok:
@@ -120,7 +121,7 @@ async def play_songs(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_get_song: Result = await GetSongCollectionSongs(
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
         logging_data=logging_data,
     ).execute(user_id=user.id, song_id=song_id)
     if result_get_song.ok:

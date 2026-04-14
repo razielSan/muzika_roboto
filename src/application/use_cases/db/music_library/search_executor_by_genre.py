@@ -3,7 +3,6 @@ from typing import List, Optional
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.entities.response import ExecutorSearchResponse
 from domain.errors.error_code import ErorrCode, SuccessCode
-from domain.entities.response import ExecutorSearchResponse
 from domain.entities.db.models.genre import Genre as GenreDomain
 from domain.entities.db.models.executor import Executor as ExecutorDomain
 from core.error_handlers.decorator import safe_async_execution

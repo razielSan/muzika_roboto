@@ -35,6 +35,7 @@ from infrastructure.aiogram.filters import (
     DeleteCallbackDataFilters,
     ScrollingCallbackDataFilters,
 )
+from infrastructure.db.db_helper import db_helper
 from infrastructure.aiogram.messages import LIMIT_COLLECTION_SONGS, resolve_message
 from infrastructure.aiogram.messages import user_messages
 from core.logging.api import get_loggers
@@ -74,7 +75,7 @@ async def start_delete_songs_collection_songs(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result: Result = await GetUserCollectionSongs(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(user=user)
     if result.ok:
         user_resonse: UserCollectionSongsResponse = result.data
@@ -184,7 +185,7 @@ async def scrolling_songe_menu_delete(
     delete_songs: Set = set(data["state_data"].selected_songs_ids)
 
     result_scrolling = await GetUserCollectionSongs(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(user=user)
     if result_scrolling.ok:
         user_resonse: UserCollectionSongsResponse = result_scrolling.data
@@ -272,7 +273,7 @@ async def delete_collection_songs(
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_delete = await DeleteSongsCollectionSongs(
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
         logging_data=logging_data,
     ).execute(user_id=user.id, list_ids=selected_songs_ids)
 
@@ -281,7 +282,7 @@ async def delete_collection_songs(
         msg_result_delete = resolve_message(code=result_delete.code)
 
         result = await GetUserCollectionSongs(
-            uow=UnitOfWork(), logging_data=logging_data
+            uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
         ).execute(
             user=user,
         )

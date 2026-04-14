@@ -1,5 +1,5 @@
 from domain.entities.db.uow import AbstractUnitOfWork
-from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
+from domain.errors.error_code import ErorrCode, SuccessCode
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok
 from core.response.response_data import Result

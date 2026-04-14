@@ -1,4 +1,3 @@
-from infrastructure.db.models.sqlaclhemy.base import Base
 from infrastructure.db.models.sqlaclhemy.album import Album
 from infrastructure.db.models.sqlaclhemy.song import Song
 from infrastructure.db.models.sqlaclhemy.collection_songs import CollectionSongs
@@ -9,3 +8,4 @@ from infrastructure.db.models.sqlaclhemy.user_genre_executor import (
     GenreExecutor,
     UserExecutor,
 )
+from infrastructure.db.models.sqlaclhemy.base import Base

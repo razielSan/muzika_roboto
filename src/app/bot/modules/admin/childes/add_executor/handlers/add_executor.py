@@ -40,6 +40,7 @@ from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.response import KeyboardResponse
 from infrastructure.aiogram.messages import user_messages, resolve_message
+from infrastructure.db.db_helper import db_helper
 from core.response.response_data import Result, LoggingData
 from core.logging.api import get_loggers
 from core.response.messages import telegram_emoji
@@ -140,7 +141,7 @@ async def finish_add_executor_without_albums(
     logging_data: LoggingData = get_loggers(name=admin_settings.NAME_FOR_LOG_FOLDER)
 
     result: Result = await CreateExecutor(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         name=name,
         country="неизвестно",
@@ -299,7 +300,7 @@ async def add_country(message: Message, state: FSMContext, bot: Bot) -> None:
     executor_name: str = data.get("name")
 
     result: Result = await ChekExecutorExists(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(user_id=None, name=executor_name, country=country)
 
     if result.ok:  # если исполнитель существует то переходим сразу к добавлению пути
@@ -488,7 +489,7 @@ async def add_executor_base(
     update_progress = async_make_update_progress(state=state)
 
     result = await ImportExecutorFromPath(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         executor_name=executor_name,
         country=country,

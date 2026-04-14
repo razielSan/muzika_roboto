@@ -39,6 +39,7 @@ from infrastructure.aiogram.messages import (
     LIMIT_SEARCH_EXECUTOR,
     GENRES,
 )
+from infrastructure.db.db_helper import db_helper
 from core.logging.api import get_loggers
 from core.response.messages import messages
 from core.response.response_data import LoggingData, Result
@@ -131,7 +132,7 @@ async def show_find_executors(
     )
 
     result: Result = await SearchExecutorName(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         name_lower=name_lower,
         user_id=None,
@@ -239,7 +240,7 @@ async def show_executors_search_by_genres(
     )
 
     result: Result = await SearchExecutorGenre(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         title=genre,
         user_id=None,
@@ -345,7 +346,7 @@ async def return_exeucor_page(
     logging_data: str = get_loggers(name=music_library_settings.NAME_FOR_LOG_FOLDER)
 
     result: Result = await GetExecutorPage(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(user_id=None, executor_id=executor_id)
     if result.ok:
         result_message: str = resolve_message(code=result.code)

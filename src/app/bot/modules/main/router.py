@@ -6,6 +6,7 @@ from app.bot.modules.main.settings import settings
 from application.use_cases.db.user.get_or_create_user import GetOrCreateUser
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.messages import resolve_message
+from infrastructure.db.db_helper import db_helper
 from core.logging.api import get_loggers
 from core.response.response_data import Result, LoggingData
 
@@ -28,7 +29,7 @@ async def main(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result: Result = await GetOrCreateUser(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         name=name,
         telegram=telegram,

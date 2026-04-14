@@ -1,5 +1,3 @@
-from typing import Optional
-
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.errors.error_code import ErorrCode, SuccessCode, NotFoundCode
 from domain.entities.db.models.executor import Executor as ExecutorDomain

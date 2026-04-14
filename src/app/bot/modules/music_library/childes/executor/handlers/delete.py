@@ -51,6 +51,7 @@ from infrastructure.aiogram.keyboards.inline import (
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.response import KeyboardResponse
+from infrastructure.db.db_helper import db_helper
 from core.logging.api import get_loggers
 from core.response.response_data import Result, LoggingData
 
@@ -105,7 +106,7 @@ async def confirm_delete_executor(
     )
 
     result_delete_executor: Result = await DeleteExecutor(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(user_id=user_id, executor_id=executor_id)
     if result_delete_executor.ok:
         result_message: str = resolve_message(code=result_delete_executor.code)
@@ -188,7 +189,7 @@ async def end_delete_album(
     )
 
     result_delete_album: Result = await DeleteAlbum(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(executor_id=executor_id, album_id=album_id)
     if result_delete_album.ok:
         result_message: str = resolve_message(code=result_delete_album.code)
@@ -287,7 +288,7 @@ async def start_delete_songs_collection_songs(
     )
 
     result: Result = await GetAlbumWithSongs(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         user_id=user_id,
         executor_id=executor_id,
@@ -519,7 +520,7 @@ async def end_delete_songs_album(
     )
 
     result: Result = await DeleteSongsAlbum(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         album_id=delete_state_data.album_id,
         songs_id=delete_state_data.state_data.selected_songs_ids,

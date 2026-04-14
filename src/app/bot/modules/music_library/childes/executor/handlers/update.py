@@ -53,6 +53,7 @@ from infrastructure.db.utils.editing import (
     get_information_album,
 )
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.db.db_helper import db_helper
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
 from core.utils.chek import check_number_is_positivity
@@ -133,7 +134,7 @@ async def end_update_photo_executor(
 
     await state.clear()
     result_update_photo_executor: Result = await UpdatePhotoExecutor(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         user_id=user_id,
         executor_id=executor_id,
@@ -255,7 +256,7 @@ async def end_update_country_executor(
     )
 
     result_update_country_executor: Result = await UpdateCountryExecutor(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         user_id=user_id,
         executor_id=executor_id,
@@ -374,7 +375,7 @@ async def end_update_genres_executor(
     )
     await state.clear()
     result_update_country_executor: Result = await UpdateGenreExecutor(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         user_id=user_id,
         executor_id=executor_id,
@@ -493,7 +494,7 @@ async def end_update_name_excutor(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
     result_update_name_executor: Result = await UpdateNameExecutor(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         user_id=user_id,
         executor_id=executor_id,
@@ -635,7 +636,7 @@ async def end_update_photo_album(
     )
 
     result = await UpdatePhotoAlbum(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         album_id=state_data.album_id,
         executor_id=state_data.executor_id,
@@ -786,7 +787,7 @@ async def end_update_year_album(
     )
 
     result: Result = await UpdateAlumbYear(
-        logging_data=logging_data, uow=UnitOfWork()
+        logging_data=logging_data, uow=UnitOfWork(session_factory=db_helper.session)
     ).execute(
         executor_id=state_data.executor_id,
         album_id=state_data.album_id,
@@ -928,7 +929,7 @@ async def end_update_title_album(
     )
 
     result: Result = await UpdateAlumbTitle(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         album_id=state_data.album_id,
         executor_id=state_data.executor_id,
@@ -1101,7 +1102,7 @@ async def end_update_song_title(
     title: str = message.text.strip()
 
     result: Result = await UpdateSongTitle(
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
         logging_data=logging_data,
     ).execute(
         album_id=state_data.album_id,

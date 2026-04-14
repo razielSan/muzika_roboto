@@ -36,6 +36,7 @@ from infrastructure.db.utils.editing import (
     get_information_executor,
     get_information_album,
 )
+from infrastructure.db.db_helper import db_helper
 from core.utils.chek import check_number_is_positivity
 from core.response.response_data import Result, LoggingData
 from core.logging.api import get_loggers
@@ -291,7 +292,7 @@ async def end_add_album(
     chat_id: int = message.chat.id
 
     result_add_album = await AddAlbumExecutor(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         executor_id=state_data.executor_id,
         title=state_data.title,
@@ -497,7 +498,7 @@ async def end_songs_album(
     )
 
     result: Result = await AddSongsAlbum(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         executor_id=state_data.executor_id,
         album_id=state_data.album_id,

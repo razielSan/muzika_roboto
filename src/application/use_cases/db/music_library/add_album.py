@@ -31,6 +31,7 @@ class AddAlbumExecutor:
         songs: List[SongResponse],
     ) -> Result:
 
+        album_id = None
         async with self.uow as uow:
             exists_album: Optional[
                 AlbumDomain
@@ -62,7 +63,8 @@ class AddAlbumExecutor:
             await uow.songs.add_songs(
                 album_id=album.id, start_position=position, songs=songs
             )
+            album_id = album.id
         return ok(
-            data=SuccessCode.ADD_AlBUM_SUCCESS.value,
+            data=album_id,
             code=SuccessCode.ADD_AlBUM_SUCCESS.name,
         )

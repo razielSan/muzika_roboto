@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from domain.errors.error_code import NotFoundCode
 from domain.entities.db.models.user import User as UserDomain
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.db.db_helper import db_helper
 from infrastructure.aiogram.messages import resolve_message
 from infrastructure.db.mappers.user_mapper import to_domain_user
 
@@ -22,7 +23,7 @@ class UserMiddleware(BaseMiddleware):
         """Вовзращает user."""
         telegram_id: int = event.from_user.id
 
-        async with UnitOfWork() as uwo:
+        async with UnitOfWork(session_factory=db_helper.session) as uwo:
             user: UserDomain = await uwo.users.get_user_by_telegram(
                 telegram=telegram_id
             )

@@ -5,6 +5,7 @@ from domain.errors.error_code import ErorrCode, SuccessCode, NotFoundCode
 from domain.entities.db.models.album import Album as AlbumDomain
 from domain.entities.db.models.executor import Executor as ExecutorDomain
 from domain.entities.response import AlbumPageResponse, SongResponse
+from domain.entities.validate import AlbumValidator
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok
 from core.response.response_data import Result
@@ -27,6 +28,25 @@ class GetAlbumWithSongs:
         current_page_executor=1,
         is_global_executor=True,
     ) -> Result:
+        
+        # ПРоверка входящих значений
+        vaidator = AlbumValidator(
+            album_id=album_id,
+            executor_id=executor_id,
+            user_id=user_id,
+        )
+        validate_user_id = vaidator.validate_user_id()
+        if not validate_user_id.ok:
+            return validate_user_id
+
+        validate_album_id = vaidator.validate_album_id()
+        if not validate_album_id.ok:
+            return validate_album_id
+
+        validate_executor_id = vaidator.validate_executor_id()
+        if not validate_executor_id.ok:
+            return validate_executor_id
+
         async with self.uow as uow:
             if user_id:  # пользовательская библиотека(берем исполнителя по execitor_id)
                 executor: ExecutorDomain = (

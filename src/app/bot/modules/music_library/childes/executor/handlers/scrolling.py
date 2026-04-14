@@ -20,6 +20,7 @@ from infrastructure.db.utils.editing import (
 )
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.messages import LIMIT_ALBUMS, LIMIT_SONGS
+from infrastructure.db.db_helper import db_helper
 from core.logging.api import get_loggers
 from core.response.response_data import LoggingData
 
@@ -48,7 +49,7 @@ async def scrolling_albums_executor(
     role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork(), logging_data=logging_data, call=call
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         mode=LibraryMode(
@@ -82,7 +83,7 @@ async def scrolling_global_executors(
     role: LibraryRole = LibraryRole.ADMIN if is_admin else LibraryRole.USER
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork(), logging_data=logging_data, call=call
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         mode=LibraryMode(
@@ -124,7 +125,7 @@ async def scrolling_songs_album(
     )
 
     await ShowAlbumPageCallbackService(
-        uow=UnitOfWork(), logging_data=logging_data, call=call
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data, call=call
     ).execute(
         mode=mode,
         get_information_album=get_information_album,

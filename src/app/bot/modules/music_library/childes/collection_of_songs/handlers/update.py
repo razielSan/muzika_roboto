@@ -30,6 +30,7 @@ from infrastructure.aiogram.messages import (
     resolve_message,
 )
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
+from infrastructure.db.db_helper import db_helper
 from core.utils.chek import check_number_is_positivity
 from core.response.response_data import Result
 from core.logging.api import get_loggers
@@ -111,7 +112,7 @@ async def finish_update_song_title(
 
     result_update: Result = await UpdateTitleSongCollectionSongs(
         logging_data=logging_data,
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
     ).execute(user_id=user.id, title=title, position=position)
     if result_update.ok:
 
@@ -128,7 +129,7 @@ async def finish_update_song_title(
         msg_update: str = msg_update.format(title=title)
         result: Result = await GetUserCollectionSongs(
             logging_data=logging_data,
-            uow=UnitOfWork(),
+            uow=UnitOfWork(session_factory=db_helper.session),
         ).execute(user=user)
 
         await state.clear()
@@ -215,7 +216,7 @@ async def finish_update_user_collection_songs_photo_file_id(
     logging_data = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_update = await UpdateUserCollectionSongsPhotoFileId(
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
         logging_data=logging_data,
     ).execute(
         user_id=user.id,
@@ -228,7 +229,7 @@ async def finish_update_user_collection_songs_photo_file_id(
         msg_update: str = resolve_message(code=result_update.code)
 
         result = await GetUserCollectionSongs(
-            uow=UnitOfWork(), logging_data=logging_data
+            uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
         ).execute(user=user)
         if result.ok:
             user_response: UserCollectionSongsResponse = result.data

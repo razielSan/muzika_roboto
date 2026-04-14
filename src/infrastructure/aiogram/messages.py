@@ -11,6 +11,15 @@ ERRORS = {
     ErorrCode.ALBUM_ALREADY_EXISTS.name: "⚠ Альбом уже существует",
     ErorrCode.GENRE_DOES_NOT_EXIST.name: "⚠ Жанр не существует",
     ErorrCode.CANCEL_ERROR.name: "❌ Отменены все действия",
+    ErorrCode.INVALID_TELEGRAM.name: "⚠ Telegam должен быть числом",
+    ErorrCode.INVALID_USER_NAME.name: "⚠ Имя пользователя должно быть строкой",
+    ErorrCode.INVALID_USER_ID.name: "⚠ USER ID должен быть числом или None",
+    ErorrCode.INVALID_EXECUTOR_NAME.name: "⚠ Имя исполнителя должно быть строкой",
+    ErorrCode.INVALID_EXECUTOR_GENRES.name: "⚠ Жанры должны быть списком из строк",
+    ErorrCode.INVALID_EXECUTOR_COUNTRY.name: "⚠ Страна должна быть строкой",
+    ErorrCode.INVALID_EXECUTOR_ID.name: "⚠ EXECUTOR ID должен быть числом ",
+    ErorrCode.INVALID_ALBUM_ID: "⚠ ALBUM ID должнен быть числом",
+    ErorrCode.INVALID_LEN_DATA.name: "⚠ Данные должны быть больше 0 и не быть пустым значением",
 }
 
 
@@ -46,6 +55,7 @@ SUCCESS = {
     SuccessCode.DESYNC_EXECUTOR_SUCCESS.name: "✅ Исполнитель убран из библиотеки",
     SuccessCode.DELETE_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно удален из библиотеки",
     SuccessCode.DELETE_ALBUM_SUCCES.name: "✅ Альбом успешно удален из библиотеки",
+    SuccessCode.VALIDATE_USER_SUCCES.name: "✅ Валидация данных пользователя прошла успешно",
 }
 
 LIMIT_COLLECTION_SONGS: int = 5

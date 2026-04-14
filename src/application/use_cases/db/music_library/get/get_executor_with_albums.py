@@ -4,6 +4,7 @@ from domain.entities.db.uow import AbstractUnitOfWork
 from domain.errors.error_code import ErorrCode, NotFoundCode, SuccessCode
 from domain.entities.response import ExecutorPageResponse, AlbumResponse
 from domain.entities.db.models.executor import Executor as ExecutorDomain
+from domain.entities.validate import ExecutorValidator
 from core.error_handlers.decorator import safe_async_execution
 from core.error_handlers.helpers import ok
 from core.response.response_data import Result, LoggingData
@@ -22,6 +23,11 @@ class GetExecutorWihtAlbums:
         user_id: Union[int, None],
         current_page=1,
     ) -> Result:
+        validator = ExecutorValidator(user_id=user_id)
+        validate_user_id = validator.validate_user_id()
+        if not validate_user_id.ok:
+            return validate_user_id
+
         async with self.uow as uow:
             if user_id:  # пользовательская библиотека
                 executors: Union[

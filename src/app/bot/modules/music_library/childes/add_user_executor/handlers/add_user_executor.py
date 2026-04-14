@@ -14,6 +14,7 @@ from application.use_cases.db.music_library.create_executor import CreateExecuto
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
 from infrastructure.aiogram.messages import user_messages, resolve_message
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.db.db_helper import db_helper
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
 
@@ -118,7 +119,7 @@ async def add_photo(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     result_create_executor: Result = await CreateExecutor(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(
         name=name,
         country=country,

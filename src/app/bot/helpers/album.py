@@ -9,6 +9,7 @@ from app.bot.services.music_library.show_album_page import (
 )
 from domain.entities.db.uow import AbstractUnitOfWork
 from domain.entities.response import LibraryMode
+from infrastructure.db.db_helper import db_helper
 from core.response.response_data import LoggingData
 
 
@@ -35,7 +36,11 @@ async def return_to_album_page(
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    await ShowAlbumPageService(uow=uow(), logging_data=logging_data, bot=bot,).execute(
+    await ShowAlbumPageService(
+        uow=uow(session_factory=db_helper.session),
+        logging_data=logging_data,
+        bot=bot,
+    ).execute(
         chat_id=chat_id,
         get_information_album=get_information_album,
         album_default_photo_file_id=album_default_photo_file_id,
@@ -67,7 +72,7 @@ async def return_to_album_page_callback(
     if message:
         await call.answer(text=message)
     await ShowAlbumPageCallbackService(
-        uow=uow(),
+        uow=uow(session_factory=db_helper.session),
         logging_data=logging_data,
         call=call,
     ).execute(

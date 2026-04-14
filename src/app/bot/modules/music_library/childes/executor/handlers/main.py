@@ -25,6 +25,7 @@ from infrastructure.db.utils.editing import (
     get_information_album,
 )
 from infrastructure.db.uow import UnitOfWork
+from infrastructure.db.db_helper import db_helper
 from infrastructure.aiogram.messages import LIMIT_ALBUMS, LIMIT_SONGS, user_messages
 from core.logging.api import get_loggers
 from core.response.response_data import LoggingData
@@ -65,7 +66,7 @@ async def executor_library(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork(), logging_data=logging_data, call=call
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data, call=call
     ).execute(
         executor_default_photo_file_id=bot_settings.EXECUTOR_DEFAULT_PHOTO_FILE_ID,
         limit_albums=LIMIT_ALBUMS,
@@ -91,7 +92,7 @@ async def user_library(
     user_id: int = user.id
 
     await ShowExecutorPageCallbackService(
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
         logging_data=logging_data,
         call=call,
     ).execute(
@@ -129,7 +130,7 @@ async def show_album_executor(
     )
 
     await ShowAlbumPageCallbackService(
-        uow=UnitOfWork(), logging_data=logging_data, call=call
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data, call=call
     ).execute(
         get_information_album=get_information_album,
         album_id=album_id,
@@ -157,7 +158,7 @@ async def play_songs_album(
     logging_data: LoggingData = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
 
     await ShowSongService(
-        uow=UnitOfWork(),
+        uow=UnitOfWork(session_factory=db_helper.session),
         logging_data=logging_data,
         call=call,
         bot=bot,

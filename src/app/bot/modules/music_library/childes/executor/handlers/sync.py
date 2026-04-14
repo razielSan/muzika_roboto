@@ -17,6 +17,7 @@ from infrastructure.aiogram.filters import SyncExecutor, DesyncExecutor
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.db.utils.editing import get_information_executor
 from infrastructure.aiogram.messages import resolve_message, user_messages, LIMIT_ALBUMS
+from infrastructure.db.db_helper import db_helper
 from core.logging.api import get_loggers
 from core.response.response_data import LoggingData, Result
 
@@ -39,7 +40,7 @@ async def sync_executor(
     )
 
     result_sync: Result = await SyncExecutorLibrary(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(executor_id=executor_id, user_id=user_id)
 
     if result_sync.ok:
@@ -66,7 +67,7 @@ async def desync_executor(
     )
 
     result_desync_executor: Result = await DesyncExecutorLibrary(
-        uow=UnitOfWork(), logging_data=logging_data
+        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
     ).execute(executor_id=executor_id, user_id=user_id)
 
     if result_desync_executor.ok:
@@ -83,7 +84,7 @@ async def desync_executor(
         success_message: str = resolve_message(code=result_desync_executor.code)
         await call.answer(text=success_message)
         await ShowExecutorPageCallbackService(
-            uow=UnitOfWork(),
+            uow=UnitOfWork(session_factory=db_helper.session),
             logging_data=logging_data,
             call=call,
         ).execute(
