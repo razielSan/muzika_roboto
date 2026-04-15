@@ -20,7 +20,10 @@ from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
     callback_update_menu_inline_music_library,
 )
-from application.use_cases.db.music_library.search_executor_by_name import (
+from app.bot.modules.music_library.childes.executor.use_cases.search import (
+    process_serach_executor_by_name,
+)
+from app.bot.modules.music_library.childes.executor.use_cases.search import (
     SearchExecutorName,
 )
 from application.use_cases.db.music_library.search_executor_by_genre import (
@@ -29,6 +32,7 @@ from application.use_cases.db.music_library.search_executor_by_genre import (
 from domain.entities.response import ExecutorSearchResponse, LibraryMode, LibraryRole
 from application.use_cases.db.music_library.get.get_executor_page import GetExecutorPage
 from infrastructure.aiogram.keyboards.reply import get_reply_cancel_button
+from infrastructure.aiogram.fsm.data import SearchExecutorData
 from infrastructure.db.utils.editing import get_information_executor
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.aiogram.response import KeyboardResponse
@@ -60,17 +64,6 @@ class FSMSearchExecutor(StatesGroup):
     processing: State = State()
 
 
-@dataclass
-class SearchExecutorData:
-    executors: List[ExecutorSearchResponse]
-    is_admin: bool
-    search_executor: bool
-    media: str
-    caption: str
-    name: None
-    processing: None
-
-
 @router.callback_query(StateFilter(None), Search.Executor.filter())
 async def search_executor(
     call: CallbackQuery, callback_data: Search.Executor, state: FSMContext
@@ -89,6 +82,7 @@ async def search_executor(
     await state.update_data(caption=caption)
     await state.update_data(is_admin=is_admin)
     await state.update_data(name=None)
+    await state.update_data(executors=[])
     await state.update_data(search_executor=True)
     await state.update_data(processing=None)
 
@@ -126,20 +120,21 @@ async def show_find_executors(
 ):
     """Отправляет инлайн клавиатуру из найденных исполнителей."""
 
+    data = await state.get_data()
+    state_data: SearchExecutorData = SearchExecutorData(**data)
+    
     name_lower: str = message.text.casefold().strip()
     chat_id: str = message.chat.id
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
-    data = await state.get_data()
-    is_admin: bool = data.get("is_admin")
 
-    result: Result = await SearchExecutorName(
-        uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
-    ).execute(
-        name_lower=name_lower,
-        user_id=None,
+    result = await process_serach_executor_by_name(
+        logging_data=logging_data,
+        name=name_lower,
         len_name=5,
+        uwo=UnitOfWork(session_factory=db_helper.session),
+        user_id=None,
     )
 
     if result.ok:
@@ -150,11 +145,6 @@ async def show_find_executors(
             )
             return
 
-        data: Dict = await state.get_data()
-        is_admin: bool = data.get("is_admin")
-        caption: str = data.get("caption")
-        media: str = data.get("media")
-
         executors: ExecutorSearchResponse = result.data
 
         await state.update_data(executors=executors)
@@ -163,22 +153,22 @@ async def show_find_executors(
         total: int = len(executors)
         executors = executors[0:LIMIT_SEARCH_EXECUTOR]
         await bot.send_photo(
-            caption=caption,
+            caption=state_data.caption,
             chat_id=chat_id,
-            photo=media,
+            photo=state_data.media,
             reply_markup=show_executor_search(
                 executors=executors,
                 position=0,
                 limit=LIMIT_SEARCH_EXECUTOR,
                 total=total,
-                is_admin=is_admin,
+                is_admin=state_data.is_admin,
             ),
         )
 
     if not result.ok:
         await state.clear()
         error_message: str = resolve_message(code=result.error.code)
-        if is_admin:
+        if state_data.is_admin:
             await message.answer(error_message)
             await bot.send_photo(
                 caption=user_messages.ADMIN_PANEL_CAPTION,
@@ -361,7 +351,7 @@ async def return_exeucor_page(
     """Переходит на страницу исполнителя."""
 
     await state.clear()
-    
+
     await call.message.answer(
         text=user_messages.WAIT_MESSAGE,
         reply_markup=ReplyKeyboardRemove(),
