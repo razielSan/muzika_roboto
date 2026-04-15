@@ -14,6 +14,10 @@ from app.bot.modules.music_library.utils.music_library import (
 from app.bot.settings import settings as bot_settings
 from app.bot.helpers.executor import return_to_executor_page
 from app.bot.helpers.album import return_to_album_page
+from app.bot.modules.music_library.childes.executor.use_cases.update import (
+    process_update_album_year,
+)
+from app.bot.keyboards.inlinle import select_admin_library_keyboard
 from application.use_cases.db.music_library.update.update_photo_executor import (
     UpdatePhotoExecutor,
 )
@@ -29,9 +33,6 @@ from application.use_cases.db.music_library.update.update_name_executor import (
 from application.use_cases.db.music_library.update.update_photo_album import (
     UpdatePhotoAlbum,
 )
-from application.use_cases.db.music_library.update.update_year_album import (
-    UpdateAlumbYear,
-)
 from application.use_cases.db.music_library.update.update_title_album import (
     UpdateAlumbTitle,
 )
@@ -39,6 +40,7 @@ from application.use_cases.db.music_library.update.update_song_title import (
     UpdateSongTitle,
 )
 from domain.entities.response import LibraryMode, LibraryRole, ExecutorScope
+from domain.errors.error_code import ErorrCode
 from infrastructure.aiogram.filters import UpdateCallbackDataFilters
 from infrastructure.aiogram.messages import (
     user_messages,
@@ -54,6 +56,7 @@ from infrastructure.db.utils.editing import (
 )
 from infrastructure.db.uow import UnitOfWork
 from infrastructure.db.db_helper import db_helper
+from infrastructure.aiogram.fsm.data import UpdateAlbumYearData
 from core.response.response_data import LoggingData, Result
 from core.logging.api import get_loggers
 from core.utils.chek import check_number_is_positivity
@@ -164,6 +167,17 @@ async def end_update_photo_executor(
 
     if not result_update_photo_executor.ok:
         error_message = resolve_message(code=result_update_photo_executor.error.code)
+        if is_admin:
+            await message.answer(error_message)
+            await bot.send_photo(
+                caption=user_messages.ADMIN_PANEL_CAPTION,
+                chat_id=chat_id,
+                photo=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                reply_markup=select_admin_library_keyboard(is_admin=True),
+            )
+
+            return
+
         await get_inline_menu_music_library(
             chat_id=chat_id,
             bot=bot,
@@ -405,6 +419,17 @@ async def end_update_genres_executor(
         error_message: str = resolve_message(
             code=result_update_country_executor.error.code
         )
+        if is_admin:
+            await message.answer(error_message)
+            await bot.send_photo(
+                caption=user_messages.ADMIN_PANEL_CAPTION,
+                chat_id=chat_id,
+                photo=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                reply_markup=select_admin_library_keyboard(is_admin=True),
+            )
+
+            return
+
         await get_inline_menu_music_library(
             chat_id=chat_id,
             bot=bot,
@@ -674,6 +699,17 @@ async def end_update_photo_album(
 
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
+        if state_data.is_admin:
+            await message.answer(error_message)
+            await bot.send_photo(
+                caption=user_messages.ADMIN_PANEL_CAPTION,
+                chat_id=chat_id,
+                photo=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                reply_markup=select_admin_library_keyboard(is_admin=True),
+            )
+
+            return
+
         await get_inline_menu_music_library(
             chat_id=chat_id,
             bot=bot,
@@ -709,19 +745,6 @@ class FSMUpdateAlbumYearML(StatesGroup):
     album_position: State = State()
     is_admin: State = State()
     year: State = State()
-
-
-@dataclass
-class UpdateAlbumYearData:
-    current_page_executor: int
-    music_library_album: bool
-    executor_id: int
-    user_id: Optional[int]
-    album_id: int
-    is_global_executor: bool
-    album_position: int
-    is_admin: bool
-    year: None
 
 
 @router.callback_query(StateFilter(None), UpdateCallbackDataFilters.AlbumYear.filter())
@@ -771,30 +794,22 @@ async def end_update_year_album(
 ):
     """Обновляет год альбома."""
 
-    result_year: Result = check_number_is_positivity(number=message.text.strip())
-    if not result_year.ok:  # если год был указан не верно
-        await message.answer(
-            text=f"{result_year.error.message}\n\n{user_messages.ENTER_THE_ALBUM_YEAR}"
-        )
-        return
-    year: int = result_year.data
+    chat_id: int = message.chat.id
     data: Dict = await state.get_data()
     state_data: UpdateAlbumYearData = UpdateAlbumYearData(**data)
-    chat_id: int = message.chat.id
-
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
-
-    result: Result = await UpdateAlumbYear(
-        logging_data=logging_data, uow=UnitOfWork(session_factory=db_helper.session)
-    ).execute(
-        executor_id=state_data.executor_id,
-        album_id=state_data.album_id,
-        year=year,
+    result = await process_update_album_year(
+        state_data=state_data,
+        logging_data=logging_data,
+        number=message.text.strip(),
+        uwo=UnitOfWork(
+            session_factory=db_helper.session,
+        ),
     )
-    await state.clear()
     if result.ok:
+        await state.clear()
         mode: LibraryMode = LibraryMode(
             user_id=state_data.user_id,
             role=LibraryRole.ADMIN if state_data.is_admin else LibraryRole.USER,
@@ -821,7 +836,29 @@ async def end_update_year_album(
         )
         return
     if not result.ok:
+        if result.error.code == ErorrCode.FAILED_CHECK_POSITIVITY.name:
+            error_message: str = resolve_message(code=result.error.code).format(
+                data="Год"
+            )
+            await message.answer(
+                f"{error_message}\n\n{user_messages.ENTER_THE_ALBUM_YEAR}"
+            )
+            return
+
+        await state.clear()
         error_message: str = resolve_message(code=result.error.code)
+
+        if state_data.is_admin:
+            await message.answer(error_message)
+            await bot.send_photo(
+                caption=user_messages.ADMIN_PANEL_CAPTION,
+                chat_id=chat_id,
+                photo=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                reply_markup=select_admin_library_keyboard(is_admin=True),
+            )
+
+            return
+
         await get_inline_menu_music_library(
             chat_id=chat_id,
             bot=bot,
@@ -1149,6 +1186,17 @@ async def end_update_song_title(
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
+        if state_data.is_admin:
+            await message.answer(error_message)
+            await bot.send_photo(
+                caption=user_messages.ADMIN_PANEL_CAPTION,
+                chat_id=chat_id,
+                photo=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                reply_markup=select_admin_library_keyboard(is_admin=True),
+            )
+
+            return
+
         await get_inline_menu_music_library(
             chat_id=chat_id,
             bot=bot,

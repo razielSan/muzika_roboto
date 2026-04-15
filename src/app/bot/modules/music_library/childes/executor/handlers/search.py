@@ -15,6 +15,7 @@ from app.bot.modules.music_library.childes.executor.keyboards.inline import (
     show_executor_search,
     select_executor_genres_keybord,
 )
+from app.bot.keyboards.inlinle import select_admin_library_keyboard
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
     callback_update_menu_inline_music_library,
@@ -130,6 +131,8 @@ async def show_find_executors(
     logging_data: LoggingData = get_loggers(
         name=music_library_settings.NAME_FOR_LOG_FOLDER
     )
+    data = await state.get_data()
+    is_admin: bool = data.get("is_admin")
 
     result: Result = await SearchExecutorName(
         uow=UnitOfWork(session_factory=db_helper.session), logging_data=logging_data
@@ -175,6 +178,17 @@ async def show_find_executors(
     if not result.ok:
         await state.clear()
         error_message: str = resolve_message(code=result.error.code)
+        if is_admin:
+            await message.answer(error_message)
+            await bot.send_photo(
+                caption=user_messages.ADMIN_PANEL_CAPTION,
+                chat_id=chat_id,
+                photo=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                reply_markup=select_admin_library_keyboard(is_admin=True),
+            )
+
+            return
+
         await get_inline_menu_music_library(
             chat_id=chat_id,
             bot=bot,
@@ -258,7 +272,6 @@ async def show_executors_search_by_genres(
         total: int = len(executors)
         executors = executors[0:LIMIT_SEARCH_EXECUTOR]
 
-        is_admin: bool = callback_data.is_admin
         data: Dict = await state.get_data()
         media: str = data.get("media")
         caption: str = data.get("caption")
@@ -277,7 +290,19 @@ async def show_executors_search_by_genres(
         )
 
     if not result.ok:
+        await state.clear()
         error_message: str = resolve_message(code=result.error.code)
+        if is_admin:
+            await call.answer(error_message)
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                    caption=user_messages.ADMIN_PANEL_CAPTION,
+                ),
+                reply_markup=select_admin_library_keyboard(is_admin=is_admin),
+            )
+            return
+
         await callback_update_menu_inline_music_library(
             call=call,
             message=error_message,
@@ -336,6 +361,7 @@ async def return_exeucor_page(
     """Переходит на страницу исполнителя."""
 
     await state.clear()
+    
     await call.message.answer(
         text=user_messages.WAIT_MESSAGE,
         reply_markup=ReplyKeyboardRemove(),
@@ -369,6 +395,17 @@ async def return_exeucor_page(
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
+        if is_admin:
+            await call.answer(error_message)
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                    caption=user_messages.ADMIN_PANEL_CAPTION,
+                ),
+                reply_markup=select_admin_library_keyboard(is_admin=is_admin),
+            )
+            return
+
         await callback_update_menu_inline_music_library(
             call=call,
             message=error_message,

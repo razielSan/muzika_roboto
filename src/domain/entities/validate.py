@@ -114,10 +114,17 @@ class ExecutorValidator:
 
 
 class AlbumValidator:
-    def __init__(self, album_id=None, executor_id=None, user_id=None):
+    def __init__(
+        self,
+        album_id=None,
+        executor_id=None,
+        user_id=None,
+        year=None,
+    ):
         self.album_id = album_id
         self.executor_id = executor_id
         self.user_id = user_id
+        self.year = year
 
     def validate_executor_id(self):
         if not isinstance(self.executor_id, int):
@@ -153,3 +160,22 @@ class AlbumValidator:
             data=self.user_id,
             code=SuccessCode.VALIDATE_ALBUM_SUCCESS.name,
         )
+
+    def validate_year(self):
+        try:
+            number = int(self.year)
+            if number <= 0:
+                return fail(
+                    code=ErorrCode.FAILED_CHECK_POSITIVITY.name,
+                    message=ErorrCode.FAILED_CHECK_POSITIVITY.value,
+                )
+            return ok(
+                data=number,
+                code=SuccessCode.VALIDATE_ALBUM_SUCCESS.name,
+            )
+
+        except ValueError:
+            return fail(
+                code=ErorrCode.FAILED_CHECK_POSITIVITY.name,
+                message=ErorrCode.FAILED_CHECK_POSITIVITY.value,
+            )

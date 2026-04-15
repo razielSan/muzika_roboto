@@ -27,7 +27,6 @@ class SearchExecutorGenre:
         title: str,
         user_id: Optional[int],
     ) -> Result:
-
         async with self.uow as uow:
             genre: GenreDomain = await uow.genres.get_genre(title=title)
             if not genre:

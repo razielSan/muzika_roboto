@@ -13,6 +13,7 @@ from app.bot.helpers.executor import return_to_executor_page
 from app.bot.modules.music_library.utils.music_library import (
     get_inline_menu_music_library,
 )
+from app.bot.keyboards.inlinle import select_admin_library_keyboard
 from app.bot.helpers.album import return_to_album_page
 from application.use_cases.db.music_library.add_album import AddAlbumExecutor
 from application.use_cases.db.music_library.add_songs_album import AddSongsAlbum
@@ -534,6 +535,16 @@ async def end_songs_album(
         )
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
+        if state_data.is_admin:
+            await message.answer(error_message)
+            await bot.send_photo(
+                caption=user_messages.ADMIN_PANEL_CAPTION,
+                chat_id=chat_id,
+                photo=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                reply_markup=select_admin_library_keyboard(is_admin=True),
+            )
+
+            return
 
         await get_inline_menu_music_library(
             chat_id=chat_id,

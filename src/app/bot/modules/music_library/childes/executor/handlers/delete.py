@@ -14,6 +14,7 @@ from app.bot.helpers.album import return_to_album_page_callback
 from app.bot.modules.music_library.utils.music_library import (
     callback_update_menu_inline_music_library,
 )
+from app.bot.keyboards.inlinle import select_admin_library_keyboard
 from application.use_cases.db.music_library.delete.delete_executor import DeleteExecutor
 from application.use_cases.db.music_library.get.get_album_with_songs import (
     GetAlbumWithSongs,
@@ -127,11 +128,21 @@ async def confirm_delete_executor(
 
     if not result_delete_executor.ok:
         error_message: str = resolve_message(code=result_delete_executor.error.code)
+        if is_admin:
+            await call.answer(error_message)
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                    caption=user_messages.ADMIN_PANEL_CAPTION,
+                ),
+                reply_markup=select_admin_library_keyboard(is_admin=is_admin),
+            )
+            return
 
         await callback_update_menu_inline_music_library(
             call=call,
-            caption=user_messages.USER_PANEL_CAPTION,
             message=error_message,
+            caption=user_messages.USER_PANEL_CAPTION,
         )
 
 
@@ -213,6 +224,17 @@ async def end_delete_album(
 
     if not result_delete_album.ok:
         error_message: str = resolve_message(code=result_delete_album.error.code)
+
+        if is_admin:
+            await call.answer(error_message)
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                    caption=user_messages.ADMIN_PANEL_CAPTION,
+                ),
+                reply_markup=select_admin_library_keyboard(is_admin=is_admin),
+            )
+            return
 
         await callback_update_menu_inline_music_library(
             call=call,
@@ -348,6 +370,17 @@ async def start_delete_songs_collection_songs(
 
     if not result.ok:
         error_message: str = resolve_message(code=result.error.code)
+
+        if is_admin:
+            await call.answer(error_message)
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                    caption=user_messages.ADMIN_PANEL_CAPTION,
+                ),
+                reply_markup=select_admin_library_keyboard(is_admin=is_admin),
+            )
+            return
 
         await callback_update_menu_inline_music_library(
             call=call,
@@ -554,8 +587,20 @@ async def end_delete_songs_album(
             text=error_message,
             reply_markup=ReplyKeyboardRemove(),
         )
+        if delete_state_data.is_admin:
+            await call.answer(error_message)
+            await call.message.edit_media(
+                media=InputMediaPhoto(
+                    media=bot_settings.ADMIN_PANEL_PHOTO_FILE_ID,
+                    caption=user_messages.ADMIN_PANEL_CAPTION,
+                ),
+                reply_markup=select_admin_library_keyboard(is_admin=is_admin),
+            )
+            return
+
         await callback_update_menu_inline_music_library(
             call=call,
+            message=error_message,
             caption=user_messages.USER_PANEL_CAPTION,
         )
 

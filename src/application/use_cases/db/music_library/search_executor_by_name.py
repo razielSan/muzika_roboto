@@ -27,7 +27,6 @@ class SearchExecutorName:
         user_id: Optional[int],
         len_name: int,
     ) -> Result:
-
         async with self.uow as uow:
             result_executors = []
             executors = []
