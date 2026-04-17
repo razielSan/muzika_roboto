@@ -73,3 +73,7 @@ async def _run_windows():
         raise
     finally:
         logging_data.info_logger.info("Приложение завершило работу корректно")
+
+
+if __name__ == "__main__":
+    main()
