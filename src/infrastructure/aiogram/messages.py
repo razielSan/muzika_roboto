@@ -20,7 +20,7 @@ ERRORS = {
     ErorrCode.INVALID_EXECUTOR_ID.name: "⚠ EXECUTOR ID должен быть числом ",
     ErorrCode.INVALID_ALBUM_ID.name: "⚠ ALBUM ID должнен быть числом",
     ErorrCode.INVALID_LEN_DATA.name: "⚠ Данные должны быть больше 0 и не быть пустым значением",
-    ErorrCode.FAILED_CHECK_POSITIVITY.name: "⚠ {data} должен быть числом и больше 0"
+    ErorrCode.FAILED_CHECK_POSITIVITY.name: "⚠ {data} должен быть числом и больше 0",
 }
 
 
@@ -150,5 +150,16 @@ class UserMessages:
     USER_PANEL_CAPTION: str = "🤔 Что же мне сегодня послушать ?"
     ADMIN_PANEL_CAPTION: str = "🔧 Админ Панель"
 
+
+START_MESSAGE: str = (
+    "🤘🏿 Привет, {name}!\n\n🤘🏿 Заходите в /music_library.Двери открыты\n\n"
+    "/music_library: вход в музыкальную библиотеку"
+)
+DESCRIPTION_BOT: str = (
+    "Музыкальный бот Musique Roboto:\n"
+    "🎸 Большой выбор музыки\n🎸 Создание своего плейлиста\n🎸 Удобный поиск"
+    " исполнителей\n🎸 Открытие новых жанров и исполнителей\n\n"
+    "Чтобы запустить бота нажмите кнопку /start 👇🏿"
+)
 
 user_messages: UserMessages = UserMessages()

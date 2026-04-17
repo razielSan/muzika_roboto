@@ -5,7 +5,7 @@ from aiogram.filters.state import StateFilter
 from app.bot.modules.main.settings import settings
 from application.use_cases.db.user.get_or_create_user import GetOrCreateUser
 from infrastructure.db.uow import UnitOfWork
-from infrastructure.aiogram.messages import resolve_message
+from infrastructure.aiogram.messages import resolve_message, START_MESSAGE
 from infrastructure.db.db_helper import db_helper
 from core.logging.api import get_loggers
 from core.response.response_data import Result, LoggingData
@@ -47,6 +47,6 @@ async def main(
         pass
 
     await message.answer(
-        text=f"☕ Будь как дома, {name}\n\n☕ Музыкальная библиотека открыта",
+        text=START_MESSAGE.format(name=name),
         reply_markup=ReplyKeyboardRemove(),
     )

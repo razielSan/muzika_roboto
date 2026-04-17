@@ -41,7 +41,7 @@ class BotSettings(BaseSettings):
     MUSICL_LIBRARY_MODULE_NAME: str = "music_library"
 
     model_config: SettingsConfigDict = SettingsConfigDict(
-        env_file=BOT_DIR / ".env", extra="ignore"
+        env_file=".env", extra="ignore"
     )
 
 
@@ -71,7 +71,7 @@ class ProxySettings(BaseSettings):
         return None
 
     model_config: SettingsConfigDict = SettingsConfigDict(
-        env_file=BOT_DIR / ".env", extra="ignore"
+        env_file=".env", extra="ignore"
     )
 
 
