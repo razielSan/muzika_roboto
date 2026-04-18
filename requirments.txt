@@ -1,0 +1,7 @@
+pydantic<=2.6.1
+pydantic-settings<=2.2.1
+aiogram>=3.13.1
+sqlalchemy
+alembic
+aiosqlite
+aiohttp_socks
