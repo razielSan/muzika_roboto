@@ -21,7 +21,7 @@ class BotSettings(BaseSettings):
         BotCommand(command="admin", description="Для администраторов"),
         BotCommand(command="music_library", description="Музыкальная библиотека"),
     ]
-    ADMINS_LIST: List[str]
+    ADMINS_LIST: List[str] = []
 
     ASYNC_SQLITE_BASE: str = f"sqlite+aiosqlite:///{DB_PATH}"
     SQLITE_BASE: str = f"sqlite:///{DB_PATH}"

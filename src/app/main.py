@@ -23,7 +23,7 @@ def main() -> None:
         except Exception as err:
             print("FATAL: Ошибка при создание логов")
             print(err)
-            sys.exit()
+            return
 
         logging_data = get_loggers(name=app_settings.NAME_FOR_LOG_FOLDER)
         asyncio.run(async_main())
