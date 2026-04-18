@@ -131,20 +131,21 @@ async def setup_bot() -> Result:
             logging_bot.info_logger.info(
                 f"UserMiddleware для {logging_data.router_name} подключен"
             )
+        try:
+            telegram_bot = create_bot(
+                bot_settings=settings,
+                proxy_settings=proxy_settings,
+                logging_data=logging_data,
+            )
 
-        telegram_bot = create_bot(
-            bot_settings=settings,
-            proxy_settings=proxy_settings,
-            logging_data=logging_data,
-        )
-
-        await telegram_bot.set_my_commands(
-            commands=settings.LIST_BOT_COMMANDS  # Добавляет команды боту
-        )  # Добавляет команды боту
-        await telegram_bot.delete_webhook(
-            drop_pending_updates=True
-        )  # Игнорирует все присланные сообщение пока бот не работал
-
+            await telegram_bot.set_my_commands(
+                commands=settings.LIST_BOT_COMMANDS  # Добавляет команды боту
+            )  # Добавляет команды боту
+            await telegram_bot.delete_webhook(
+                drop_pending_updates=True
+            )  # Игнорирует все присланные сообщение пока бот не работал
+        except Exception as err:
+            pass
         return ok(data=(get_main_inline_keyboards, dp, telegram_bot))
     except Exception as err:
         logging_bot.error_logger.error(
