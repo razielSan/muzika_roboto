@@ -78,3 +78,21 @@ class SQLAlchemyUserRepository(UserRepository):
         user.collection_songs_photo_file_unique_id = photo_file_unique_id
         await self.session.flush()
         return user
+
+    async def delete_user(self, user_id: int) -> bool:
+        user: Optional[User] = await self.session.scalar(
+            select(self.model)
+            .where(self.model.id == user_id)
+            .options(selectinload(self.model.library_executors))
+            .options(selectinload(self.model.collection_songs))
+            .options(selectinload(self.model.executors))
+        )
+
+        if not user:
+            return False
+
+        user.library_executors = []
+        user.collection_songs = []
+        await self.session.delete(user)
+        await self.session.flush()
+        return True

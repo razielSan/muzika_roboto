@@ -25,8 +25,7 @@ ERRORS = {
 
 
 NOT_FOUND = {
-    NotFoundCode.USER_NOT_FOUND.name: "⚠ Пользователь не найден\n\n"
-    "🤷🏻‍♀️ Нажмите /start для регистрации",
+    NotFoundCode.USER_NOT_FOUND.name: "⚠ Пользователь не найден",
     NotFoundCode.SONGS_NOT_FOUND.name: "⚠ Песни не найдены",
     NotFoundCode.SONG_NOT_FOUND.name: "⚠ Песня не найдена",
     NotFoundCode.SONG_POSITION_NOT_FOUND.name: "⚠ Песня c позицией {position} не найдена",
@@ -56,6 +55,7 @@ SUCCESS = {
     SuccessCode.DESYNC_EXECUTOR_SUCCESS.name: "✅ Исполнитель убран из библиотеки",
     SuccessCode.DELETE_EXECUTOR_SUCCESS.name: "✅ Исполнитель успешно удален из библиотеки",
     SuccessCode.DELETE_ALBUM_SUCCES.name: "✅ Альбом успешно удален из библиотеки",
+    SuccessCode.DELETE_USER_SUCCESS.name: "✅ Пользователь успешно удален",
     SuccessCode.VALIDATE_USER_SUCCES.name: "✅ Валидация данных пользователя прошла успешно",
 }
 
@@ -124,6 +124,7 @@ class UserMessages:
         f"\n\n{format_album.FORMAT_ALBUM}: формат альбома"
     )
     ENTER_THE_SONG_POSITION: str = "❗️ Введите позицию песни"
+    ENTER_THE_USER_USER_ID: str = "❗️ Введите ID пользователя для удаления"
     MESSAGE_TO_CONFIRM_THE_DELETION_OF_SONGS: str = (
         "❗️ Подтвердите"
         " песни для удаления\n\n✅ Количество: {count}\n✅ Позиции песен: {positions}"
@@ -133,6 +134,9 @@ class UserMessages:
     MY_COLLECTION_OF_SONGS: str = "🎧 Мой сборник песен"
     NO_SONGS_WERE_DROPPED: str = "🤷🏻‍♀️ Не было сброшено песен"
     PRESS_ONE_OF_THE_BUTTONS: str = "👇 Нажмите одну из кнопок"
+    PRESS_BUTTON_OR_START_FOR_REGISTRATION: str = (
+        "Попробуйте нажать кнопку еще раз или /start для регистрации"
+    )
     PRESSING_THE_BUTTON_AGAIN_EXECUTOR: str = "❗️ Исполнитель уже загружен"
     SONGS_WILL_BE_ADDED_IN_QUANTITY: str = (
         "✅ Будут добавлены песни\n\n✅ Количество {count}"

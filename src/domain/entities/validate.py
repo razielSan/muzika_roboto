@@ -5,11 +5,13 @@ from core.error_handlers.helpers import ok, fail
 class UserValidator:
     def __init__(
         self,
+        id=None,
         name=None,
         telegram=None,
     ):
         self.name = name
         self.telegram = telegram
+        self.id = id
 
     def validate_name(self):
         if not isinstance(self.name, str):
@@ -40,6 +42,25 @@ class UserValidator:
             data=self.telegram,
             code=SuccessCode.VALIDATE_USER_SUCCES.name,
         )
+
+    def validate_id(self):
+        try:
+            number = int(self.id)
+            if number <= 0:
+                return fail(
+                    code=ErorrCode.FAILED_CHECK_POSITIVITY.name,
+                    message=ErorrCode.FAILED_CHECK_POSITIVITY.value,
+                )
+            return ok(
+                data=number,
+                code=SuccessCode.VALIDATE_USER_SUCCES.name,
+            )
+
+        except ValueError:
+            return fail(
+                code=ErorrCode.FAILED_CHECK_POSITIVITY.name,
+                message=ErorrCode.FAILED_CHECK_POSITIVITY.value,
+            )
 
 
 class ExecutorValidator:

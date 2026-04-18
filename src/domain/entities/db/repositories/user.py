@@ -26,3 +26,10 @@ class UserRepository(ABC):
     @abstractmethod
     async def get_library_executors(self, user_id: int) -> List[Executor]:
         pass
+
+    @abstractmethod
+    async def delete_user(
+        self,
+        user_id: int,
+    ) -> bool:
+        pass
