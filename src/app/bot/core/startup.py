@@ -144,8 +144,9 @@ async def setup_bot() -> Result:
             await telegram_bot.delete_webhook(
                 drop_pending_updates=True
             )  # Игнорирует все присланные сообщение пока бот не работал
-        except Exception as err:
-            pass
+        except Exception:
+            logging_bot.error_logger.error("Ошибка при подключении к телеграм")
+            raise
         return ok(data=(get_main_inline_keyboards, dp, telegram_bot))
     except Exception as err:
         logging_bot.error_logger.error(
