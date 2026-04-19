@@ -91,6 +91,7 @@ class SQLAlchemyUserRepository(UserRepository):
         if not user:
             return False
 
+        user.executors = []
         user.library_executors = []
         user.collection_songs = []
         await self.session.delete(user)
