@@ -42,7 +42,7 @@ class GetExecutorWihtAlbums:
                     )
 
                 total_pages: int = len(executors)
-                executor: ExecutorDomain = executors[current_page - 1]
+                executor: ExecutorDomain = executors[max(0, current_page - 1)]
 
             else:  # глобальная библиотека
 
