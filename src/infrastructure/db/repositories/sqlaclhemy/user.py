@@ -57,10 +57,13 @@ class SQLAlchemyUserRepository(UserRepository):
         executors = []
         library_executors: Union[List, List[Executor]] = user.library_executors
         user_executors: Union[List, List[Executor]] = user.executors
-        executors.extend(library_executors)
-        executors.extend(user_executors)
-        if executors:
-            executors.sort(key=lambda x: x.name.casefold())
+        executors_map = {}
+
+        for e in library_executors + user_executors:
+            executors_map[e.id] = e
+        if executors_map:
+            executors = list(executors_map.values())
+            executors.sort(key=lambda x: (x.name.casefold(), x.id))
         return executors
 
     async def update_collection_songs_photo_file_id(
@@ -90,10 +93,7 @@ class SQLAlchemyUserRepository(UserRepository):
 
         if not user:
             return False
-
-        user.executors = []
-        user.library_executors = []
-        user.collection_songs = []
+        
         await self.session.delete(user)
         await self.session.flush()
         return True

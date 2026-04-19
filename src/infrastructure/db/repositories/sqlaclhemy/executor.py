@@ -124,11 +124,15 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         user_id=None - все исполнители глобальной библиотеки
         user_id=<int> - все исполнители конкретного пользователя
         """
+        if user_id is None:
+            condition = self.model.user_id.is_(None)
+        else:
+            condition = self.model.user_id == user_id
 
         stmt = await self.session.scalars(
             select(self.model)
             .order_by(self.model.name_lower)
-            .where(self.model.user_id.is_(user_id))
+            .where(condition)
             .order_by(self.model.name_lower)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
@@ -269,8 +273,6 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         if not executor:
             return None
 
-        executor.genres = []
-        executor.library_users = []
         await self.session.delete(executor)
         await self.session.flush()
         return True
