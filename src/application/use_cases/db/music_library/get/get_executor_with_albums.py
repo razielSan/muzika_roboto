@@ -45,7 +45,6 @@ class GetExecutorWihtAlbums:
                 executor: ExecutorDomain = executors[max(0, current_page - 1)]
 
             else:  # глобальная библиотека
-
                 executor: Union[
                     ExecutorDomain, None
                 ] = await self.uow.executors.get_global_executor_page(page=current_page)

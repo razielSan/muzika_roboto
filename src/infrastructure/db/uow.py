@@ -19,10 +19,9 @@ from infrastructure.db.repositories.sqlaclhemy.user_executor import (
 
 
 class UnitOfWork(AbstractUnitOfWork):
-    def __init__(self, session_factory, commit=True):
+    def __init__(self, session_factory):
         self.session_factory = session_factory
         self.session = None
-        self._commit = commit
 
     async def __aenter__(self):
         self.session: AsyncSession = self.session_factory()
@@ -49,7 +48,7 @@ class UnitOfWork(AbstractUnitOfWork):
     async def __aexit__(self, exc_type, exc, tb):
         if exc:
             await self.session.rollback()
-        elif self._commit:
+        else:
             await self.session.commit()
 
         await self.session.close()
