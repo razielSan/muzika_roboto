@@ -134,8 +134,8 @@ async def setup_bot() -> Result:
         try:
             telegram_bot = create_bot(
                 bot_settings=settings,
-                proxy_settings=proxy_settings,
                 logging_data=logging_data,
+                proxy=proxy_settings.get_proxy_url(),
             )
 
             await telegram_bot.set_my_commands(
