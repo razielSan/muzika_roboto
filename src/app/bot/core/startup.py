@@ -32,7 +32,6 @@ async def setup_bot() -> Result:
         if not settings.DB_PATH.exists():
             settings.DB_PATH.parent.mkdir(parents=True, exist_ok=True),
             settings.DB_PATH.touch(exist_ok=True)
-            # raise RuntimeError("Database not initialized. Please contact developer.")
 
         result_load_modules = load_modules(
             root_package=DEFAULT_BOT_MODULES_ROOT,
