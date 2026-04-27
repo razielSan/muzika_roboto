@@ -146,10 +146,14 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         user_id: Union[int, None],
         executor_id: int,
     ) -> Optional[Executor]:
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
+
         executor = await self.session.scalar(
-            select(self.model).where(
-                self.model.user_id == user_id, self.model.id == executor_id
-            )
+            select(self.model).where(user_id_condition, self.model.id == executor_id)
         )
         return executor
 
@@ -193,10 +197,13 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         photo_file_id: str,
         photo_file_unique_id: str,
     ) -> Optional[Executor]:
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
         executor: Optional[Executor] = await self.session.scalar(
-            select(self.model).where(
-                self.model.user_id == user_id, self.model.id == executor_id
-            )
+            select(self.model).where(user_id_condition, self.model.id == executor_id)
         )
         if not executor:
             return None
@@ -212,10 +219,13 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
         user_id: Optional[int],
         country: str,
     ) -> Optional[Executor]:
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
         executor: Optional[Executor] = await self.session.scalar(
-            select(self.model).where(
-                self.model.user_id == user_id, self.model.id == executor_id
-            )
+            select(self.model).where(user_id_condition, self.model.id == executor_id)
         )
         if not executor:
             return None
@@ -227,9 +237,14 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
     async def update_executor_genres(
         self, executor_id: int, user_id: Optional[int], genres: List[Genre]
     ) -> Optional[Executor]:
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
         executor: Optional[Executor] = await self.session.scalar(
             select(self.model)
-            .where(self.model.user_id == user_id, self.model.id == executor_id)
+            .where(user_id_condition, self.model.id == executor_id)
             .options(selectinload(self.model.genres))
             .options(selectinload(self.model.albums))
         )
@@ -243,10 +258,13 @@ class SQLAlchemyExecutorRepository(ExecutorRepository):
     async def update_executor_name(
         self, executor_id: int, user_id: Optional[int], name: str
     ) -> Optional[Executor]:
+        # для предотвращения ошибки при сравнивании None
+        if user_id is None:
+            user_id_condition: bool = self.model.user_id.is_(None)
+        else:
+            user_id_condition: bool = self.model.user_id == user_id
         executor: Optional[Executor] = await self.session.scalar(
-            select(self.model).where(
-                self.model.user_id == user_id, self.model.id == executor_id
-            )
+            select(self.model).where(user_id_condition, self.model.id == executor_id)
         )
         if not executor:
             return None
