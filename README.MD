@@ -177,7 +177,7 @@ PYTHONPATH=src python -m app.main
 ```
 
 
-🧪 Testing
+#### 🧪 Testing
 
 Run tests:
 
@@ -185,27 +185,28 @@ Run tests:
 pytest
 ```
 
-🏛 Architecture Principles
+#### 🏛 Architecture Principles
 
 This project follows:
 
-✅ Clean Architecture
-✅ Separation of Concerns
-✅ Dependency Injection style
-✅ Repository Pattern
-✅ Unit Of Work
-✅ Async-first design
-✅ Testable business logic
+- ✅ Clean Architecture
+- ✅ Separation of Concerns
+- ✅ Dependency Injection style
+- ✅ Repository Pattern
+- ✅ Unit Of Work
+- ✅ Async-first design
+- ✅ Testable business logic
 
 
-🗄 Database Support
+####  🗄 Database Support
 
-Database	Status
-SQLite	✅ Supported
-PostgreSQL	✅ Recommended
-Railway PostgreSQL	✅ Ready
+| Database           | Status        |
+| ------------------ | ------------- |
+| SQLite             | ✅ Supported   |
+| PostgreSQL         | ✅ Recommended |
+| Railway PostgreSQL | ✅ Ready       |
 
-☁️ Deployment
+#### ☁️ Deployment
 
 Supported platforms:
 
@@ -215,21 +216,21 @@ Supported platforms:
 - Docker
 - Linux Server
 
-📌 Why This Project?
+#### 📌 Why This Project?
 
 Most Telegram bots are simple scripts.
 
 Muzika Roboto demonstrates how to build a scalable, maintainable, production-grade Telegram application with modern Python practices.
 
 
-🤝 Contributing
+#### 🤝 Contributing
 
 Pull requests are welcome.
 
 If you'd like to improve architecture, performance, or UX — feel free to open an issue.
 
 
-📬 Contact
+#### 📬 Contact
 
 Telegram: @razielasus
 
@@ -243,4 +244,4 @@ Share it 🚀
 
 <div align="center">
 🎵 Muzika Roboto — where Telegram meets music.
-</div> ```
+</div> 
