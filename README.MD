@@ -79,8 +79,8 @@ muzika_roboto/
 ```
 
 
-🚀 Quick Start
-1️⃣ Clone repository
+## 🚀 Quick Start
+### 1️⃣ Clone repository
 
 ```bash
 git clone https://github.com/razielSan/muzika_roboto.git
@@ -88,7 +88,7 @@ cd muzika_roboto
 ```
 
 
-2️⃣ Create virtual environment
+### 2️⃣ Create virtual environment
 
 Linux / macOS
 
@@ -105,7 +105,7 @@ venv\Scripts\activate
 ```
 
 
-3️⃣ Install dependencies
+### 3️⃣ Install dependencies
 
 ```bash
 pip install -e .
@@ -117,7 +117,7 @@ or
 pip install -r requirements.txt
 ```
 
-⚙️ Configuration
+### ⚙️ Configuration
 
 Create file:
 
@@ -133,7 +133,7 @@ ADMINS_LIST=["123456789"]
 ```
 
 
-🌍 Proxy Support
+### 🌍 Proxy Support
 
 Webshare Proxy
 
@@ -164,7 +164,7 @@ class ProxySettings(BaseSettings):
    USE_OTHER_PROXY: bool = True
 ```
 
-▶️ Run Bot
+### ▶️ Run Bot
 
 ```bash
 bot
@@ -177,7 +177,7 @@ PYTHONPATH=src python -m app.main
 ```
 
 
-#### 🧪 Testing
+### 🧪 Testing
 
 Run tests:
 
@@ -185,7 +185,7 @@ Run tests:
 pytest
 ```
 
-#### 🏛 Architecture Principles
+### 🏛 Architecture Principles
 
 This project follows:
 
@@ -198,7 +198,7 @@ This project follows:
 - ✅ Testable business logic
 
 
-####  🗄 Database Support
+###  🗄 Database Support
 
 | Database           | Status        |
 | ------------------ | ------------- |
@@ -206,7 +206,7 @@ This project follows:
 | PostgreSQL         | ✅ Recommended |
 | Railway PostgreSQL | ✅ Ready       |
 
-#### ☁️ Deployment
+### ☁️ Deployment
 
 Supported platforms:
 
@@ -216,21 +216,21 @@ Supported platforms:
 - Docker
 - Linux Server
 
-#### 📌 Why This Project?
+### 📌 Why This Project?
 
 Most Telegram bots are simple scripts.
 
 Muzika Roboto demonstrates how to build a scalable, maintainable, production-grade Telegram application with modern Python practices.
 
 
-#### 🤝 Contributing
+### 🤝 Contributing
 
 Pull requests are welcome.
 
 If you'd like to improve architecture, performance, or UX — feel free to open an issue.
 
 
-#### 📬 Contact
+### 📬 Contact
 
 Telegram: @razielasus
 
