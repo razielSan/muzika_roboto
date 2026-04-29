@@ -25,10 +25,9 @@ from core.error_handlers.format import format_errors_message
 
 async def setup_bot() -> Result:
     """Подключает все необходимые компоненты для работы бота."""
+    logging_bot = None
     try:
-
         logging_bot = get_loggers(name=settings.NAME_FOR_LOG_FOLDER)
-
         if not settings.DB_PATH.exists():
             settings.DB_PATH.parent.mkdir(parents=True, exist_ok=True),
             settings.DB_PATH.touch(exist_ok=True)
@@ -148,13 +147,16 @@ async def setup_bot() -> Result:
             raise
         return ok(data=(get_main_inline_keyboards, dp, telegram_bot))
     except Exception as err:
-        logging_bot.error_logger.error(
-            msg=format_errors_message(
-                name_router=logging_bot.router_name,
-                function_name=setup_bot.__name__,
-                error_text=f"Критическая ошибка в работе startup\n{traceback.format_exc()}",
+        if logging_bot:
+            logging_bot.error_logger.error(
+                msg=format_errors_message(
+                    name_router=logging_bot.router_name,
+                    function_name=setup_bot.__name__,
+                    error_text=f"Критическая ошибка в работе startup\n{traceback.format_exc()}",
+                )
             )
-        )
+        else:
+            print(traceback.format_exc())
         return fail(
             code="STARTUP FAIL",
             message=f"Критическая ошибка в работе startup - {err}",

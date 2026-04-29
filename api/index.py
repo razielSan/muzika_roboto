@@ -9,6 +9,8 @@ from aiogram.types import Update
 from fastapi import FastAPI, Request
 
 from app.bot.core.startup import setup_bot
+from core.context.context import create_app_context
+from core.context.runtime import ContextRuntime
 
 app = FastAPI()
 
@@ -22,6 +24,8 @@ async def init():
 
     if _inited:
         return
+    ctx = create_app_context()
+    ContextRuntime.init(ctx)
 
     result = await setup_bot()
     _, _dp, _bot = result.data
