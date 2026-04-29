@@ -22,7 +22,6 @@ class BotSettings(BaseSettings):
         BotCommand(command="music_library", description="Музыкальная библиотека"),
     ]
     ADMINS_LIST: List[str] = []
-    USE_WEBHOOK: bool = True
 
     ASYNC_SQLITE_BASE: str = f"sqlite+aiosqlite:///{DB_PATH}"
     SQLITE_BASE: str = f"sqlite:///{DB_PATH}"
