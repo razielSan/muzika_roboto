@@ -1,5 +1,4 @@
 import sys
-
 import aiohttp
 
 from app.bot.core.startup import setup_bot
@@ -34,7 +33,6 @@ async def run_bot() -> None:
                 dp["session"] = session
                 dp["get_main_inline_keyboards"] = get_main_inline_keyboards
                 logging_data.info_logger.info("bot запущен")
-
                 await dp.start_polling(telegram_bot)
         finally:
             await telegram_bot.session.close()
