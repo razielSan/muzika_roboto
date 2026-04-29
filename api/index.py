@@ -1,7 +1,14 @@
+import os
+import sys
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+SRC_DIR = os.path.join(BASE_DIR, "src")
+sys.path.insert(0, SRC_DIR)
+
+from aiogram.types import Update
 from fastapi import FastAPI, Request
 
 from app.bot.core.startup import setup_bot
-from aiogram.types import Update
 
 app = FastAPI()
 

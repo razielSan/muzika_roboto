@@ -39,7 +39,6 @@ class BotSettings(BaseSettings):
 
     AUDIO_EXTENSIONS: Set[str] = {".mp3", ".flac", ".wav", ".ogg", ".m4a"}
     MUSICL_LIBRARY_MODULE_NAME: str = "music_library"
-    WEBHOOK_URL: str
 
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_file=".env", extra="ignore"
