@@ -12,6 +12,7 @@ dependencies = [
     "alembic",
     "aiosqlite",
     "aiohttp_socks",
+    "fastapi"
 ]
 
 [project.optional-dependencies]

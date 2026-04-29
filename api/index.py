@@ -1,45 +1,39 @@
-import json
-from aiogram.types import Update
+from fastapi import FastAPI, Request
 
 from app.bot.core.startup import setup_bot
-from app.bot.settings import settings
+from aiogram.types import Update
+
+app = FastAPI()
 
 _bot = None
 _dp = None
-_initialized = False
+_inited = False
 
 
 async def init():
-    global _bot, _dp, _initialized
+    global _bot, _dp, _inited
 
-    if _initialized:
+    if _inited:
         return
 
     result = await setup_bot()
     _, _dp, _bot = result.data
 
     await _bot.set_webhook(
-        url=settings.WEBHOOK_URL,
-        drop_pending_updates=True,
+        url="https://YOUR-PROJECT.vercel.app/webhook"
     )
 
-    _initialized = True
+    _inited = True
 
 
-async def handler(request):
+@app.post("/webhook")
+async def webhook(request: Request):
     await init()
 
-    body = request.body
-    if isinstance(body, bytes):
-        body = body.decode()
-
-    data = json.loads(body)
+    data = await request.json()
 
     update = Update.model_validate(data)
 
-    await _dp.feed_webhook_update(
-        bot=_bot,
-        update=update,
-    )
+    await _dp.feed_webhook_update(_bot, update)
 
-    return {"statusCode": 200, "body": "ok"}
+    return {"ok": True}
