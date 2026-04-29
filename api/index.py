@@ -30,9 +30,7 @@ async def init():
     result = await setup_bot()
     _, _dp, _bot = result.data
 
-    await _bot.set_webhook(
-        url="https://YOUR-PROJECT.vercel.app/webhook"
-    )
+    await _bot.set_webhook(url="https://muzika-roboto.vercel.app/webhook")
 
     _inited = True
 
@@ -46,5 +44,16 @@ async def webhook(request: Request):
     update = Update.model_validate(data)
 
     await _dp.feed_webhook_update(_bot, update)
+
+    return {"ok": True}
+
+
+@app.get("/set-webhook")
+async def set_webhook_route():
+    await init()
+
+    await _bot.set_webhook(
+        url="https://muzika-roboto.vercel.app/webhook", drop_pending_updates=True
+    )
 
     return {"ok": True}

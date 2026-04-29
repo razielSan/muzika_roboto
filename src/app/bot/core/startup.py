@@ -139,9 +139,10 @@ async def setup_bot() -> Result:
             await telegram_bot.set_my_commands(
                 commands=settings.LIST_BOT_COMMANDS  # Добавляет команды боту
             )  # Добавляет команды боту
-            await telegram_bot.delete_webhook(
-                drop_pending_updates=True
-            )  # Игнорирует все присланные сообщение пока бот не работал
+            if not settings.USE_WEBHOOK:
+                await telegram_bot.delete_webhook(
+                    drop_pending_updates=True
+                )  # Игнорирует все присланные сообщение пока бот не работал
         except Exception:
             logging_bot.error_logger.error("Ошибка при подключении к телеграм")
             raise
