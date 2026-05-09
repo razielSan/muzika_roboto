@@ -57,7 +57,6 @@ class ProxySettings(BaseSettings):
     USE_WEBSHARE_PROXY: bool = False
     USE_OTHER_PROXY: bool = False
 
-
     OTHER_HOST: Optional[str] = None
     OTHER_PORT: Optional[str] = None
 
