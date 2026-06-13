@@ -54,11 +54,11 @@ class ProxySettings(BaseSettings):
     WEBSHARE_HOST: Optional[str] = None
     WEBSHARE_PORT: Optional[str] = None
 
-    USE_WEBSHARE_PROXY: bool = False
-    USE_OTHER_PROXY: bool = False
-
     OTHER_HOST: Optional[str] = None
     OTHER_PORT: Optional[str] = None
+
+    USE_WEBSHARE_PROXY: bool = False
+    USE_OTHER_PROXY: bool = False
 
     def get_proxy_url(self):
         if self.USE_WEBSHARE_PROXY:
