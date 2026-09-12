@@ -22,7 +22,7 @@ def get_information_album(title: str, year: int, number_of_songs: int):
     return (
         f"🎸 Год: {year}\n"
         f"🎸 Название: {title}\n"
-        f"🎸 Количестов песен: {number_of_songs}"
+        f"🎸 Количество песен: {number_of_songs}"
     )
 
 
